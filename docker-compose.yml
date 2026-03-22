@@ -12,6 +12,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - habithub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BACKEND__POSTGRESUSER}"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
   backend:
     build:
@@ -32,7 +37,8 @@ services:
     working_dir: /src
     command: dotnet watch run --no-launch-profile
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - habithub-network
 

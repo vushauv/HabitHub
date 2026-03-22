@@ -4,13 +4,9 @@ services:
       target: publish
     volumes:
       - ./backend:/src
-      - backend_bin:/src/bin
-      - backend_obj:/src/obj
     working_dir: /src
     command: dotnet watch run --no-launch-profile
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
 
-volumes:
-  backend_bin:
-  backend_obj:
+

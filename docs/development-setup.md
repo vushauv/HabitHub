@@ -61,6 +61,15 @@ cd frontend && npm install <package-name> && cd ..
 docker compose up -d --build frontend
 ```
 
+### Running tests
+
+```bash
+cd frontend
+npm test
+```
+
+Tests live next to the source files (e.g. `Home.test.tsx` beside `Home.tsx`) and use Vitest + React Testing Library.
+
 ### Running frontend tooling locally (optional)
 
 If you want IDE type-checking or linting outside Docker:
@@ -77,6 +86,9 @@ npm run lint
 frontend/
 ├── src/
 │   ├── pages/          # Route pages (Home, Register, …)
+│   │   └── *.test.tsx  # Component tests (co-located)
+│   ├── test/
+│   │   └── setup.ts    # Test setup (jest-dom matchers)
 │   ├── App.tsx         # Router setup
 │   ├── main.tsx        # Entry point
 │   └── index.css

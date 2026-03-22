@@ -9,6 +9,14 @@ RUN dotnet restore "backend.csproj"
 COPY . .
 RUN dotnet publish "backend.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
+FROM publish AS dev
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/*
+COPY docker-entrypoint.dev.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.dev.sh
+ENTRYPOINT ["docker-entrypoint.dev.sh"]
+
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

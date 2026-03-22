@@ -1,0 +1,10 @@
+services:
+  backend:
+    build:
+      target: publish
+    volumes:
+      - ./backend:/src
+    working_dir: /src
+    command: dotnet watch run --no-launch-profile
+    environment:
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"

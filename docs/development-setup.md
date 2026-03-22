@@ -1,11 +1,12 @@
-# Backend — Developer Guide
+# Development Setup
 
-Everything you need to start developing, testing, and debugging the backend.
+Everything you need to start developing, testing, and debugging the project.
 
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - [.NET 10 SDK](https://dotnet.microsoft.com/download) — needed for running tests and EF migrations locally
+- [Node.js 22+](https://nodejs.org/) — only needed if you want to run frontend tooling (lint, type-check) outside Docker
 
 ## Quick Start
 
@@ -15,7 +16,6 @@ git clone -b dev git@github.com:vushauv/HabitHub.git && cd HabitHub
 # or via https
 git clone -b dev https://github.com/vushauv/HabitHub.git && cd HabitHub
 
-
 # 2. Create your .env (defaults work out of the box)
 cp .env.example .env
 
@@ -23,9 +23,15 @@ cp .env.example .env
 docker compose up --build
 ```
 
-That's it. The backend is at `http://localhost:5000`, Swagger UI at `http://localhost:5000/swagger`.
+That's it:
 
-Hot-reload is enabled — edit any `.cs` file and the app recompiles automatically inside the container.
+| Service  | URL                            |
+|----------|--------------------------------|
+| Frontend | `http://localhost:3000`         |
+| Backend  | `http://localhost:5000`         |
+| Swagger  | `http://localhost:5000/swagger` |
+
+Hot-reload is enabled for both stacks — edit any `.cs` file and the backend recompiles; edit any `.tsx` file and the frontend updates instantly via Vite HMR.
 
 ### Stopping
 
@@ -34,7 +40,54 @@ docker compose down          # stop containers, keep database
 docker compose down -v       # stop containers AND wipe the database volume
 ```
 
-## Running Tests
+## Frontend
+
+The frontend is a Vite + React + TypeScript app in `frontend/`.
+
+- Runs inside Docker — no need to run `npm run dev` locally
+- Source is bind-mounted, so all edits are reflected immediately
+- API calls use relative paths (`/api/...`), proxied to the backend by Vite's dev server
+
+### Adding npm packages
+
+```bash
+docker compose exec frontend npm install <package-name>
+```
+
+Or install locally and recreate the container:
+
+```bash
+cd frontend && npm install <package-name> && cd ..
+docker compose up -d --build frontend
+```
+
+### Running frontend tooling locally (optional)
+
+If you want IDE type-checking or linting outside Docker:
+
+```bash
+cd frontend
+npm install     # one-time
+npm run lint
+```
+
+### Project structure
+
+```
+frontend/
+├── src/
+│   ├── pages/          # Route pages (Home, Register, …)
+│   ├── App.tsx         # Router setup
+│   ├── main.tsx        # Entry point
+│   └── index.css
+├── Dockerfile
+├── vite.config.ts      # Dev server, proxy, HMR config
+└── package.json
+```
+
+## Backend
+
+### Running Tests
 
 Tests run locally (not in Docker), using xUnit:
 
@@ -44,7 +97,7 @@ dotnet test
 
 This runs from the repo root using the solution file. The test project lives in `tests/backend/`.
 
-### SDK version mismatch
+#### SDK version mismatch
 
 The Docker container and your local machine may have slightly different .NET SDK patch versions (e.g. 10.0.4 inside Docker vs 10.0.5 locally). Since both write to the same `backend/obj/` directory via the bind mount, a `dotnet restore` from one can confuse the other.
 
@@ -56,6 +109,24 @@ dotnet restore
 ```
 
 This is harmless — it just forces a clean restore with your local SDK.
+
+### Project structure
+
+```
+backend/
+├── Configuration/     # Strongly-typed settings (AppSettings)
+├── Controllers/       # API endpoints
+├── Data/              # DbContext and design-time factory
+├── Dtos/              # Request/response DTOs
+├── Migrations/        # EF Core migrations (auto-generated)
+├── Models/            # Entity classes
+├── Repositories/      # Data access layer
+├── Dockerfile
+└── Program.cs         # App entry point and DI setup
+
+tests/
+└── backend/           # xUnit test project
+```
 
 ## Database
 
@@ -106,24 +177,6 @@ dotnet ef migrations remove --project backend
 
 If it was already applied, create a new migration that reverts the changes instead.
 
-## Project Structure
-
-```
-backend/
-├── Configuration/     # Strongly-typed settings (AppSettings)
-├── Controllers/       # API endpoints
-├── Data/              # DbContext and design-time factory
-├── Dtos/              # Request/response DTOs
-├── Migrations/        # EF Core migrations (auto-generated)
-├── Models/            # Entity classes
-├── Repositories/      # Data access layer
-├── Dockerfile
-└── Program.cs         # App entry point and DI setup
-
-tests/
-└── backend/           # xUnit test project
-```
-
 ## Docker Compose Files
 
 | File | Purpose | When to use |
@@ -148,6 +201,8 @@ All backend variables use the `BACKEND__` prefix (double underscore maps to ASP.
 | `BACKEND__CORSORIGINS` | Allowed CORS origins | `http://localhost:3000` |
 | `POSTGRES_HOST_PORT` | Host port for direct DB access | `54320` |
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET environment | `Development` |
+| `FRONTEND_PORT` | Host port the frontend maps to | `3000` |
+| `VITE_API_URL` | Backend URL used by the frontend proxy | `http://localhost:5000` |
 
 ## Troubleshooting
 
@@ -173,3 +228,13 @@ This is just a warning, not an error. The app binds to `http://+:5000` as config
 ### `Package X was not found` during local build
 
 See [SDK version mismatch](#sdk-version-mismatch) above.
+
+### Frontend container: `node_modules` issues
+
+If you see missing module errors after adding/removing packages, recreate the named volume:
+
+```bash
+docker compose down
+docker volume rm habithub_frontend_node_modules
+docker compose up --build
+```

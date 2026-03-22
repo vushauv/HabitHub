@@ -11,7 +11,12 @@ Everything you need to start developing, testing, and debugging the backend.
 
 ```bash
 # 1. Clone and enter the repo
-git clone <repo-url> && cd HabbitHub
+git clone git@github.com:vushauv/HabitHub.git && cd HabitHub
+
+# or via https
+
+git clone https://github.com/vushauv/HabitHub.git && cd HabitHub
+
 
 # 2. Create your .env (defaults work out of the box)
 cp .env.example .env

@@ -1,0 +1,7 @@
+services:
+  backend:
+    build:
+      target: final
+    volumes: []
+    working_dir: /app
+    command: []

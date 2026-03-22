@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: habithub-postgres
+    environment:
+      POSTGRES_DB: ${BACKEND__POSTGRESDB}
+      POSTGRES_USER: ${BACKEND__POSTGRESUSER}
+      POSTGRES_PASSWORD: ${BACKEND__POSTGRESPASSWORD}
+    ports:
+      - "${POSTGRES_HOST_PORT:-54320}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - habithub-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: habithub-backend
+    ports:
+      - "${BACKEND__APPPORT:-5000}:5000"
+    env_file:
+      - .env
+    environment:
+      BACKEND__POSTGRESHOST: postgres
+      ASPNETCORE_URLS: http://+:5000
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    volumes:
+      - ./backend:/src
+    working_dir: /src
+    command: dotnet watch run --no-launch-profile
+    depends_on:
+      - postgres
+    networks:
+      - habithub-network
+
+volumes:
+  postgres_data:
+
+networks:
+  habithub-network:
+    driver: bridge

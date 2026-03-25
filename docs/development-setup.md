@@ -1,6 +1,6 @@
 # Development Setup
 
-Everything you need to start developing, testing, and debugging the project.
+Everything you need to start developing, testing, and debugging the project. To be updated.
 
 ## Prerequisites
 

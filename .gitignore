@@ -1,3 +1,10 @@
 .env
 *.log
 .vscode/
+.vs/
+
+backend/.vs/
+backend/bin/
+backend/obj/
+tests/backend/obj/
+*.user

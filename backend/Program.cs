@@ -1,6 +1,7 @@
 using backend.Configuration;
 using backend.Data;
 using backend.Repositories;
+using backend.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -22,7 +23,7 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
     options.UseNpgsql(settings.ConnectionString);
 });
 
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScroped<IAuthService, AuthService>();
 
 builder.Services.AddCors();
 builder.Services.AddControllers();

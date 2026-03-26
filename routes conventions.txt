@@ -1,0 +1,19 @@
+/                  		Home
+/login             		Login
+/register         	 	Register
+
+/app               		App entry / redirect
+/teams             		Team list
+/teams/join       	Join team
+/teams/:teamId     	Team overview
+/teams/create
+/teams/:teamId/chat
+/teams/:teamId/archive
+
+/habits/:habitId
+/habits/create
+/habits/:habitId/leaderboard
+
+/settings
+/settings/sessions
+/settings/security

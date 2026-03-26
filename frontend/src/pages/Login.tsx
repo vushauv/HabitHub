@@ -185,10 +185,10 @@ export default function Login() {
             </Link>
           </div>
 
-          <h1 className="login-title">Sign in</h1>
+          <h1 className="login-title">Log in</h1>
 
           <p className="login-text">
-            Welcome back. Sign in to continue with HabitHub.
+            Welcome back. Log in to continue with HabitHub.
           </p>
 
           {serverError && (
@@ -295,7 +295,7 @@ export default function Login() {
               type="submit"
               disabled={loading || !formIsValid}
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Logging in..." : "Log in"}
             </button>
 
             <p className="login-footer-text">

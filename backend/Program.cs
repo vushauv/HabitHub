@@ -23,7 +23,10 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
     options.UseNpgsql(settings.ConnectionString);
 });
 
-builder.Services.AddScroped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITeamCreatorRepository, TeamCreatorRepository>();
+builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddCors();
 builder.Services.AddControllers();

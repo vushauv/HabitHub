@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using backend.Enums;
+using System.ComponentModel.DataAnnotations;
 namespace backend.Dtos.AuthDtos
 {
     public record RegisterRequestDto(

@@ -3,6 +3,7 @@ using backend.Repositories;
 using Microsoft.AspNetCore.Identity;
 using backend.Models;
 using backend.Exceptions;
+using backend.Enums;
 
 namespace backend.Service
 {
@@ -37,19 +38,19 @@ namespace backend.Service
 
             TeamCreator creator = new TeamCreator
             {
-                Id = Guid.NewGuid(),
+                CreatorId = Guid.NewGuid(),
                 Name = request.Name,
                 Email = request.Email,
-                Password = hasher.HashPassword(null, request.Password),
+                PasswordHash = hasher.HashPassword(null, request.Password),
             };
 
             TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
-            Session createdSession = await CreateSessionAsync(createdCreator.Id, ipAddress, deviceInfo);
-
-            return (new RegisterResponseDto(
-                createdSession.Id,
-                new UserDto(createdCreator.Id, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
-            );
+            Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+//RegisterResponseDto doesnt exists changed to AuthResponseDto
+            return new AuthResponseDto(
+                createdSession.SessionId,
+                new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
+            ;
         }
 
         private async Task<AuthResponseDto> RegisterMemberAsync(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
@@ -59,20 +60,21 @@ namespace backend.Service
 
             TeamMember member = new TeamMember
             {
-                Id = Guid.NewGuid(),
+                MemberId = Guid.NewGuid(),
                 Name = request.Name,
                 Email = request.Email,
-                Password = hasher.HashPassword(null, request.Password),
+                PasswordHash = hasher.HashPassword(null, request.Password),
                 Timezone = request.Timezone
             };
 
             TeamMember createdMember = await members.CreateMemberAsync(member);
-            Session createdSession = await CreateSessionAsync(createdMember.Id,ipAddress,deviceInfo);
+            Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress,deviceInfo);
 
-            return (new RegisterResponseDto(
-                createdSession.Id,
-                new UserDto(createdMember.Id, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
-            );
+//RegisterResponseDto doesnt exists changed to AuthResponseDto
+            return new AuthResponseDto(
+                createdSession.SessionId,
+                new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
+            ;
         }
 
         private async Task<AuthResponseDto> LoginCreatorAsync(LoginRequestDto request, string? ipAddress, string? deviceInfo)
@@ -83,17 +85,17 @@ namespace backend.Service
                 throw new InvalidCredentialsException("Invalid email or password.");
             }
 
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.Password, request.Password);
+            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
             if(passwordResult == PasswordVerificationResult.Failed)
             {
                 throw new InvalidCredentialsException("Invalid email or password.");
             }
 
-            Session createdSession = await CreateSessionAsync(creator.Id, ipAddress, deviceInfo);
+            Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
 
             return new AuthResponseDto(
-                createdSession.Id,
-                new UserDto(creator.Id, creator.Name, creator.Email, UserType.Creator, null)
+                createdSession.SessionId,
+                new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
             );
         }
 
@@ -104,26 +106,27 @@ namespace backend.Service
             {
                 throw new InvalidCredentialsException("Invalid email or password.");
             }
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.Password, request.Password);
+            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
             if (passwordResult == PasswordVerificationResult.Failed)
             {
                 throw new InvalidCredentialsException("Invalid email or password.");
             }
 
-            Session createdSession = await CreateSessionAsync(member.Id, ipAddress, deviceInfo);
+            Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
 
             return new AuthResponseDto(
-                createdSession.Id,
-                new UserDto(member.Id, member.Name, member.Email, UserType.Member, member.Timezone)
+                createdSession.SessionId,
+                new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
             );
         }
 
-        private async Task<Session> CreateSessionAsync(Guid userId, string? ipAddress, string? deviceInfo)
+        private async Task<Session> CreateSessionAsync(Guid userId, UserType userType, string? ipAddress, string? deviceInfo)
         {
             Session session = new()
             {
-                Id = Guid.NewGuid(),
+                SessionId = Guid.NewGuid(),
                 UserId = userId,
+                UserType = userType,
                 CreatedAt = DateTime.UtcNow,
                 LastActiveAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(30),

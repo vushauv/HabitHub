@@ -1,4 +1,6 @@
-﻿namespace backend.Dtos.AuthDtos
+﻿using backend.Enums;
+
+namespace backend.Dtos.AuthDtos
 {
     public record UserDto(
         Guid Id,

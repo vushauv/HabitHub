@@ -1,6 +1,6 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import './Login.css'
+import "./Login.css";
 
 type AccountType = "Creator" | "Member";
 
@@ -15,6 +15,8 @@ type LoginErrors = {
   password?: string;
   userType?: string;
 };
+
+const API_BASE_URL = "http://localhost:5000";
 
 function validateEmail(email: string): string | undefined {
   if (!email.trim()) {
@@ -56,6 +58,10 @@ function validateForm(form: LoginForm): LoginErrors {
 
 function hasValidationErrors(errors: LoginErrors): boolean {
   return Boolean(errors.email || errors.password || errors.userType);
+}
+
+function mapUserTypeToEnum(userType: AccountType): number {
+  return userType === "Creator" ? 0 : 1;
 }
 
 export default function Login() {
@@ -142,10 +148,10 @@ export default function Login() {
       const payload = {
         email: form.email.trim(),
         password: form.password,
-        userType: form.userType,
+        userType: mapUserTypeToEnum(form.userType),
       };
 
-      const response = await fetch("/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -166,7 +172,30 @@ export default function Login() {
         throw new Error(responseText || `Login failed (${response.status}).`);
       }
 
-      navigate("/");
+      const data = await response.json();
+
+      const authenticatedUserType =
+        data.userType === "creator" || data.userType === 0
+          ? "Creator"
+          : data.userType === "member" || data.userType === 1
+            ? "Member"
+            : form.userType;
+
+            localStorage.setItem(
+              "habithubAuth",
+              JSON.stringify({
+                isLoggedIn: true,
+                userType: authenticatedUserType,
+                sessionId: data.sessionId ?? null,
+                userId: data.userId ?? data.memberId ?? data.creatorId ?? null,
+                name: data.name ?? "John",
+              }),
+            );
+
+      navigate(
+        authenticatedUserType === "Creator" ? "/main-creator" : "/main-member",
+        { replace: true },
+      );
     } catch (error) {
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
@@ -214,7 +243,9 @@ export default function Login() {
                 placeholder="example@gmail.com"
                 autoComplete="email"
                 aria-invalid={Boolean(touched.email && errors.email)}
-                aria-describedby={touched.email && errors.email ? "login-email-error" : undefined}
+                aria-describedby={
+                  touched.email && errors.email ? "login-email-error" : undefined
+                }
                 required
               />
               {touched.email && errors.email && (
@@ -240,7 +271,9 @@ export default function Login() {
                 autoComplete="current-password"
                 aria-invalid={Boolean(touched.password && errors.password)}
                 aria-describedby={
-                  touched.password && errors.password ? "login-password-error" : undefined
+                  touched.password && errors.password
+                    ? "login-password-error"
+                    : undefined
                 }
                 required
               />

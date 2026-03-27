@@ -198,3 +198,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+.register-footer-text {
+  margin: 0.35rem 0 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-color-soft);
+}
+
+.register-footer-link {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.register-footer-link:hover {
+  color: var(--primary-color-dark);
+  text-decoration: underline;
+}

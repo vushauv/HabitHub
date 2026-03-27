@@ -1,9 +1,9 @@
 namespace backend.Models;
 
-public class User
+public class TeamCreator
 {
-    public Guid Id { get; set; }
+    public Guid CreatorId { get; set; }
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

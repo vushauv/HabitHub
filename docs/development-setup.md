@@ -175,9 +175,12 @@ Migrations run automatically on app startup (`db.Database.Migrate()` in `Program
 # Make sure Docker is running (you need the database)
 docker compose up -d postgres
 
-# From the repo root
-dotnet ef migrations add <MigrationName> --project backend
+# DO NOT RUN Migrations locally to avoid any version conflicts!!! ONLY with docker
+docker compose exec backend dotnet ef migrations add <MigrationName>
+docker compose restart backend
 ```
+
+
 
 This generates files in `backend/Migrations/`. Commit them — they're part of the codebase.
 

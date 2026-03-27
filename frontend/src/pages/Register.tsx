@@ -1,6 +1,6 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import './Register.css'
+import "./Register.css";
 
 type AccountType = "Creator" | "Member";
 
@@ -19,6 +19,8 @@ type RegisterErrors = {
   timezone?: string;
   userType?: string;
 };
+
+const API_BASE_URL = "http://localhost:5000";
 
 const TIMEZONE_OPTIONS = [
   "Europe/Warsaw",
@@ -119,6 +121,10 @@ function hasValidationErrors(errors: RegisterErrors): boolean {
   );
 }
 
+function mapUserTypeToEnum(userType: AccountType): number {
+  return userType === "Creator" ? 0 : 1;
+}
+
 export default function Register() {
   const navigate = useNavigate();
 
@@ -213,10 +219,10 @@ export default function Register() {
         email: form.email.trim(),
         password: form.password,
         timezone: form.timezone,
-        userType: form.userType,
+        userType: mapUserTypeToEnum(form.userType),
       };
 
-      const response = await fetch("/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -237,7 +243,7 @@ export default function Register() {
         throw new Error(responseText || `Registration failed (${response.status}).`);
       }
 
-      navigate("/");
+      navigate("/login");
     } catch (error) {
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
@@ -307,7 +313,7 @@ export default function Register() {
                 value={form.email}
                 onChange={(event) => handleChange("email", event)}
                 onBlur={() => handleBlur("email")}
-                placeholder="example@gmail.com"
+                placeholder="john@gmail.com"
                 autoComplete="email"
                 aria-invalid={Boolean(touched.email && errors.email)}
                 aria-describedby={touched.email && errors.email ? "email-error" : undefined}
@@ -332,7 +338,7 @@ export default function Register() {
                 value={form.password}
                 onChange={(event) => handleChange("password", event)}
                 onBlur={() => handleBlur("password")}
-                placeholder="At least 8 characters"
+                placeholder="Enter your password"
                 autoComplete="new-password"
                 aria-invalid={Boolean(touched.password && errors.password)}
                 aria-describedby={
@@ -424,6 +430,13 @@ export default function Register() {
             >
               {loading ? "Creating account..." : "Create account"}
             </button>
+
+            <p className="register-footer-text">
+              Already have an account?{" "}
+              <Link to="/login" className="register-footer-link">
+                Log in
+              </Link>
+            </p>
           </form>
         </div>
       </section>

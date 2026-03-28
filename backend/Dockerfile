@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 5000
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS publish
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS publish
 WORKDIR /src
 COPY ["backend.csproj", "./"]
 RUN dotnet restore "backend.csproj"
@@ -10,7 +10,7 @@ COPY . .
 RUN dotnet publish "backend.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM publish AS dev
-RUN dotnet tool install --global dotnet-ef
+RUN dotnet tool install --global dotnet-ef --version 8.*
 ENV PATH="$PATH:/root/.dotnet/tools"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends gosu \

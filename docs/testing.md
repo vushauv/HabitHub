@@ -6,6 +6,7 @@
 - [Backend — unit tests](#backend--unit-tests)
 - [Backend — integration tests](#backend--integration-tests)
 - [Frontend — unit tests](#frontend--unit-tests)
+- [Frontend — integration tests](#frontend--integration-tests)
 
 ---
 
@@ -16,6 +17,7 @@
 | Backend unit | xUnit | `backend/backend.Tests/Unit/` | No |
 | Backend integration | xUnit + WebApplicationFactory | `backend/backend.Tests/Integration/` | Yes (PostgreSQL) |
 | Frontend unit | Vitest + React Testing Library | `frontend/tests/unit/` | No |
+| Frontend integration | Vitest + React Testing Library | `frontend/tests/integration/` | No |
 
 **Running all tests in Docker:**
 
@@ -26,7 +28,8 @@
 **Running a specific suite:**
 
 ```bash
-./scripts/run_tests.sh frontend-test
+./scripts/run_tests.sh frontend-unit-test
+./scripts/run_tests.sh frontend-integration-test
 ./scripts/run_tests.sh backend-unit-test
 ./scripts/run_tests.sh backend-integration-test
 ```
@@ -39,7 +42,7 @@ This runs frontend, backend unit, and backend integration tests sequentially and
 
 ```zsh
 run-tests() { ~/code/uni/SE2/HabitHub/scripts/run_tests.sh "$@" }
-_run-tests() { compadd -- frontend-test backend-unit-test backend-integration-test }
+_run-tests() { compadd -- frontend-unit-test frontend-integration-test backend-unit-test backend-integration-test }
 compdef _run-tests run-tests
 ```
 
@@ -50,7 +53,7 @@ Then use `run-tests <TAB>` instead of calling the script directly.
 ```bash
 run-tests() { ~/code/uni/SE2/HabitHub/scripts/run_tests.sh "$@" }
 _run-tests() {
-  local services="frontend-test backend-unit-test backend-integration-test"
+  local services="frontend-unit-test frontend-integration-test backend-unit-test backend-integration-test"
   COMPREPLY=($(compgen -W "$services" -- "${COMP_WORDS[COMP_CWORD]}"))
 }
 complete -F _run-tests run-tests
@@ -72,6 +75,10 @@ cd backend && dotnet test backend.Tests/backend.Tests.csproj --filter "Category=
 
 # Docker
 docker compose -f docker-compose.test.yml run --rm backend-unit-test
+
+# Script (Docker internally)
+./scripts/run_tests.sh backend-unit-test
+
 ```
 
 ### Writing
@@ -193,21 +200,24 @@ public class MyEndpointTests : IClassFixture<TestWebAppFactory>
 
 ## Frontend — unit tests
 
-Frontend tests render React components in a simulated browser environment (jsdom) and assert on what is visible to the user. They do not make real API calls.
+Unit tests render a single component in isolation and assert on what is visible. They do not make API calls or interact with localStorage.
 
 ### Running
 
 ```bash
 # Locally
-cd frontend && npm test
+cd frontend && npm run test:unit
 
 # Docker
-docker compose -f docker-compose.test.yml run --rm frontend-test
+docker compose -f docker-compose.test.yml run --rm frontend-unit-test
+
+# Script
+./scripts/run_tests.sh frontend-unit-test
 ```
 
 ### Writing
 
-Test files go in `frontend/tests/unit/` mirroring the structure of `frontend/src/`. A test for `src/pages/Home.tsx` goes in `tests/unit/pages/Home.test.tsx`.
+Test files go in `frontend/tests/unit/` mirroring `frontend/src/`. A test for `src/pages/Home.tsx` goes in `tests/unit/pages/Home.test.tsx`.
 
 **Pattern:**
 
@@ -231,20 +241,85 @@ describe("MyPage", () => {
 });
 ```
 
-**Wrap with `MemoryRouter`** whenever the component uses `<Link>` or `useNavigate` — otherwise the test will crash because there is no router context.
-
-**Mocking API calls:**
-
-```tsx
-import { vi } from "vitest";
-
-vi.mock("../../../src/api/auth", () => ({
-  login: vi.fn().mockResolvedValue({ token: "fake-token" }),
-}));
-```
+**Wrap with `MemoryRouter`** whenever the component uses `<Link>` or `useNavigate`.
 
 **Rules:**
 - Query elements the way a user would: prefer `getByRole`, `getByLabelText`, `getByText` over `getByTestId`.
-- Do not test implementation details (internal state, function calls) — test what is rendered.
+- Do not test implementation details — test what is rendered.
 
 **Real example:** `frontend/tests/unit/pages/Home.test.tsx`
+
+---
+
+## Frontend — integration tests
+
+Integration tests render a full page component and test its behaviour — form submission, API calls (mocked via `vi.fn()`), localStorage reads/writes, and navigation. They run in jsdom, not a real browser, so no Docker is needed.
+
+### Running
+
+```bash
+# Locally
+cd frontend && npm run test:integration
+
+# Docker
+docker compose -f docker-compose.test.yml run --rm frontend-integration-test
+
+# Script
+./scripts/run_tests.sh frontend-integration-test
+```
+
+### Writing
+
+Test files go in `frontend/tests/integration/` mirroring `frontend/src/`. Use `beforeEach` to reset mocks and clear localStorage between tests.
+
+**Pattern:**
+
+```tsx
+// frontend/tests/integration/pages/MyPage.test.tsx
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import MyPage from "../../../src/pages/MyPage";
+
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
+describe("MyPage", () => {
+  beforeEach(() => {
+    mockNavigate.mockReset();
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("calls fetch with correct payload on submit", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: "ok" }),
+    });
+
+    render(<MemoryRouter><MyPage /></MemoryRouter>);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+    });
+  });
+});
+```
+
+**Rules:**
+- Always mock `fetch` with `global.fetch = vi.fn()` — never let tests make real HTTP requests.
+- Always clear `localStorage` in `beforeEach` — tests must not share auth state.
+- Use `waitFor` for any assertions that depend on async operations (fetch, navigation).
+
+**Real examples:**
+- `frontend/tests/integration/pages/Login.test.tsx`
+- `frontend/tests/integration/ProtectedRoute.test.tsx`

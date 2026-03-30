@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVICES=(frontend-test backend-unit-test backend-integration-test)
+SERVICES=(frontend-unit-test frontend-integration-test backend-unit-test backend-integration-test)
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "REPO_ROOT: $REPO_ROOT"

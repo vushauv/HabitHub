@@ -40,13 +40,21 @@ services:
       --filter "Category=Integration"
       --logger "console;verbosity=normal"
 
-  frontend-test:
+  frontend-unit-test:
     image: node:22-alpine
     working_dir: /app
     volumes:
       - ./frontend:/app
       - frontend_test_node_modules:/app/node_modules
-    command: sh -c "npm ci && npm test"
+    command: sh -c "npm ci && npx vitest run tests/unit"
+
+  frontend-integration-test:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_test_node_modules:/app/node_modules
+    command: sh -c "npm ci && npx vitest run tests/integration"
 
 volumes:
   frontend_test_node_modules:

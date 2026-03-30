@@ -20,8 +20,10 @@
 **Running all tests in Docker:**
 
 ```bash
-docker compose -f docker-compose.test.yml up --abort-on-container-exit
+./scripts/run_tests.sh
 ```
+
+This runs frontend, backend unit, and backend integration tests sequentially and exits with a non-zero code if any suite fails. Do not use `docker compose up --abort-on-container-exit` — it stops all containers as soon as the first one finishes, which kills still-running suites.
 
 ---
 

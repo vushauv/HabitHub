@@ -31,7 +31,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebAppFactory>
             email = "infra-test@example.com",
             password = "Test1234!",
             timezone = "UTC",
-            userType = "TeamCreator"
+            userType = 0  // UserType.Creator
         });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);

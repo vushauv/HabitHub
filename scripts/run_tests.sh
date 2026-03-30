@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SERVICES=(frontend-test backend-unit-test backend-integration-test)
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "REPO_ROOT: $REPO_ROOT"
 cd "$REPO_ROOT"
@@ -16,9 +18,19 @@ run() {
   echo "==> $service done (exit: $?)"
 }
 
-run frontend-test
-run backend-unit-test
-run backend-integration-test
+if [ $# -eq 1 ]; then
+  SERVICE=$1
+  if [[ ! " ${SERVICES[*]} " =~ " ${SERVICE} " ]]; then
+    echo "Unknown service: $SERVICE"
+    echo "Available: ${SERVICES[*]}"
+    exit 1
+  fi
+  run "$SERVICE"
+else
+  for SERVICE in "${SERVICES[@]}"; do
+    run "$SERVICE"
+  done
+fi
 
 $COMPOSE down --volumes 2>/dev/null || true
 

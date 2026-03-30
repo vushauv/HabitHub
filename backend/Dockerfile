@@ -15,9 +15,6 @@ ENV PATH="$PATH:/root/.dotnet/tools"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends gosu \
     && rm -rf /var/lib/apt/lists/*
-# COPY docker-entrypoint.dev.sh /usr/local/bin/
-# RUN chmod +x /usr/local/bin/docker-entrypoint.dev.sh
-# ENTRYPOINT ["docker-entrypoint.dev.sh"]
 
 FROM base AS final
 WORKDIR /app

@@ -23,7 +23,40 @@
 ./scripts/run_tests.sh
 ```
 
+**Running a specific suite:**
+
+```bash
+./scripts/run_tests.sh frontend-test
+./scripts/run_tests.sh backend-unit-test
+./scripts/run_tests.sh backend-integration-test
+```
+
 This runs frontend, backend unit, and backend integration tests sequentially and exits with a non-zero code if any suite fails. Do not use `docker compose up --abort-on-container-exit` — it stops all containers as soon as the first one finishes, which kills still-running suites.
+
+**Tab completion for the script:**
+
+*zsh* — add to `~/.zshrc` after `compinit`:
+
+```zsh
+run-tests() { ~/code/uni/SE2/HabitHub/scripts/run_tests.sh "$@" }
+_run-tests() { compadd -- frontend-test backend-unit-test backend-integration-test }
+compdef _run-tests run-tests
+```
+
+Then use `run-tests <TAB>` instead of calling the script directly.
+
+*bash* — add to `~/.bashrc`:
+
+```bash
+run-tests() { ~/code/uni/SE2/HabitHub/scripts/run_tests.sh "$@" }
+_run-tests() {
+  local services="frontend-test backend-unit-test backend-integration-test"
+  COMPREPLY=($(compgen -W "$services" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+complete -F _run-tests run-tests
+```
+
+Both approaches wrap the script in a shell function because tab completion for scripts called via relative paths (`./scripts/...`) is unreliable in both shells.
 
 ---
 

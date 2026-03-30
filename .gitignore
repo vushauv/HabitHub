@@ -3,6 +3,8 @@
 .vscode/
 .vs/
 
+.idea/
+
 backend/.vs/
 backend/bin/
 backend/obj/

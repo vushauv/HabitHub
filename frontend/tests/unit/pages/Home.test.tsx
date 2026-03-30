@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
-import Home from "./Home";
+import Home from "../../../src/pages/Home";
 
 describe("Home", () => {
   it("renders heading and navigation links", () => {
@@ -20,7 +20,7 @@ describe("Home", () => {
     ).toHaveAttribute("href", "/register");
 
     expect(
-      screen.getByRole("link", { name: "Sign in" }),
+      screen.getByRole("link", { name: "Log in" }),
     ).toHaveAttribute("href", "/login");
   });
 });

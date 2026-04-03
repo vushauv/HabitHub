@@ -21,15 +21,10 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
             s.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(s => s.LastActiveAt)
             .ToListAsync();
-    public async Task<Session?> GetByIdAsync(Guid sessionId) =>
+    public async Task<Session?> GetByIdAsync(string sessionId) =>
         await db.Sessions.FindAsync(sessionId);
-    public async Task UpdateAsync(Session session)
-    {
-        db.Sessions.Update(session);
-        await db.SaveChangesAsync();
-    }
 
-    public async Task InvalidateAsync(Guid sessionId)
+    public async Task InvalidateAsync(string sessionId)
     {
         Session? session = await GetByIdAsync(sessionId);
         if (session == null) return;
@@ -41,12 +36,12 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
         }
     }
 
-    public async Task InvalidateAllExceptCurrentAsync(Guid userId, UserType userType, Guid currentSessionId)
+    public async Task InvalidateAllExceptCurrentAsync(Guid userId, UserType userType, string currentSessionId)
     {
          List<Session> sessions = await db.Sessions.Where(s => s.UserId == userId &&
                                                                 s.UserType == userType &&
                                                                 s.SessionState == SessionState.Active
-                                                                && s.SessionId != currentSessionId)
+                                                                && !string.Equals(s.SessionId, currentSessionId))
                                                           .ToListAsync();
 
         foreach(Session session in sessions)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using backend.Models;
 using backend.Exceptions;
 using backend.Enums;
+using backend.Utils;
 
 namespace backend.Service
 {
@@ -46,7 +47,7 @@ namespace backend.Service
 
             TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
             Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
-//RegisterResponseDto doesnt exists changed to AuthResponseDto
+
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
@@ -70,7 +71,6 @@ namespace backend.Service
             TeamMember createdMember = await members.CreateMemberAsync(member);
             Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress,deviceInfo);
 
-//RegisterResponseDto doesnt exists changed to AuthResponseDto
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
@@ -82,13 +82,13 @@ namespace backend.Service
             TeamCreator? creator = await creators.GetCreatorByEmailAsync(request.Email);
             if (creator == null)
             {
-                throw new InvalidCredentialsException("Invalid email or password.");
+                throw new InvalidCredentialsException();
             }
 
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
             if(passwordResult == PasswordVerificationResult.Failed)
             {
-                throw new InvalidCredentialsException("Invalid email or password.");
+                throw new InvalidCredentialsException();
             }
 
             Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
@@ -104,12 +104,12 @@ namespace backend.Service
             TeamMember? member = await members.GetMemberByEmailAsync(request.Email);
             if (member == null)
             {
-                throw new InvalidCredentialsException("Invalid email or password.");
+                throw new InvalidCredentialsException();
             }
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
             if (passwordResult == PasswordVerificationResult.Failed)
             {
-                throw new InvalidCredentialsException("Invalid email or password.");
+                throw new InvalidCredentialsException();
             }
 
             Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
@@ -124,7 +124,7 @@ namespace backend.Service
         {
             Session session = new()
             {
-                SessionId = Guid.NewGuid(),
+                SessionId = SessionIdGenerator.GenerateSessionId(),
                 UserId = userId,
                 UserType = userType,
                 CreatedAt = DateTime.UtcNow,

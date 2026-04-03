@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403164505_ChangeSessionIdToString")]
+    partial class ChangeSessionIdToString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,43 +25,40 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-   
             modelBuilder.Entity("backend.Models.Session", b =>
-            {
-                b.Property<string>("SessionId")
-                    .IsRequired()
-                    .HasMaxLength(64)
-                    .HasColumnType("character varying(64)");
+                {
+                    b.Property<string>("SessionId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                b.Property<DateTime>("CreatedAt")
-                .HasColumnType("timestamp with time zone");
+                    b.Property<string>("DeviceInfo")
+                        .HasColumnType("text");
 
-                b.Property<string>("DeviceInfo")
-                    .HasColumnType("text");
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
 
-                b.Property<DateTime>("ExpiresAt")
-                    .HasColumnType("timestamp with time zone");
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text");
 
-                b.Property<string>("IpAddress")
-                    .HasColumnType("text");
+                    b.Property<DateTime>("LastActiveAt")
+                        .HasColumnType("timestamp with time zone");
 
-                b.Property<DateTime>("LastActiveAt")
-                    .HasColumnType("timestamp with time zone");
+                    b.Property<int>("SessionState")
+                        .HasColumnType("integer");
 
-                b.Property<int>("SessionState")
-                    .HasColumnType("integer");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uuid");
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
 
-                b.Property<int>("UserType")
-                    .HasColumnType("integer");
+                    b.HasKey("SessionId");
 
-                b.HasKey("SessionId");
-
-                b.ToTable("Sessions");
-            });
+                    b.ToTable("Sessions");
+                });
 
             modelBuilder.Entity("backend.Models.TeamCreator", b =>
                 {

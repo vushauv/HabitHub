@@ -5,6 +5,7 @@ using backend.Models;
 using backend.Exceptions;
 using backend.Enums;
 using backend.Utils;
+using System.Globalization;
 
 namespace backend.Service
 {
@@ -34,14 +35,17 @@ namespace backend.Service
 
         private async Task<AuthResponseDto> RegisterCreatorAsync(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
         {
-            TeamCreator? existing = await creators.GetCreatorByEmailAsync(request.Email);
+            string name = NormalizeName(request.Name);
+            string email = NormalizeEmail(request.Email);
+
+            TeamCreator? existing = await creators.GetCreatorByEmailAsync(email);
             if (existing != null) throw new EmailAlreadyExistsException();
 
             TeamCreator creator = new TeamCreator
             {
                 CreatorId = Guid.NewGuid(),
-                Name = request.Name,
-                Email = request.Email,
+                Name = name,
+                Email = email,
                 PasswordHash = hasher.HashPassword(null, request.Password),
             };
 
@@ -56,16 +60,20 @@ namespace backend.Service
 
         private async Task<AuthResponseDto> RegisterMemberAsync(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
         {
-            TeamMember? existing = await members.GetMemberByEmailAsync(request.Email);
+            string name = NormalizeName(request.Name);
+            string email = NormalizeEmail(request.Email);
+            string timezone = NormalizeTimezone(request.Timezone);
+
+            TeamMember? existing = await members.GetMemberByEmailAsync(email);
             if (existing != null) throw new EmailAlreadyExistsException();
 
             TeamMember member = new TeamMember
             {
                 MemberId = Guid.NewGuid(),
-                Name = request.Name,
-                Email = request.Email,
+                Name = name,
+                Email = email,
                 PasswordHash = hasher.HashPassword(null, request.Password),
-                Timezone = request.Timezone
+                Timezone = timezone
             };
 
             TeamMember createdMember = await members.CreateMemberAsync(member);
@@ -79,17 +87,14 @@ namespace backend.Service
 
         private async Task<AuthResponseDto> LoginCreatorAsync(LoginRequestDto request, string? ipAddress, string? deviceInfo)
         {
-            TeamCreator? creator = await creators.GetCreatorByEmailAsync(request.Email);
-            if (creator == null)
-            {
-                throw new InvalidCredentialsException();
-            }
+            string email = NormalizeEmail(request.Email);
+
+            TeamCreator? creator = await creators.GetCreatorByEmailAsync(email);
+            if (creator == null) throw new InvalidCredentialsException();
+           
 
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
-            if(passwordResult == PasswordVerificationResult.Failed)
-            {
-                throw new InvalidCredentialsException();
-            }
+            if(passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
 
             Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
 
@@ -101,17 +106,14 @@ namespace backend.Service
 
         private async Task<AuthResponseDto> LoginMemberAsync(LoginRequestDto request, string? ipAddress, string? deviceInfo)
         {
-            TeamMember? member = await members.GetMemberByEmailAsync(request.Email);
-            if (member == null)
-            {
-                throw new InvalidCredentialsException();
-            }
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
-            if (passwordResult == PasswordVerificationResult.Failed)
-            {
-                throw new InvalidCredentialsException();
-            }
+            string email = NormalizeEmail(request.Email);
 
+            TeamMember? member = await members.GetMemberByEmailAsync(email);
+            if (member == null) throw new InvalidCredentialsException();
+            
+            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
+            if (passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
+       
             Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
 
             return new AuthResponseDto(
@@ -137,6 +139,10 @@ namespace backend.Service
 
             return await sessions.CreateAsync(session);
         }
+
+        private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+        private static string NormalizeName(string name) => name.Trim();
+        private static string NormalizeTimezone(string timezone) => timezone.Trim();
     }
 }
           

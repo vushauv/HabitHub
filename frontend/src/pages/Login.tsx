@@ -1,68 +1,9 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
-
-type AccountType = "Creator" | "Member";
-
-type LoginForm = {
-  email: string;
-  password: string;
-  userType: AccountType;
-};
-
-type LoginErrors = {
-  email?: string;
-  password?: string;
-  userType?: string;
-};
-
-const API_BASE_URL = "http://localhost:5000";
-
-function validateEmail(email: string): string | undefined {
-  if (!email.trim()) {
-    return "Email is required.";
-  }
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailPattern.test(email)) {
-    return "Enter a valid email address.";
-  }
-
-  return undefined;
-}
-
-function validatePassword(password: string): string | undefined {
-  if (!password) {
-    return "Password is required.";
-  }
-
-  return undefined;
-}
-
-function validateUserType(userType: AccountType): string | undefined {
-  if (userType !== "Creator" && userType !== "Member") {
-    return "Choose an account type.";
-  }
-
-  return undefined;
-}
-
-function validateForm(form: LoginForm): LoginErrors {
-  return {
-    email: validateEmail(form.email),
-    password: validatePassword(form.password),
-    userType: validateUserType(form.userType),
-  };
-}
-
-function hasValidationErrors(errors: LoginErrors): boolean {
-  return Boolean(errors.email || errors.password || errors.userType);
-}
-
-function mapUserTypeToEnum(userType: AccountType): number {
-  return userType === "Creator" ? 0 : 1;
-}
+import { type LoginForm, type LoginErrors} from "../services/Login.ts";
+import {validateForm,hasValidationErrors} from "../services/Login.ts"
+import { API_BASE_URL, type AccountType, mapUserTypeToEnum } from "../services/User.ts";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -125,7 +66,7 @@ export default function Login() {
     setServerError("");
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setTouched({

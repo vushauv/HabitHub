@@ -1,129 +1,14 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
+import {type RegisterErrors, type RegisterForm} from "../services/Register.ts";
+import {validateForm, hasValidationErrors} from "../services/Register.ts"
+import {API_BASE_URL, type AccountType, TIMEZONE_OPTIONS, DEFAULT_TIMEZONE, mapUserTypeToEnum } from "../services/User.ts"
 
-type AccountType = "Creator" | "Member";
 
-type RegisterForm = {
-  name: string;
-  email: string;
-  password: string;
-  timezone: string;
-  userType: AccountType;
-};
 
-type RegisterErrors = {
-  name?: string;
-  email?: string;
-  password?: string;
-  timezone?: string;
-  userType?: string;
-};
 
-const API_BASE_URL = "http://localhost:5000";
 
-const TIMEZONE_OPTIONS = [
-  "Europe/Warsaw",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Paris",
-  "Europe/Madrid",
-  "Europe/Rome",
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Asia/Tokyo",
-  "Asia/Seoul",
-  "Asia/Singapore",
-  "Australia/Sydney",
-];
-
-const DEFAULT_TIMEZONE =
-  Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Warsaw";
-
-function validateName(name: string): string | undefined {
-  if (!name.trim()) {
-    return "Name is required.";
-  }
-
-  if (name.trim().length < 2) {
-    return "Name must be at least 2 characters long.";
-  }
-
-  return undefined;
-}
-
-function validateEmail(email: string): string | undefined {
-  if (!email.trim()) {
-    return "Email is required.";
-  }
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailPattern.test(email)) {
-    return "Enter a valid email address.";
-  }
-
-  return undefined;
-}
-
-function validatePassword(password: string): string | undefined {
-  if (!password) {
-    return "Password is required.";
-  }
-
-  if (password.length < 8) {
-    return "Password must be at least 8 characters long.";
-  }
-
-  return undefined;
-}
-
-function validateTimezone(timezone: string): string | undefined {
-  if (!timezone.trim()) {
-    return "Timezone is required.";
-  }
-
-  if (!TIMEZONE_OPTIONS.includes(timezone)) {
-    return "Choose a valid timezone.";
-  }
-
-  return undefined;
-}
-
-function validateUserType(userType: AccountType): string | undefined {
-  if (userType !== "Creator" && userType !== "Member") {
-    return "Choose an account type.";
-  }
-
-  return undefined;
-}
-
-function validateForm(form: RegisterForm): RegisterErrors {
-  return {
-    name: validateName(form.name),
-    email: validateEmail(form.email),
-    password: validatePassword(form.password),
-    timezone: validateTimezone(form.timezone),
-    userType: validateUserType(form.userType),
-  };
-}
-
-function hasValidationErrors(errors: RegisterErrors): boolean {
-  return Boolean(
-    errors.name ||
-      errors.email ||
-      errors.password ||
-      errors.timezone ||
-      errors.userType,
-  );
-}
-
-function mapUserTypeToEnum(userType: AccountType): number {
-  return userType === "Creator" ? 0 : 1;
-}
 
 export default function Register() {
   const navigate = useNavigate();

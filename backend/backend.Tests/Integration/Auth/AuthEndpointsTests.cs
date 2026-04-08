@@ -36,4 +36,28 @@ public class AuthEndpointsTests : IClassFixture<TestWebAppFactory>
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Register_BothUserTypesWithSameEmail_Returns201()
+    {
+        var response1 = await _client.PostAsJsonAsync("/auth/register", new
+        {
+            name = "Test User",
+            email = "infra-test-2types@example.com",
+            password = "Test1234!",
+            timezone = "UTC",
+            userType = 0  // UserType.Creator
+        });
+        var response2 = await _client.PostAsJsonAsync("/auth/register", new
+        {
+            name = "Test User",
+            email = "infra-test-2types@example.com",
+            password = "Test1234!",
+            timezone = "UTC",
+            userType = 1  // UserType.Member
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response1.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response2.StatusCode);
+    }
 }

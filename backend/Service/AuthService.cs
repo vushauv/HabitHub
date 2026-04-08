@@ -137,6 +137,20 @@ namespace backend.Service
 
             return await sessions.CreateAsync(session);
         }
+
+        public async Task<List<SessionDto>> ViewActiveSessions(Guid userId, UserType userType, string currentSessionId)
+        {
+            var activeSessions = await sessions.GetActiveSessionsForUserAsync(userId, userType);
+            return activeSessions
+                .Select(s => new SessionDto(s.SessionId, 
+                    s.UserType, 
+                    s.CreatedAt, 
+                    s.LastActiveAt, 
+                    s.ExpiresAt, 
+                    s.SessionState,
+                    s.SessionId == currentSessionId
+                )).ToList();
+        }
     }
 }
           

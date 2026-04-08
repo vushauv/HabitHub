@@ -4,6 +4,7 @@ using backend.Repositories;
 using backend.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using backend.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,7 @@ app.UseCors(policy => policy
     .AllowAnyMethod());
 
 app.UseHttpsRedirection();
+app.UseMiddleware<SessionAuthenticationMiddleware>();
 app.MapControllers();
 
 app.Run();

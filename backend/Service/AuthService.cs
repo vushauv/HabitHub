@@ -169,6 +169,49 @@ namespace backend.Service
         private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
         private static string NormalizeName(string name) => name.Trim();
         private static string NormalizeTimezone(string timezone) => timezone.Trim();
+
+        public async Task ChangePassword(Guid userId, UserType userType, string currentSessionId, ChangePasswordRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+                string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid request body.");
+            }
+
+            if(userType == UserType.Creator)
+            {
+                TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
+                if(creator == null)
+                    throw new AppException(StatusCodes.Status404NotFound, "not-found", "User not found.");
+                
+                var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.CurrentPassword);
+                if(verifyResult == PasswordVerificationResult.Failed)
+                    throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+
+                string newHash = hasher.HashPassword(null!, request.NewPassword);
+                
+                await creators.UpdatePasswordAsync(userId, newHash);
+
+            } else if(userType == UserType.Member)
+            {
+                TeamMember? member = await members.GetMemberByIdAsync(userId);
+                if(member == null)
+                    throw new AppException(StatusCodes.Status404NotFound, "not-found", "User not found.");
+                
+                var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.CurrentPassword);
+                if(verifyResult == PasswordVerificationResult.Failed)
+                    throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+
+                string newHash = hasher.HashPassword(null!, request.NewPassword);
+                
+                await members.UpdatePasswordAsync(userId, newHash);
+            } else
+            {
+                throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid user type.");
+            }
+
+            await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+        }
     }
 }
           

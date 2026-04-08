@@ -92,5 +92,27 @@ namespace backend.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
             }
         }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if(currentUser == null) 
+                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
+                
+                await authService.ChangePassword(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
+                return StatusCode(StatusCodes.Status200OK);
+            }
+            catch(AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
     }
 }

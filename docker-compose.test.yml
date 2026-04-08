@@ -1,0 +1,61 @@
+name: habithub-tests
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: habithub_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d habithub_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  backend-unit-test:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    working_dir: /src
+    volumes:
+      - ./backend:/src/backend
+      - backend_nuget:/root/.nuget/packages
+    command: >
+      dotnet test backend/backend.Tests/backend.Tests.csproj
+      --filter "Category=Unit"
+      --logger "console;verbosity=normal"
+
+  backend-integration-test:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    working_dir: /src
+    volumes:
+      - ./backend:/src/backend
+      - backend_nuget:/root/.nuget/packages
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    command: >
+      dotnet test backend/backend.Tests/backend.Tests.csproj
+      --filter "Category=Integration"
+      --logger "console;verbosity=normal"
+
+  frontend-unit-test:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_test_node_modules:/app/node_modules
+    command: sh -c "npm ci && npx vitest run tests/unit"
+
+  frontend-integration-test:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_test_node_modules:/app/node_modules
+    command: sh -c "npm ci && npx vitest run tests/integration"
+
+volumes:
+  frontend_test_node_modules:
+  backend_nuget:

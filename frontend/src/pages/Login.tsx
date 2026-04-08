@@ -1,6 +1,7 @@
 import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
+import "../App.css";
 import { type LoginForm, type LoginErrors} from "../services/Login.ts";
 import {validateForm,hasValidationErrors} from "../services/Login.ts"
 import { API_BASE_URL, type AccountType, mapUserTypeToEnum } from "../services/User.ts";
@@ -147,35 +148,40 @@ export default function Login() {
   }
 
   return (
-    <main className="page login-container">
-      <section className="login-card">
-        <div className="login-content">
+    <main className="page container login-page">
+      <div className="background-glow background-glow-left"></div>
+      <div className="background-glow background-glow-right"></div>
+
+      <section className="card login-card">
+        <div className="content login-content">
           <div className="login-top">
-            <Link to="/" className="login-home-link">
+            <Link to="/" className="button button-secondary login-home-link">
               Home
             </Link>
           </div>
 
-          <h1 className="login-title">Log in</h1>
+          <div className="content-centered login-header">
+            <h1 className="title login-title">Log in</h1>
 
-          <p className="login-text">
-            Welcome back. Log in to continue with HabitHub.
-          </p>
+            <p className="text login-text">
+              Welcome back. Log in to continue with HabitHub.
+            </p>
+          </div>
 
           {serverError && (
-            <p className="login-form-error" role="alert">
+            <p className="form-error" role="alert">
               {serverError}
             </p>
           )}
 
           <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <div className="login-field">
-              <label className="login-label" htmlFor="email">
+            <div className="form-field">
+              <label className="form-label" htmlFor="email">
                 Email
               </label>
               <input
                 id="email"
-                className="login-input"
+                className="form-input"
                 type="email"
                 name="email"
                 value={form.email}
@@ -190,19 +196,19 @@ export default function Login() {
                 required
               />
               {touched.email && errors.email && (
-                <p id="login-email-error" className="login-field-error">
+                <p id="login-email-error" className="field-error">
                   {errors.email}
                 </p>
               )}
             </div>
 
-            <div className="login-field">
-              <label className="login-label" htmlFor="password">
+            <div className="form-field">
+              <label className="form-label" htmlFor="password">
                 Password
               </label>
               <input
                 id="password"
-                className="login-input"
+                className="form-input"
                 type="password"
                 name="password"
                 value={form.password}
@@ -219,17 +225,17 @@ export default function Login() {
                 required
               />
               {touched.password && errors.password && (
-                <p id="login-password-error" className="login-field-error">
+                <p id="login-password-error" className="field-error">
                   {errors.password}
                 </p>
               )}
             </div>
 
-            <div className="login-field">
-              <span className="login-label">Account type</span>
+            <div className="form-field">
+              <span className="form-label">Account type</span>
 
               <div
-                className="login-role-group"
+                className="role-group"
                 role="radiogroup"
                 aria-label="Account type"
               >
@@ -237,8 +243,8 @@ export default function Login() {
                   type="button"
                   className={
                     form.userType === "Creator"
-                      ? "login-role-button login-role-button-active"
-                      : "login-role-button"
+                      ? "role-button role-button-active"
+                      : "role-button"
                   }
                   onClick={() => handleUserTypeChange("Creator")}
                   aria-pressed={form.userType === "Creator"}
@@ -250,8 +256,8 @@ export default function Login() {
                   type="button"
                   className={
                     form.userType === "Member"
-                      ? "login-role-button login-role-button-active"
-                      : "login-role-button"
+                      ? "role-button role-button-active"
+                      : "role-button"
                   }
                   onClick={() => handleUserTypeChange("Member")}
                   aria-pressed={form.userType === "Member"}
@@ -261,21 +267,21 @@ export default function Login() {
               </div>
 
               {touched.userType && errors.userType && (
-                <p className="login-field-error">{errors.userType}</p>
+                <p className="field-error">{errors.userType}</p>
               )}
             </div>
 
             <button
-              className="login-submit-button"
+              className="button button-primary form-submit"
               type="submit"
               disabled={loading || !formIsValid}
             >
               {loading ? "Logging in..." : "Log in"}
             </button>
 
-            <p className="login-footer-text">
+            <p className="form-footer-text">
               Don&apos;t have an account?{" "}
-              <Link to="/register" className="login-footer-link">
+              <Link to="/register" className="form-footer-link">
                 Create one
               </Link>
             </p>
@@ -283,5 +289,6 @@ export default function Login() {
         </div>
       </section>
     </main>
+
   );
 }

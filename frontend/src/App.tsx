@@ -5,7 +5,10 @@ import Register from "./pages/Register";
 import MainCreator  from "./pages/MainCreator";
 import MainMember from "./pages/MainMember";
 import ProtectedRoute from "./ProtectedRoute";
-
+import Settings from "./pages/Settings";
+import Sessions from "./pages/Sessions";
+import ChangePassword from "./pages/ChangePassword";
+import ChangeEmail from "./pages/ChangeEmail";
 
 export default function App() {
   return (
@@ -22,7 +25,25 @@ export default function App() {
         <Route element={<ProtectedRoute allowedUserType="Member" />}>
           <Route path="/main-member" element={<MainMember />} />
         </Route>
-      </Routes>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+
+        <Route element={<ProtectedRoute/>}> 
+          <Route path="/settings/sessions" element={<Sessions />}/>
+        </Route>
+
+        <Route element={<ProtectedRoute/>}> 
+          <Route path="/settings/change-password" element={<ChangePassword />}/>
+        </Route>
+
+        <Route element={<ProtectedRoute/>}> 
+          <Route path="/settings/change-email" element={<ChangeEmail />}/>
+        </Route>
+
+
+      </Routes> 
     </BrowserRouter>
   );
 }

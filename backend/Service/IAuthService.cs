@@ -8,5 +8,6 @@ namespace backend.Service
         public Task<AuthResponseDto> Login(LoginRequestDto request, string? ipAddress, string? deviceInfo);
         public Task<AuthResponseDto> Register(RegisterRequestDto request, string? ipAddress, string? deviceInfo);
         public Task<List<SessionDto>> ViewActiveSessions(Guid userId, UserType userType, string currentSessionId);
+        public Task InvalidateSpecificSession(Guid userId, UserType userType, string sessionId);
     }
 }

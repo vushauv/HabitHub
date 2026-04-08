@@ -151,6 +151,19 @@ namespace backend.Service
                     s.SessionId == currentSessionId
                 )).ToList();
         }
+
+        public async Task InvalidateSpecificSession(Guid userId, UserType userType, string sessionId)
+        {
+            Session? session = await sessions.GetByIdAsync(sessionId);
+            if(session == null 
+                || session.UserType != userType 
+                || session.UserId != userId 
+                || session.SessionState != SessionState.Active)
+            {
+                throw new AppException( StatusCodes.Status404NotFound, "not-found", "Session not found");
+            }
+            await sessions.InvalidateAsync(session.SessionId);
+        }
     }
 }
           

@@ -6,6 +6,7 @@ using backend.Exceptions;
 using backend.Enums;
 using backend.Utils;
 using System.Globalization;
+using backend.Dto.AuthDtos;
 
 namespace backend.Service
 {
@@ -206,6 +207,48 @@ namespace backend.Service
                 
                 await members.UpdatePasswordAsync(userId, newHash);
             } else
+            {
+                throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid user type.");
+            }
+
+            await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+        }
+        public async Task ChangeEmail(Guid userId, UserType userType, string currentSessionId, ChangeEmailRequestDto request)
+        {
+            if(string.IsNullOrWhiteSpace(request.NewEmail) || string.IsNullOrWhiteSpace(request.Password))
+                throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid request body.");
+
+            if(userType == UserType.Creator)
+            {
+                if(await creators.EmailExistsAsync(request.NewEmail))
+                    throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
+
+                TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
+                if(creator == null)
+                    throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "User not found."); //good error here?
+
+                var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
+                if(verifyResult == PasswordVerificationResult.Failed)
+                    throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+
+                await creators.ChangeEmailAsync(userId, request.NewEmail);
+
+            } else if(userType == UserType.Member)
+            {
+                if(await members.EmailAlreadyExists(request.NewEmail))
+                    throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
+
+                TeamMember? member = await members.GetMemberByIdAsync(userId);
+                if(member == null)
+                    throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "User not found."); //good error here?
+                
+                var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
+                if(verifyResult == PasswordVerificationResult.Failed)
+                    throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+
+                await members.ChangeEmailAsync(userId, request.NewEmail);
+            }
+            else
             {
                 throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid user type.");
             }

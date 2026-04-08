@@ -1,7 +1,27 @@
 services:
+  postgres:
+    ports: []
+
   backend:
     build:
       target: final
     volumes: []
     working_dir: /app
     command: []
+    ports: []
+    networks:
+      - habithub-network
+      - web
+
+  frontend:
+    build:
+      context: ./frontend
+      target: final
+    depends_on:
+      - backend
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

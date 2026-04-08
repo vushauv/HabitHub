@@ -140,6 +140,32 @@ namespace backend.Service
             return await sessions.CreateAsync(session);
         }
 
+        public async Task<List<SessionDto>> ViewActiveSessions(Guid userId, UserType userType, string currentSessionId)
+        {
+            var activeSessions = await sessions.GetActiveSessionsForUserAsync(userId, userType);
+            return activeSessions
+                .Select(s => new SessionDto(s.SessionId, 
+                    s.UserType, 
+                    s.CreatedAt, 
+                    s.LastActiveAt, 
+                    s.ExpiresAt, 
+                    s.SessionState,
+                    s.SessionId == currentSessionId
+                )).ToList();
+        }
+
+        public async Task InvalidateSpecificSession(Guid userId, UserType userType, string sessionId)
+        {
+            Session? session = await sessions.GetByIdAsync(sessionId);
+            if(session == null 
+                || session.UserType != userType 
+                || session.UserId != userId 
+                || session.SessionState != SessionState.Active)
+            {
+                throw new AppException( StatusCodes.Status404NotFound, "not-found", "Session not found");
+            }
+            await sessions.InvalidateAsync(session.SessionId);
+        }
         private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
         private static string NormalizeName(string name) => name.Trim();
         private static string NormalizeTimezone(string timezone) => timezone.Trim();

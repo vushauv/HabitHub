@@ -17,4 +17,24 @@ public class TeamMemberRepository(AppDbContext db) : ITeamMemberRepository
         await db.SaveChangesAsync();
         return member;
     }
+    public async Task UpdatePasswordAsync(Guid memberId, string newPasswordHash)
+    {
+        TeamMember? member = await db.TeamMembers.FindAsync(memberId);
+        if (member == null) return;
+
+        member.PasswordHash = newPasswordHash;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task ChangeEmailAsync(Guid memberId, string newEmail)
+    {
+        TeamMember? member = await db.TeamMembers.FindAsync(memberId);
+        if (member == null) return;
+
+        member.Email = newEmail;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<bool> EmailAlreadyExistsAsync(string email) =>
+        await db.TeamMembers.AnyAsync(c => c.Email == email);
 }

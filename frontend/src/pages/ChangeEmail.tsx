@@ -1,8 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import "./ChangeEmail.css";
-import "../App.css"
-import { API_BASE_URL, validateEmail, type AccountType } from "../services/User";
+import "../App.css";
+import {
+  API_BASE_URL,
+  validateEmail,
+  type AccountType,
+} from "../services/User";
 
 type StoredAuth = {
   isLoggedIn?: boolean;
@@ -43,10 +47,14 @@ function getStoredAuth(): StoredAuth | null {
   }
 }
 
+function clearStoredAuth(): void {
+  localStorage.removeItem("habithubAuth");
+}
+
 function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
   return {
     "Content-Type": "application/json",
-    ...(auth?.sessionId ? { Authorization: `Bearer ${auth.sessionId}` } : {}),
+    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
   };
 }
 
@@ -86,7 +94,7 @@ function getFriendlyErrorMessage(errorCode: ChangeEmailErrorCode): string {
 
 function resolveChangeEmailErrorCode(
   status: number,
-  responseText: string
+  responseText: string,
 ): ChangeEmailErrorCode {
   if (status === 400) {
     return "validation-error";
@@ -106,6 +114,7 @@ function resolveChangeEmailErrorCode(
 }
 
 export default function ChangeEmail() {
+  const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
   const [form, setForm] = useState<ChangeEmailForm>({
     newEmail: "",
@@ -127,7 +136,9 @@ export default function ChangeEmail() {
     setErrors((currentErrors) => ({
       ...currentErrors,
       [name]:
-        name === "newEmail" ? validateEmail(value) : validateCurrentPassword(value),
+        name === "newEmail"
+          ? validateEmail(value)
+          : validateCurrentPassword(value),
     }));
 
     setFormError(null);
@@ -146,6 +157,17 @@ export default function ChangeEmail() {
       return;
     }
 
+    if (!auth?.isLoggedIn || !auth.sessionId) {
+      setFormError("Your session is no longer valid. Please log in again.");
+      clearStoredAuth();
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1200);
+
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -153,7 +175,7 @@ export default function ChangeEmail() {
         method: "POST",
         headers: getAuthHeaders(auth),
         body: JSON.stringify({
-          newEmail: form.newEmail,
+          newEmail: form.newEmail.trim(),
           password: form.password,
         }),
       });
@@ -162,14 +184,25 @@ export default function ChangeEmail() {
         const responseText = await response.text().catch(() => "");
         const errorCode = resolveChangeEmailErrorCode(
           response.status,
-          responseText
+          responseText,
         );
+
+        if (errorCode === "auth-required") {
+          clearStoredAuth();
+          setFormError(getFriendlyErrorMessage(errorCode));
+
+          setTimeout(() => {
+            navigate("/login", { replace: true });
+          }, 1200);
+
+          return;
+        }
 
         throw new Error(getFriendlyErrorMessage(errorCode));
       }
 
       setSuccessMessage(
-        "Email changed successfully. Other active sessions may now be invalidated by the server."
+        "Email changed successfully. Your current session may no longer be valid, so please log in again if needed.",
       );
 
       setForm({

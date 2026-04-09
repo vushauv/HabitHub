@@ -2,9 +2,93 @@ import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import "../App.css";
-import { type LoginForm, type LoginErrors} from "../services/Login.ts";
-import {validateForm,hasValidationErrors} from "../services/Login.ts"
-import { API_BASE_URL, type AccountType, mapUserTypeToEnum } from "../services/User.ts";
+import { type LoginForm } from "../services/Login";
+import { validateForm, hasValidationErrors } from "../services/Login";
+import {
+  API_BASE_URL,
+  type AccountType,
+  mapUserTypeToEnum,
+} from "../services/User";
+
+type LoginResponse = {
+  sessionId?: string | null;
+  sessionID?: string | null;
+  SessionId?: string | null;
+  SessionID?: string | null;
+  userId?: string | null;
+  userID?: string | null;
+  UserId?: string | null;
+  UserID?: string | null;
+  memberId?: string | null;
+  memberID?: string | null;
+  MemberId?: string | null;
+  MemberID?: string | null;
+  creatorId?: string | null;
+  creatorID?: string | null;
+  CreatorId?: string | null;
+  CreatorID?: string | null;
+  userType?: string | number | null;
+  UserType?: string | number | null;
+  name?: string | null;
+  Name?: string | null;
+};
+
+function resolveAuthenticatedUserType(
+  data: LoginResponse,
+  fallback: AccountType,
+): AccountType {
+  const rawUserType = data.userType ?? data.UserType;
+
+  if (
+    rawUserType === "creator" ||
+    rawUserType === "Creator" ||
+    rawUserType === 0
+  ) {
+    return "Creator";
+  }
+
+  if (
+    rawUserType === "member" ||
+    rawUserType === "Member" ||
+    rawUserType === 1
+  ) {
+    return "Member";
+  }
+
+  return fallback;
+}
+
+function resolveSessionId(data: LoginResponse): string | null {
+  return (
+    data.sessionId ??
+    data.sessionID ??
+    data.SessionId ??
+    data.SessionID ??
+    null
+  );
+}
+
+function resolveUserId(data: LoginResponse): string | null {
+  return (
+    data.userId ??
+    data.userID ??
+    data.UserId ??
+    data.UserID ??
+    data.memberId ??
+    data.memberID ??
+    data.MemberId ??
+    data.MemberID ??
+    data.creatorId ??
+    data.creatorID ??
+    data.CreatorId ??
+    data.CreatorID ??
+    null
+  );
+}
+
+function resolveName(data: LoginResponse): string {
+  return data.name ?? data.Name ?? "John";
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -114,31 +198,41 @@ export default function Login() {
         throw new Error(responseText || `Login failed (${response.status}).`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as LoginResponse;
 
-      const authenticatedUserType =
-        data.userType === "creator" || data.userType === 0
-          ? "Creator"
-          : data.userType === "member" || data.userType === 1
-            ? "Member"
-            : form.userType;
+      const authenticatedUserType = resolveAuthenticatedUserType(
+        data,
+        form.userType,
+      );
 
-            localStorage.setItem(
-              "habithubAuth",
-              JSON.stringify({
-                isLoggedIn: true,
-                userType: authenticatedUserType,
-                sessionId: data.sessionId ?? null,
-                userId: data.userId ?? data.memberId ?? data.creatorId ?? null,
-                name: data.name ?? "John",
-              }),
-            );
+      const sessionId = resolveSessionId(data);
+      const userId = resolveUserId(data);
+      const name = resolveName(data);
+
+      if (!sessionId) {
+        throw new Error(
+          "Login succeeded but no session id was returned by the server.",
+        );
+      }
+
+      localStorage.setItem(
+        "habithubAuth",
+        JSON.stringify({
+          isLoggedIn: true,
+          userType: authenticatedUserType,
+          sessionId,
+          userId,
+          name,
+        }),
+      );
 
       navigate(
         authenticatedUserType === "Creator" ? "/main-creator" : "/main-member",
         { replace: true },
       );
     } catch (error) {
+      localStorage.removeItem("habithubAuth");
+
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
       );
@@ -289,6 +383,5 @@ export default function Login() {
         </div>
       </section>
     </main>
-
   );
 }

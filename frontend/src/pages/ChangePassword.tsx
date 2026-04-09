@@ -1,8 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import "./ChangePassword.css";
-import "../App.css"
-import { API_BASE_URL, validatePassword, type AccountType } from "../services/User";
+import "../App.css";
+import {
+  API_BASE_URL,
+  validatePassword,
+  type AccountType,
+} from "../services/User";
 
 type StoredAuth = {
   isLoggedIn?: boolean;
@@ -42,10 +46,14 @@ function getStoredAuth(): StoredAuth | null {
   }
 }
 
+function clearStoredAuth(): void {
+  localStorage.removeItem("habithubAuth");
+}
+
 function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
   return {
     "Content-Type": "application/json",
-    ...(auth?.sessionId ? { Authorization: `Bearer ${auth.sessionId}` } : {}),
+    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
   };
 }
 
@@ -58,7 +66,7 @@ function validateCurrentPassword(currentPassword: string): string | undefined {
 }
 
 function validateChangePasswordForm(
-  form: ChangePasswordForm
+  form: ChangePasswordForm,
 ): ChangePasswordErrors {
   return {
     currentPassword: validateCurrentPassword(form.currentPassword),
@@ -70,8 +78,15 @@ function hasErrors(errors: ChangePasswordErrors): boolean {
   return Object.values(errors).some(Boolean);
 }
 
-function getErrorCode(status: number): ChangePasswordErrorCode {
+function getErrorCode(
+  status: number,
+  responseText: string,
+): ChangePasswordErrorCode {
   if (status === 401) {
+    if (responseText.includes("invalid-credentials")) {
+      return "invalid-credentials";
+    }
+
     return "auth-required";
   }
 
@@ -96,6 +111,7 @@ function getFriendlyErrorMessage(errorCode: ChangePasswordErrorCode): string {
 }
 
 export default function ChangePassword() {
+  const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
   const [form, setForm] = useState<ChangePasswordForm>({
     currentPassword: "",
@@ -106,9 +122,7 @@ export default function ChangePassword() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
     setForm((currentForm) => ({
@@ -140,6 +154,17 @@ export default function ChangePassword() {
       return;
     }
 
+    if (!auth?.isLoggedIn || !auth.sessionId) {
+      setFormError("Your session is no longer valid. Please log in again.");
+      clearStoredAuth();
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1200);
+
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -153,21 +178,25 @@ export default function ChangePassword() {
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          const errorText = await response.text().catch(() => "");
-          const errorCode = errorText.includes("invalid-credentials")
-            ? "invalid-credentials"
-            : "auth-required";
+        const responseText = await response.text().catch(() => "");
+        const errorCode = getErrorCode(response.status, responseText);
 
-          throw new Error(getFriendlyErrorMessage(errorCode));
+        if (errorCode === "auth-required") {
+          clearStoredAuth();
+          setFormError(getFriendlyErrorMessage(errorCode));
+
+          setTimeout(() => {
+            navigate("/login", { replace: true });
+          }, 1200);
+
+          return;
         }
 
-        const errorCode = getErrorCode(response.status);
         throw new Error(getFriendlyErrorMessage(errorCode));
       }
 
       setSuccessMessage(
-        "Password changed successfully. Other active sessions should now be invalidated."
+        "Password changed successfully. Other active sessions should now be invalidated.",
       );
 
       setForm({
@@ -213,7 +242,11 @@ export default function ChangePassword() {
               </p>
             </div>
 
-            <form className="change-password-form" onSubmit={handleSubmit} noValidate>
+            <form
+              className="change-password-form"
+              onSubmit={handleSubmit}
+              noValidate
+            >
               <div className="form-field">
                 <label className="form-label" htmlFor="currentPassword">
                   Current password

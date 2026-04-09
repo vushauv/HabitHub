@@ -1,6 +1,6 @@
 services:
   postgres:
-    ports: []
+    ports: !reset []
 
   backend:
     build:
@@ -8,7 +8,7 @@ services:
     volumes: []
     working_dir: /app
     command: []
-    ports: []
+    ports: !reset []
     networks:
       - habithub-network
       - web

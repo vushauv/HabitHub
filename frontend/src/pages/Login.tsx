@@ -16,7 +16,7 @@ type LoginErrors = {
   userType?: string;
 };
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 function validateEmail(email: string): string | undefined {
   if (!email.trim()) {

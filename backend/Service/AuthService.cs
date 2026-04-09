@@ -39,8 +39,8 @@ namespace backend.Service
             string name = NormalizeName(request.Name);
             string email = NormalizeEmail(request.Email);
 
-            TeamCreator? existing = await creators.GetCreatorByEmailAsync(email);
-            if (existing != null) throw new EmailAlreadyExistsException();
+            if (await creators.EmailAlreadyExistsAsync(email))
+                throw new EmailAlreadyExistsException();
 
             TeamCreator creator = new TeamCreator
             {
@@ -65,8 +65,8 @@ namespace backend.Service
             string email = NormalizeEmail(request.Email);
             string timezone = NormalizeTimezone(request.Timezone);
 
-            TeamMember? existing = await members.GetMemberByEmailAsync(email);
-            if (existing != null) throw new EmailAlreadyExistsException();
+            if (await members.EmailAlreadyExistsAsync(email))
+                throw new EmailAlreadyExistsException();
 
             TeamMember member = new TeamMember
             {
@@ -93,7 +93,6 @@ namespace backend.Service
             TeamCreator? creator = await creators.GetCreatorByEmailAsync(email);
             if (creator == null) throw new InvalidCredentialsException();
            
-
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
             if(passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
 
@@ -167,10 +166,6 @@ namespace backend.Service
             }
             await sessions.InvalidateAsync(session.SessionId);
         }
-        private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
-        private static string NormalizeName(string name) => name.Trim();
-        private static string NormalizeTimezone(string timezone) => timezone.Trim();
-
         public async Task ChangePassword(Guid userId, UserType userType, string currentSessionId, ChangePasswordRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
@@ -220,7 +215,7 @@ namespace backend.Service
 
             if(userType == UserType.Creator)
             {
-                if(await creators.EmailExistsAsync(request.NewEmail))
+                if(await creators.EmailAlreadyExistsAsync(request.NewEmail))
                     throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
 
                 TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
@@ -235,7 +230,7 @@ namespace backend.Service
 
             } else if(userType == UserType.Member)
             {
-                if(await members.EmailAlreadyExists(request.NewEmail))
+                if(await members.EmailAlreadyExistsAsync(request.NewEmail))
                     throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
 
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
@@ -255,6 +250,9 @@ namespace backend.Service
 
             await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
         }
+        private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+        private static string NormalizeName(string name) => name.Trim();
+        private static string NormalizeTimezone(string timezone) => timezone.Trim();
     }
 }
           

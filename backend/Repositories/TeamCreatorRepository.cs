@@ -16,4 +16,25 @@ public class TeamCreatorRepository(AppDbContext db) : ITeamCreatorRepository
         await db.SaveChangesAsync();
         return creator;
     }
+    
+    public async Task UpdatePasswordAsync(Guid creatorId, string newPasswordHash)
+    {
+        TeamCreator? creator = await db.TeamCreators.FindAsync(creatorId);
+        if (creator == null) return;
+
+        creator.PasswordHash = newPasswordHash;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task ChangeEmailAsync(Guid creatorId, string newEmail)
+    {
+        TeamCreator? creator = await db.TeamCreators.FindAsync(creatorId);
+        if (creator == null) return;
+
+        creator.Email = newEmail;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<bool> EmailAlreadyExistsAsync(string email) =>
+        await db.TeamCreators.AnyAsync(c => c.Email == email);
 }

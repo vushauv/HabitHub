@@ -95,7 +95,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -117,7 +117,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("change-email")]
-        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request)
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {

@@ -40,6 +40,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    var sessionRepository = scope.ServiceProvider.GetRequiredService<ISessionRepository>();
+    await sessionRepository.ExpirePastDueSessionsAsync();
 }
 
 if (app.Environment.IsDevelopment())

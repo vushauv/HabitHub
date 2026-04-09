@@ -47,7 +47,7 @@ namespace backend.Service
                 CreatorId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = hasher.HashPassword(null, request.Password),
+                PasswordHash = hasher.HashPassword(null!, request.Password),
             };
 
             TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
@@ -73,7 +73,7 @@ namespace backend.Service
                 MemberId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = hasher.HashPassword(null, request.Password),
+                PasswordHash = hasher.HashPassword(null!, request.Password),
                 Timezone = timezone
             };
 
@@ -96,8 +96,15 @@ namespace backend.Service
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
             if(passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
 
-            Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
-
+            Session? reusableSession = await sessions.FindReusableActiveSessionAsync(creator.CreatorId, UserType.Creator);
+            Session createdSession;
+            if(reusableSession == null)
+                createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+            else
+            {
+                createdSession = reusableSession;
+                await sessions.RefreshSpecificSession(createdSession.SessionId);
+            }
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
@@ -114,8 +121,15 @@ namespace backend.Service
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
             if (passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
        
-            Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
-
+            Session? reusableSession = await sessions.FindReusableActiveSessionAsync(member.MemberId, UserType.Member);
+            Session createdSession;
+            if(reusableSession == null)
+                createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
+            else
+            {
+                createdSession = reusableSession;
+                await sessions.RefreshSpecificSession(createdSession.SessionId);
+            }
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
@@ -210,12 +224,13 @@ namespace backend.Service
         }
         public async Task ChangeEmail(Guid userId, UserType userType, string currentSessionId, ChangeEmailRequestDto request)
         {
-            if(string.IsNullOrWhiteSpace(request.NewEmail) || string.IsNullOrWhiteSpace(request.Password))
+            var email = NormalizeEmail(request.NewEmail);
+            if(string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
                 throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid request body.");
 
             if(userType == UserType.Creator)
             {
-                if(await creators.EmailAlreadyExistsAsync(request.NewEmail))
+                if(await creators.EmailAlreadyExistsAsync(email))
                     throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
 
                 TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
@@ -226,11 +241,11 @@ namespace backend.Service
                 if(verifyResult == PasswordVerificationResult.Failed)
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
 
-                await creators.ChangeEmailAsync(userId, request.NewEmail);
+                await creators.ChangeEmailAsync(userId, email);
 
             } else if(userType == UserType.Member)
             {
-                if(await members.EmailAlreadyExistsAsync(request.NewEmail))
+                if(await members.EmailAlreadyExistsAsync(email))
                     throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
 
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
@@ -241,7 +256,7 @@ namespace backend.Service
                 if(verifyResult == PasswordVerificationResult.Failed)
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
 
-                await members.ChangeEmailAsync(userId, request.NewEmail);
+                await members.ChangeEmailAsync(userId, email);
             }
             else
             {

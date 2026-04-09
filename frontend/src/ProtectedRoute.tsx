@@ -10,7 +10,7 @@ type StoredAuth = {
 };
 
 type ProtectedRouteProps = {
-  allowedUserType: AccountType;
+  allowedUserType?: AccountType;
 };
 
 function getStoredAuth(): StoredAuth | null {
@@ -37,7 +37,7 @@ export default function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  if (auth.userType !== allowedUserType) {
+  if (allowedUserType && auth.userType !== allowedUserType) {
     return (
       <Navigate
         to={auth.userType === "Creator" ? "/main-creator" : "/main-member"}

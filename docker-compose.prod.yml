@@ -17,6 +17,8 @@ services:
     build:
       context: ./frontend
       target: final
+      args:
+        - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - backend
     networks:

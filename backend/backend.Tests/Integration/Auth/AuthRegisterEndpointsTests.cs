@@ -41,7 +41,7 @@ public class AuthRegisterEndpointsTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact(Skip = "Test fails")]
+    [Fact(Skip = "TODO: Fix code to pass test")]
     public async Task Register_WithMissingUserType_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/auth/register", new

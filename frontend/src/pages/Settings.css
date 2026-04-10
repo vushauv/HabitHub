@@ -1,0 +1,125 @@
+.settings-card-shell {
+  align-items: stretch;
+}
+
+.settings-content {
+  max-width: 58rem;
+  gap: 2rem;
+}
+
+.settings-topbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.settings-back-button {
+  min-width: auto;
+  padding-inline: 1.1rem;
+}
+
+.settings-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.settings-title {
+  font-size: clamp(2.7rem, 6vw, 4.4rem);
+}
+
+.settings-text {
+  max-width: 40rem;
+  text-align: center;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.settings-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  min-height: 14rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-medium);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.settings-option:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 113, 227, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+}
+
+.settings-option:focus-visible {
+  outline: none;
+  border-color: rgba(0, 113, 227, 0.35);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+}
+
+.settings-option-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.settings-option-title {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.settings-option-description {
+  margin: 0;
+  color: var(--text-color-soft);
+  line-height: 1.65;
+  font-size: 0.98rem;
+}
+
+.settings-option-arrow {
+  flex-shrink: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+@media (max-width: 960px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-option {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .settings-content {
+    gap: 1.5rem;
+  }
+
+  .settings-title {
+    font-size: clamp(2.2rem, 10vw, 3rem);
+  }
+
+  .settings-option {
+    padding: 1.2rem;
+  }
+}

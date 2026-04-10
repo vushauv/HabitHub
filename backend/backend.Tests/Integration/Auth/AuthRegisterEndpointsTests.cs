@@ -5,21 +5,14 @@ using backend.Tests.Fixtures;
 namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
-public class AuthEndpointsTests : IClassFixture<TestWebAppFactory>
+[Collection("Web app collection")]
+public class AuthRegisterEndpointsTests
 {
     private readonly HttpClient _client;
 
-    public AuthEndpointsTests(TestWebAppFactory factory)
+    public AuthRegisterEndpointsTests(TestWebAppFactory factory)
     {
         _client = factory.CreateClient();
-    }
-
-    [Fact]
-    public async Task Health_Returns200()
-    {
-        var response = await _client.GetAsync("/api/health");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]

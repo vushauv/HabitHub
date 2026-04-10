@@ -1,67 +1,93 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
+import "../App.css";
+import { type LoginForm } from "../services/Login";
+import { validateForm, hasValidationErrors } from "../services/Login";
+import {
+  API_BASE_URL,
+  type AccountType,
+  mapUserTypeToEnum,
+} from "../services/User";
 
-type AccountType = "Creator" | "Member";
-
-type LoginForm = {
-  email: string;
-  password: string;
-  userType: AccountType;
+type LoginResponse = {
+  sessionId?: string | null;
+  sessionID?: string | null;
+  SessionId?: string | null;
+  SessionID?: string | null;
+  userId?: string | null;
+  userID?: string | null;
+  UserId?: string | null;
+  UserID?: string | null;
+  memberId?: string | null;
+  memberID?: string | null;
+  MemberId?: string | null;
+  MemberID?: string | null;
+  creatorId?: string | null;
+  creatorID?: string | null;
+  CreatorId?: string | null;
+  CreatorID?: string | null;
+  userType?: string | number | null;
+  UserType?: string | number | null;
+  name?: string | null;
+  Name?: string | null;
 };
 
-type LoginErrors = {
-  email?: string;
-  password?: string;
-  userType?: string;
-};
+function resolveAuthenticatedUserType(
+  data: LoginResponse,
+  fallback: AccountType,
+): AccountType {
+  const rawUserType = data.userType ?? data.UserType;
 
-const API_BASE_URL = "http://localhost:5000";
-
-function validateEmail(email: string): string | undefined {
-  if (!email.trim()) {
-    return "Email is required.";
+  if (
+    rawUserType === "creator" ||
+    rawUserType === "Creator" ||
+    rawUserType === 0
+  ) {
+    return "Creator";
   }
 
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailPattern.test(email)) {
-    return "Enter a valid email address.";
+  if (
+    rawUserType === "member" ||
+    rawUserType === "Member" ||
+    rawUserType === 1
+  ) {
+    return "Member";
   }
 
-  return undefined;
+  return fallback;
 }
 
-function validatePassword(password: string): string | undefined {
-  if (!password) {
-    return "Password is required.";
-  }
-
-  return undefined;
+function resolveSessionId(data: LoginResponse): string | null {
+  return (
+    data.sessionId ??
+    data.sessionID ??
+    data.SessionId ??
+    data.SessionID ??
+    null
+  );
 }
 
-function validateUserType(userType: AccountType): string | undefined {
-  if (userType !== "Creator" && userType !== "Member") {
-    return "Choose an account type.";
-  }
-
-  return undefined;
+function resolveUserId(data: LoginResponse): string | null {
+  return (
+    data.userId ??
+    data.userID ??
+    data.UserId ??
+    data.UserID ??
+    data.memberId ??
+    data.memberID ??
+    data.MemberId ??
+    data.MemberID ??
+    data.creatorId ??
+    data.creatorID ??
+    data.CreatorId ??
+    data.CreatorID ??
+    null
+  );
 }
 
-function validateForm(form: LoginForm): LoginErrors {
-  return {
-    email: validateEmail(form.email),
-    password: validatePassword(form.password),
-    userType: validateUserType(form.userType),
-  };
-}
-
-function hasValidationErrors(errors: LoginErrors): boolean {
-  return Boolean(errors.email || errors.password || errors.userType);
-}
-
-function mapUserTypeToEnum(userType: AccountType): number {
-  return userType === "Creator" ? 0 : 1;
+function resolveName(data: LoginResponse): string {
+  return data.name ?? data.Name ?? "John";
 }
 
 export default function Login() {
@@ -125,7 +151,7 @@ export default function Login() {
     setServerError("");
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setTouched({
@@ -172,31 +198,41 @@ export default function Login() {
         throw new Error(responseText || `Login failed (${response.status}).`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as LoginResponse;
 
-      const authenticatedUserType =
-        data.userType === "creator" || data.userType === 0
-          ? "Creator"
-          : data.userType === "member" || data.userType === 1
-            ? "Member"
-            : form.userType;
+      const authenticatedUserType = resolveAuthenticatedUserType(
+        data,
+        form.userType,
+      );
 
-            localStorage.setItem(
-              "habithubAuth",
-              JSON.stringify({
-                isLoggedIn: true,
-                userType: authenticatedUserType,
-                sessionId: data.sessionId ?? null,
-                userId: data.userId ?? data.memberId ?? data.creatorId ?? null,
-                name: data.name ?? "John",
-              }),
-            );
+      const sessionId = resolveSessionId(data);
+      const userId = resolveUserId(data);
+      const name = resolveName(data);
+
+      if (!sessionId) {
+        throw new Error(
+          "Login succeeded but no session id was returned by the server.",
+        );
+      }
+
+      localStorage.setItem(
+        "habithubAuth",
+        JSON.stringify({
+          isLoggedIn: true,
+          userType: authenticatedUserType,
+          sessionId,
+          userId,
+          name,
+        }),
+      );
 
       navigate(
         authenticatedUserType === "Creator" ? "/main-creator" : "/main-member",
         { replace: true },
       );
     } catch (error) {
+      localStorage.removeItem("habithubAuth");
+
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
       );
@@ -206,35 +242,40 @@ export default function Login() {
   }
 
   return (
-    <main className="page login-container">
-      <section className="login-card">
-        <div className="login-content">
+    <main className="page container login-page">
+      <div className="background-glow background-glow-left"></div>
+      <div className="background-glow background-glow-right"></div>
+
+      <section className="card login-card">
+        <div className="content login-content">
           <div className="login-top">
-            <Link to="/" className="login-home-link">
+            <Link to="/" className="button button-secondary login-home-link">
               Home
             </Link>
           </div>
 
-          <h1 className="login-title">Log in</h1>
+          <div className="content-centered login-header">
+            <h1 className="title login-title">Log in</h1>
 
-          <p className="login-text">
-            Welcome back. Log in to continue with HabitHub.
-          </p>
+            <p className="text login-text">
+              Welcome back. Log in to continue with HabitHub.
+            </p>
+          </div>
 
           {serverError && (
-            <p className="login-form-error" role="alert">
+            <p className="form-error" role="alert">
               {serverError}
             </p>
           )}
 
           <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <div className="login-field">
-              <label className="login-label" htmlFor="email">
+            <div className="form-field">
+              <label className="form-label" htmlFor="email">
                 Email
               </label>
               <input
                 id="email"
-                className="login-input"
+                className="form-input"
                 type="email"
                 name="email"
                 value={form.email}
@@ -249,19 +290,19 @@ export default function Login() {
                 required
               />
               {touched.email && errors.email && (
-                <p id="login-email-error" className="login-field-error">
+                <p id="login-email-error" className="field-error">
                   {errors.email}
                 </p>
               )}
             </div>
 
-            <div className="login-field">
-              <label className="login-label" htmlFor="password">
+            <div className="form-field">
+              <label className="form-label" htmlFor="password">
                 Password
               </label>
               <input
                 id="password"
-                className="login-input"
+                className="form-input"
                 type="password"
                 name="password"
                 value={form.password}
@@ -278,17 +319,17 @@ export default function Login() {
                 required
               />
               {touched.password && errors.password && (
-                <p id="login-password-error" className="login-field-error">
+                <p id="login-password-error" className="field-error">
                   {errors.password}
                 </p>
               )}
             </div>
 
-            <div className="login-field">
-              <span className="login-label">Account type</span>
+            <div className="form-field">
+              <span className="form-label">Account type</span>
 
               <div
-                className="login-role-group"
+                className="role-group"
                 role="radiogroup"
                 aria-label="Account type"
               >
@@ -296,8 +337,8 @@ export default function Login() {
                   type="button"
                   className={
                     form.userType === "Creator"
-                      ? "login-role-button login-role-button-active"
-                      : "login-role-button"
+                      ? "role-button role-button-active"
+                      : "role-button"
                   }
                   onClick={() => handleUserTypeChange("Creator")}
                   aria-pressed={form.userType === "Creator"}
@@ -309,8 +350,8 @@ export default function Login() {
                   type="button"
                   className={
                     form.userType === "Member"
-                      ? "login-role-button login-role-button-active"
-                      : "login-role-button"
+                      ? "role-button role-button-active"
+                      : "role-button"
                   }
                   onClick={() => handleUserTypeChange("Member")}
                   aria-pressed={form.userType === "Member"}
@@ -320,21 +361,21 @@ export default function Login() {
               </div>
 
               {touched.userType && errors.userType && (
-                <p className="login-field-error">{errors.userType}</p>
+                <p className="field-error">{errors.userType}</p>
               )}
             </div>
 
             <button
-              className="login-submit-button"
+              className="button button-primary form-submit"
               type="submit"
               disabled={loading || !formIsValid}
             >
               {loading ? "Logging in..." : "Log in"}
             </button>
 
-            <p className="login-footer-text">
+            <p className="form-footer-text">
               Don&apos;t have an account?{" "}
-              <Link to="/register" className="login-footer-link">
+              <Link to="/register" className="form-footer-link">
                 Create one
               </Link>
             </p>

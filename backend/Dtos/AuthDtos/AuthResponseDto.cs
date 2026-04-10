@@ -1,7 +1,7 @@
 ﻿namespace backend.Dtos.AuthDtos
 {
     public record AuthResponseDto(
-        Guid SessionId,
+        string SessionId,
         UserDto User
     );
 }

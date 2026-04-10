@@ -4,6 +4,7 @@ using backend.Repositories;
 using backend.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using backend.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    var sessionRepository = scope.ServiceProvider.GetRequiredService<ISessionRepository>();
+    await sessionRepository.ExpirePastDueSessionsAsync();
 }
 
 if (app.Environment.IsDevelopment())
@@ -54,6 +57,7 @@ app.UseCors(policy => policy
     .AllowAnyMethod());
 
 app.UseHttpsRedirection();
+app.UseMiddleware<SessionAuthenticationMiddleware>();
 app.MapControllers();
 
 app.Run();

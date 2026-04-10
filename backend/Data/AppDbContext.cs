@@ -32,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Session>(e => 
         {
             e.HasKey(s => s.SessionId);
+            e.Property(s => s.SessionId).IsRequired().HasMaxLength(64);
             e.Property(s => s.UserId).IsRequired();
             e.Property(s => s.UserType).IsRequired();
             e.Property(s => s.CreatedAt).IsRequired();

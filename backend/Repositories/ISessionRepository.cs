@@ -11,7 +11,6 @@ public interface ISessionRepository
     Task InvalidateAsync(string sessionId);
     Task InvalidateAllExceptCurrentAsync(Guid userId, UserType userType, string currentSessionId);
     Task ExpirePastDueSessionsAsync();
-    Task<Session?> FindReusableActiveSessionAsync(Guid userId, UserType userType);
     Task RefreshSpecificSession(string sessionId);
     Task ExpireSpecificSessionAsync(string sessionId);
 }

@@ -28,6 +28,7 @@ builder.Services.AddScoped<ITeamCreatorRepository, TeamCreatorRepository>();
 builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IHabitTeamRepository, HabitTeamRepository>();
+builder.Services.AddScoped<IMembershipRepository, MembershipRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddCors();

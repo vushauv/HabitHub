@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Session> Sessions => Set<Session>();
     public DbSet<HabitTeam> HabitTeams => Set<HabitTeam>();
     public DbSet<Membership> Memberships => Set<Membership>();
+    public DbSet<InviteCode> InviteCodes => Set<InviteCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +74,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .OnDelete(DeleteBehavior.Restrict); // we don't specify account deletion
 
             e.HasIndex(m => new {m.TeamId, m.MemberId}).IsUnique();
+        });
+        modelBuilder.Entity<InviteCode>(e =>
+        {
+           e.HasKey(i => i.CodeId);
+           e.Property(i => i.Code).IsRequired().HasMaxLength(64);
+           e.Property(i => i.TeamId).IsRequired();
+           e.Property(i => i.ExpiryDate).IsRequired();
+           e.Property(i => i.Status).IsRequired(); 
+
+
+           e.HasOne(m => m.Team)
+            .WithMany(t => t.InviteCodes)
+            .HasForeignKey(m => m.TeamId)
+            .OnDelete(DeleteBehavior.Cascade); // what delete?
+
+           e.HasIndex(i => i.Code).IsUnique();
+           e.HasIndex(i => i.TeamId);
         });
     }
 }

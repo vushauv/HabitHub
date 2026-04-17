@@ -6,4 +6,5 @@ public class HabitTeam
     public string Name {get; set;} = string.Empty;
     public TeamCreator Creator {get; set;} = null!;
     public Guid CreatorId {get; set;}
+    public List<Membership> Memberships {get; set;} = new List<Membership>();
 }

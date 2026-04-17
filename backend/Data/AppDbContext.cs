@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TeamCreator> TeamCreators => Set<TeamCreator>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
     public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<HabitTeam> HabitTeams => Set<HabitTeam>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +40,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.LastActiveAt).IsRequired();
             e.Property(s => s.ExpiresAt).IsRequired();
             e.Property(s => s.SessionState).IsRequired();
+        });
+        modelBuilder.Entity<HabitTeam>(e =>
+        {
+           e.HasKey(t => t.TeamId);
+           e.Property(t => t.Name).IsRequired().HasMaxLength(256);
+           e.Property(t => t.CreatorId).IsRequired();
+
+           e.HasOne(t => t.Creator)
+            .WithMany(c => c.Teams)
+            .HasForeignKey(t => t.CreatorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+           e.HasIndex(t => t.CreatorId);
         });
     }
 }

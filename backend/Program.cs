@@ -45,6 +45,8 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     var sessionRepository = scope.ServiceProvider.GetRequiredService<ISessionRepository>();
     await sessionRepository.ExpirePastDueSessionsAsync();
+    var inviteCodeRepository = scope.ServiceProvider.GetRequiredService<IInviteCodeRepository>();
+    await inviteCodeRepository.ExpirePastDueInviteCodesAsync();
 }
 
 if (app.Environment.IsDevelopment())

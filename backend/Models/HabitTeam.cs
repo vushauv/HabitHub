@@ -7,4 +7,5 @@ public class HabitTeam
     public TeamCreator Creator {get; set;} = null!;
     public Guid CreatorId {get; set;}
     public List<Membership> Memberships {get; set;} = new List<Membership>();
+    public List<InviteCode> InviteCodes {get;set;} = new List<InviteCode>();
 }

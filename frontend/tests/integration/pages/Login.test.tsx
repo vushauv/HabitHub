@@ -1,28 +1,26 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Login from "../../../src/pages/Login";
+import PathDisplay from "../PathDisplay";
 
-const mockNavigate = vi.fn();
-
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
+const App = () => (
+  <MemoryRouter initialEntries={["/login"]}>
+    <Routes>
+      <Route path="login" element={<Login/>}/>
+      <Route path="/*" element={<PathDisplay/>}/>
+    </Routes>
+  </MemoryRouter>
+)
 
 describe("Login", () => {
   beforeEach(() => {
-    mockNavigate.mockReset();
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
   it("renders email, password and account type fields", () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
@@ -31,21 +29,13 @@ describe("Login", () => {
   });
 
   it("submit button is disabled when form is empty", () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByRole("button", { name: "Log in" })).toBeDisabled();
   });
 
   it("shows validation errors on blur with empty fields", async () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.blur(screen.getByLabelText("Email"));
     fireEvent.blur(screen.getByLabelText("Password"));
@@ -67,11 +57,7 @@ describe("Login", () => {
       }),
     });
 
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "creator@example.com" },
@@ -83,9 +69,7 @@ describe("Login", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/main-creator", {
-        replace: true,
-      });
+      expect(screen.getByText("This is /main-creator!")).toBeInTheDocument();
     });
 
     const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
@@ -105,11 +89,7 @@ describe("Login", () => {
       }),
     });
 
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "member@example.com" },
@@ -120,9 +100,7 @@ describe("Login", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/main-member", {
-        replace: true,
-      });
+      expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
     });
   });
 
@@ -132,11 +110,7 @@ describe("Login", () => {
       status: 401,
     });
 
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },
@@ -152,7 +126,7 @@ describe("Login", () => {
       );
     });
 
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByText("Welcome back. Log in to continue with HabitHub.")).toBeInTheDocument();
     expect(localStorage.getItem("habithubAuth")).toBeNull();
   });
 });

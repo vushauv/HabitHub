@@ -96,15 +96,7 @@ namespace backend.Service
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
             if(passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
 
-            Session? reusableSession = await sessions.FindReusableActiveSessionAsync(creator.CreatorId, UserType.Creator);
-            Session createdSession;
-            if(reusableSession == null)
-                createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
-            else
-            {
-                createdSession = reusableSession;
-                await sessions.RefreshSpecificSession(createdSession.SessionId);
-            }
+            Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
@@ -121,15 +113,7 @@ namespace backend.Service
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
             if (passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
        
-            Session? reusableSession = await sessions.FindReusableActiveSessionAsync(member.MemberId, UserType.Member);
-            Session createdSession;
-            if(reusableSession == null)
-                createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
-            else
-            {
-                createdSession = reusableSession;
-                await sessions.RefreshSpecificSession(createdSession.SessionId);
-            }
+            Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
@@ -164,7 +148,9 @@ namespace backend.Service
                     s.LastActiveAt, 
                     s.ExpiresAt, 
                     s.SessionState,
-                    s.SessionId == currentSessionId
+                    s.SessionId == currentSessionId,
+                    s.DeviceInfo,
+                    s.IpAddress
                 )).ToList();
         }
 

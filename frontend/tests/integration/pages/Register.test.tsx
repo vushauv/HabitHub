@@ -1,27 +1,25 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Register from "../../../src/pages/Register";
+import PathDisplay from "../PathDisplay";
 
-const mockNavigate = vi.fn();
-
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
+const App = () => (
+  <MemoryRouter initialEntries={["/register"]}>
+    <Routes>
+      <Route path="register" element={<Register />}/>
+      <Route path="/*" element={<PathDisplay/>}/>
+    </Routes>
+  </MemoryRouter>
+)
 
 describe("Register", () => {
   beforeEach(() => {
-    mockNavigate.mockReset();
     vi.restoreAllMocks();
   });
 
   it("renders name, email, password, timezone and account type fields", () => {
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
@@ -32,21 +30,13 @@ describe("Register", () => {
   });
 
   it("submit button is disabled when form is empty", () => {
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByRole("button", { name: "Create account" })).toBeDisabled();
   });
 
   it("shows validation errors on blur with empty fields", async () => {
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.blur(screen.getByLabelText("Name"));
     fireEvent.blur(screen.getByLabelText("Email"));
@@ -64,11 +54,7 @@ describe("Register", () => {
       ok: true
     });
 
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Creator" },
@@ -83,7 +69,7 @@ describe("Register", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/login");
+      expect(screen.getByText("This is /login!")).toBeInTheDocument();
     });
   });
 
@@ -93,11 +79,7 @@ describe("Register", () => {
       status: 400,
     });
 
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Creator" },
@@ -117,6 +99,6 @@ describe("Register", () => {
       );
     });
 
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByText("Create your account")).toBeInTheDocument();
   });
 });

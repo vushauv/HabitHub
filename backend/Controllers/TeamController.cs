@@ -3,6 +3,7 @@ using backend.Auth;
 using backend.Dtos.TeamDtos;
 using backend.Exceptions;
 using backend.Service;
+using backend.Models;
 
 namespace backend.Controllers
 {
@@ -41,7 +42,7 @@ namespace backend.Controllers
                 if (currentUser == null)
                     throw new AuthRequiredException();
 
-                GenerateInviteCodeResponseDto response = await teamService.GenerateInviteCode(currentUser.UserId, teamId);
+                InviteCodeDto response = await teamService.GenerateInviteCode(currentUser.UserId, teamId);
                 return StatusCode(StatusCodes.Status201Created, response);
             }
             catch (AppException ex)
@@ -163,6 +164,99 @@ namespace backend.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTeams()
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if (currentUser == null)
+                    throw new AuthRequiredException();
+
+                List<TeamSummaryDto> response = await teamService.GetTeams(currentUser.UserId, currentUser.UserType);
+                return StatusCode(StatusCodes.Status200OK, response);
+            }
+            catch (AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
+
+        [HttpGet("{teamId}")]
+        public async Task<IActionResult> GetTeam(Guid teamId)
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if (currentUser == null)
+                    throw new AuthRequiredException();
+
+                TeamDetailsDto response = await teamService.GetTeam(currentUser.UserId, currentUser.UserType, teamId);
+                return StatusCode(StatusCodes.Status200OK, response);
+            }
+            catch (AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
+
+        [HttpGet("{teamId}/members")]
+        public async Task<IActionResult> GetTeamMembers(Guid teamId)
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if (currentUser == null)
+                    throw new AuthRequiredException();
+
+                List<TeamMemberDto> response = await teamService.GetTeamMembers(currentUser.UserId, currentUser.UserType, teamId);
+                return StatusCode(StatusCodes.Status200OK, response);
+            }
+            catch (AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
+
+        [HttpGet("{teamId}/invite-codes")]
+        public async Task<IActionResult> GetInviteCodes(Guid teamId)
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if (currentUser == null)
+                    throw new AuthRequiredException();
+
+                List<InviteCodeDto> response = await teamService.GetActiveInviteCodes(currentUser.UserId, teamId);
+                return StatusCode(StatusCodes.Status200OK, response);
+            }
+            catch (AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
+
     }
 }
 

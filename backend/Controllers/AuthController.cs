@@ -71,7 +71,7 @@ namespace backend.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
             }
         }
-
+        
         [HttpDelete("sessions/{sessionId}")]
         public async Task<IActionResult> InvalidateSpecificSession(string sessionId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
@@ -82,6 +82,28 @@ namespace backend.Controllers
                     return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
                 
                 await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionId);
+                return StatusCode(StatusCodes.Status204NoContent);
+            }
+            catch(AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
+        
+        [HttpDelete("logout")]
+        public async Task<IActionResult> InvalidateSpecificSession([FromHeader(Name = "X-Session-Id")] string sessionIdHeader)
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if(currentUser == null) 
+                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
+                
+                await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionIdHeader);
                 return StatusCode(StatusCodes.Status204NoContent);
             }
             catch(AppException ex)

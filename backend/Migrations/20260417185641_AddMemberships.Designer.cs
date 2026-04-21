@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417185641_AddMemberships")]
+    partial class AddMemberships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,36 +44,6 @@ namespace backend.Migrations
                     b.HasIndex("CreatorId");
 
                     b.ToTable("HabitTeams");
-                });
-
-            modelBuilder.Entity("backend.Models.InviteCode", b =>
-                {
-                    b.Property<Guid>("CodeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("CodeId");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("InviteCodes");
                 });
 
             modelBuilder.Entity("backend.Models.Membership", b =>
@@ -205,17 +178,6 @@ namespace backend.Migrations
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("backend.Models.InviteCode", b =>
-                {
-                    b.HasOne("backend.Models.HabitTeam", "Team")
-                        .WithMany("InviteCodes")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-                });
-
             modelBuilder.Entity("backend.Models.Membership", b =>
                 {
                     b.HasOne("backend.Models.TeamMember", "Member")
@@ -237,8 +199,6 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.HabitTeam", b =>
                 {
-                    b.Navigation("InviteCodes");
-
                     b.Navigation("Memberships");
                 });
 

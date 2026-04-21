@@ -27,6 +27,9 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 builder.Services.AddScoped<ITeamCreatorRepository, TeamCreatorRepository>();
 builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+builder.Services.AddScoped<IHabitTeamRepository, HabitTeamRepository>();
+builder.Services.AddScoped<IMembershipRepository, MembershipRepository>();
+builder.Services.AddScoped<IInviteCodeRepository, InviteCodeRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddCors();
@@ -42,6 +45,8 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     var sessionRepository = scope.ServiceProvider.GetRequiredService<ISessionRepository>();
     await sessionRepository.ExpirePastDueSessionsAsync();
+    var inviteCodeRepository = scope.ServiceProvider.GetRequiredService<IInviteCodeRepository>();
+    await inviteCodeRepository.ExpirePastDueInviteCodesAsync();
 }
 
 if (app.Environment.IsDevelopment())

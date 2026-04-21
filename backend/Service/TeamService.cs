@@ -5,6 +5,7 @@ using backend.Models;
 using backend.Repositories;
 using backend.Utils;
 using System.ComponentModel;
+using System.Reflection.Metadata.Ecma335;
 
 namespace backend.Service
 {
@@ -48,7 +49,7 @@ namespace backend.Service
             return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
         }
 
-        public async Task<GenerateInviteCodeResponseDto> GenerateInviteCode(Guid userId, Guid teamId)
+        public async Task<InviteCodeDto> GenerateInviteCode(Guid userId, Guid teamId)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
@@ -58,9 +59,7 @@ namespace backend.Service
             if (!isTeamCreator)
                 throw new ForbiddenException();
 
-            List<InviteCode> activeInviteCodes = await inviteCodes.GetActiveInviteCodesByTeamIdAsync(team.TeamId);
-            foreach (InviteCode ic in activeInviteCodes)
-                await inviteCodes.UpdateInviteCodeStatusAsync(ic.CodeId, CodeStatus.Invalid);
+            await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId);
 
             InviteCode inviteCode = new InviteCode
             {
@@ -73,7 +72,7 @@ namespace backend.Service
 
             InviteCode createdInviteCode = await inviteCodes.CreateInviteCodeAsync(inviteCode);
 
-            return new GenerateInviteCodeResponseDto(
+            return new InviteCodeDto(
                 createdInviteCode.CodeId,
                 createdInviteCode.Code,
                 createdInviteCode.TeamId,
@@ -212,7 +211,100 @@ namespace backend.Service
             if (!isTeamCreator)
                 throw new ForbiddenException();
 
+            await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId); //TODO: Discuss, not in sequence but i believe useful
             await habitTeams.DeleteHabitTeamAsync(team.TeamId);
+        }
+        public async Task<List<TeamSummaryDto>> GetTeams(Guid userId, UserType userType)
+        {
+            List<TeamSummaryDto> results = new List<TeamSummaryDto>();
+
+            if(userType == UserType.Creator)
+            {
+                List<HabitTeam> teams = await habitTeams.GetAllHabitTeamsByCreatorAsync(userId);
+                results.AddRange(teams.Select(t => new TeamSummaryDto(t.TeamId, t.Name)));
+            }
+
+            if(userType == UserType.Member)
+            {
+                List<Membership> activeMemberships = await memberships.GetActiveMembershipsByMemberIdAsync(userId);
+                List<Guid> teamIds = activeMemberships.Select(m => m.TeamId).ToList();
+
+                List<HabitTeam> teams = await habitTeams.GetHabitTeamsByIdsAsync(teamIds);
+
+                results.AddRange(teams.Select(t => new TeamSummaryDto(t.TeamId, t.Name)));
+            }
+
+            return results;
+        }
+        public async Task<TeamDetailsDto> GetTeam(Guid userId, UserType userType, Guid teamId)
+        {
+            HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
+            if (team == null)
+                throw new NotFoundException();
+
+            if(userType == UserType.Member)
+            {
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, userId);
+                if (!isActiveMember)
+                    throw new ForbiddenException();
+            }
+            if (userType == UserType.Creator)
+            {
+                bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
+                if (!isTeamCreator)
+                    throw new ForbiddenException();
+            }
+            return new TeamDetailsDto(team.TeamId, team.Name);
+        }
+        public async Task<List<TeamMemberDto>> GetTeamMembers(Guid userId, UserType userType, Guid teamId)
+        {
+            List<TeamMemberDto> results = new List<TeamMemberDto>();
+
+            HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
+            if (team == null)
+                throw new NotFoundException();
+
+            if (userType == UserType.Member)
+            {
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, userId);
+                if (!isActiveMember)
+                    throw new ForbiddenException();
+            }
+            if (userType == UserType.Creator)
+            {
+                bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
+                if (!isTeamCreator)
+                    throw new ForbiddenException();
+            }
+
+            List<Membership> membershipList = await memberships.GetMembershipsByTeamIdAsync(teamId);
+            List<Guid> memberIds = membershipList.Select(m => m.MemberId).ToList();
+            List<TeamMember> membersList = await members.GetMembersByIdsAsync(memberIds);
+
+            results = membershipList.Select(m =>
+            {
+                TeamMember? member = membersList.FirstOrDefault(mem => mem.MemberId == m.MemberId);
+                return new TeamMemberDto(m.MemberId, member?.Name ?? "Unknown", member?.Email ?? "Unknown", m.Status);
+            }).ToList();
+
+            return results;
+        }
+        public async Task<List<InviteCodeDto>> GetActiveInviteCodes(Guid userId, Guid teamId)
+        {
+            HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
+            if (team == null)
+                throw new NotFoundException();
+
+            bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
+            if (!isTeamCreator)
+                throw new ForbiddenException();
+
+            List<InviteCode> activeCodes = await inviteCodes.GetActiveInviteCodesByTeamIdAsync(teamId);
+
+            return activeCodes.Select(code =>
+            {
+                return new InviteCodeDto(code.CodeId, code.Code, code.TeamId, code.ExpiryDate);
+            }).ToList();
         }
 
         private static string NormalizeString(string name) => name.Trim();

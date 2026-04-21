@@ -63,18 +63,6 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
         }
         await db.SaveChangesAsync();
     }
-    public async Task<Session?> FindReusableActiveSessionAsync(Guid userId, UserType userType)
-    {
-        var now = DateTime.UtcNow;
-        return await db.Sessions
-                        .Where(s => s.UserId == userId 
-                            && s.UserType == userType 
-                            && s.SessionState == SessionState.Active
-                        )
-                        .Where(s => s.ExpiresAt > now)
-                        .OrderByDescending(s => s.LastActiveAt)
-                        .FirstOrDefaultAsync();
-    }
 
     public async Task RefreshSpecificSession(string sessionId)
     {

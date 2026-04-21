@@ -51,7 +51,7 @@ namespace backend.Controllers
             }
         }
         [HttpGet("sessions")]
-        public async Task<IActionResult> ViewActiveSessions()
+        public async Task<IActionResult> ViewActiveSessions([FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -73,7 +73,7 @@ namespace backend.Controllers
         }
         
         [HttpDelete("sessions/{sessionId}")]
-        public async Task<IActionResult> InvalidateSpecificSession(string sessionId)
+        public async Task<IActionResult> InvalidateSpecificSession(string sessionId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -95,7 +95,7 @@ namespace backend.Controllers
         }
         
         [HttpDelete("logout")]
-        public async Task<IActionResult> LogoutCurrentSession([FromHeader(Name = "X-Session-Id")] string sessionIdHeader)
+        public async Task<IActionResult> LogoutFromCurrentSession([FromHeader(Name = "X-Session-Id")] string sessionIdHeader)
         {
             try
             {
@@ -117,7 +117,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -139,7 +139,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("change-email")]
-        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request)
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {

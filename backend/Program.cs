@@ -51,6 +51,7 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         await SeedData.SeedUsersAsync(db);
+        await SeedData.SeedTeamsAsync(db);
     }
 }
 

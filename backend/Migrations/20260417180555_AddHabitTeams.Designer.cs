@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417180555_AddHabitTeams")]
+    partial class AddHabitTeams
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,61 +44,6 @@ namespace backend.Migrations
                     b.HasIndex("CreatorId");
 
                     b.ToTable("HabitTeams");
-                });
-
-            modelBuilder.Entity("backend.Models.InviteCode", b =>
-                {
-                    b.Property<Guid>("CodeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("CodeId");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("InviteCodes");
-                });
-
-            modelBuilder.Entity("backend.Models.Membership", b =>
-                {
-                    b.Property<Guid>("MembershipId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("MembershipId");
-
-                    b.HasIndex("MemberId");
-
-                    b.HasIndex("TeamId", "MemberId")
-                        .IsUnique();
-
-                    b.ToTable("Memberships");
                 });
 
             modelBuilder.Entity("backend.Models.Session", b =>
@@ -205,51 +153,9 @@ namespace backend.Migrations
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("backend.Models.InviteCode", b =>
-                {
-                    b.HasOne("backend.Models.HabitTeam", "Team")
-                        .WithMany("InviteCodes")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("backend.Models.Membership", b =>
-                {
-                    b.HasOne("backend.Models.TeamMember", "Member")
-                        .WithMany("Memberships")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.HabitTeam", "Team")
-                        .WithMany("Memberships")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Member");
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("backend.Models.HabitTeam", b =>
-                {
-                    b.Navigation("InviteCodes");
-
-                    b.Navigation("Memberships");
-                });
-
             modelBuilder.Entity("backend.Models.TeamCreator", b =>
                 {
                     b.Navigation("Teams");
-                });
-
-            modelBuilder.Entity("backend.Models.TeamMember", b =>
-                {
-                    b.Navigation("Memberships");
                 });
 #pragma warning restore 612, 618
         }

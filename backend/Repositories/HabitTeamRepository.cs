@@ -37,6 +37,8 @@ public class HabitTeamRepository(AppDbContext db) : IHabitTeamRepository
 
     public async Task<List<HabitTeam>> GetAllHabitTeamsByCreatorAsync(Guid creatorId) =>
         await db.HabitTeams.Where(t => t.CreatorId == creatorId).ToListAsync();
+    public async Task<List<HabitTeam>> GetHabitTeamsByIdsAsync(List<Guid> teamIds) =>
+        await db.HabitTeams.Where(t => teamIds.Contains(t.TeamId)).ToListAsync();
 
     public async Task<HabitTeam?> GetHabitTeamByIdAsync(Guid teamId) =>
         await db.HabitTeams.SingleOrDefaultAsync(t => t.TeamId == teamId);

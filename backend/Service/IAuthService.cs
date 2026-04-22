@@ -1,5 +1,4 @@
-﻿using backend.Dto.AuthDtos;
-using backend.Dtos.AuthDtos;
+﻿using backend.Dtos.AuthDtos;
 using backend.Enums;
 
 namespace backend.Service

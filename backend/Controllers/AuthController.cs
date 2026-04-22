@@ -1,5 +1,4 @@
 ﻿using backend.Auth;
-using backend.Dto.AuthDtos;
 using backend.Dtos.AuthDtos;
 using backend.Exceptions;
 using backend.Service;
@@ -56,9 +55,9 @@ namespace backend.Controllers
             try
             {
                 CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null) 
-                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authorization required."});
-                
+                if(currentUser == null)
+                    throw new AuthRequiredException();
+
                 List<SessionDto> activeSessions = await authService.ViewActiveSessions(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
                 return StatusCode(StatusCodes.Status200OK, activeSessions);
             }
@@ -78,9 +77,9 @@ namespace backend.Controllers
             try
             {
                 CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null) 
-                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
-                
+                if(currentUser == null)
+                    throw new AuthRequiredException();
+
                 await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionId);
                 return StatusCode(StatusCodes.Status204NoContent);
             }
@@ -100,9 +99,9 @@ namespace backend.Controllers
             try
             {
                 CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null) 
-                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
-                
+                if(currentUser == null)
+                    throw new AuthRequiredException();
+
                 await authService.ChangePassword(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
                 return StatusCode(StatusCodes.Status200OK);
             }
@@ -122,9 +121,9 @@ namespace backend.Controllers
             try
             {
                 CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null) 
-                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
-                
+                if(currentUser == null)
+                    throw new AuthRequiredException();
+
                 await authService.ChangeEmail(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
                 return StatusCode(StatusCodes.Status200OK);
             }

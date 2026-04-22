@@ -30,9 +30,12 @@ export default function MainCreator() {
         </div>
 
         <div className="buttons dashboard-actions">
-          <button type="button" className="button button-primary dashboard-action">
+          <Link
+            to="/teams-member"
+            className="button button-primary dashboard-action"
+          >
             View your teams
-          </button>
+          </Link>
 
           <Link
             to="/settings"

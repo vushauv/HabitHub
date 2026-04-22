@@ -10,6 +10,6 @@ namespace backend.Dtos.AuthDtos
         [Required, StringLength(128, MinimumLength = 8)]
         string Password,
         [Required] 
-        UserType UserType
+        UserType? UserType
     );
 }

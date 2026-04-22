@@ -1,8 +1,41 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
 import Login from "../../../src/pages/Login";
 import PathDisplay from "../PathDisplay";
+import { http, HttpResponse } from "msw"
+import { setupServer } from "msw/node";
+import { API_URL } from "../../const";
+
+const handlers = [
+  http.post(`${API_URL}/auth/login`, async ({ request }) => {
+    const data = await request.json() as {email: string} | undefined;
+    if (data == null || !("email" in data)) {
+      return new HttpResponse(null, {status: 400});
+    }
+    if (data.email.includes("creator")) {
+      return HttpResponse.json({
+        userType: "creator",
+        creatorId: "abc-123",
+        name: "Test Creator",
+        sessionId: "session-1",
+      })
+    }
+    if (data.email.includes("member")) {
+      return HttpResponse.json({
+        userType: "member",
+        memberId: "xyz-456",
+        name: "Test Member",
+        sessionId: "session-2",
+      })
+    }
+    return new HttpResponse(null, {status: 401})
+  })
+]
+const server = setupServer(...handlers);
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 const App = () => (
   <MemoryRouter initialEntries={["/login"]}>
@@ -47,16 +80,6 @@ describe("Login", () => {
   });
 
   it("navigates to /main-creator and stores auth on successful Creator login", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        userType: "creator",
-        creatorId: "abc-123",
-        name: "Test Creator",
-        sessionId: "session-1",
-      }),
-    });
-
     render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
@@ -79,16 +102,6 @@ describe("Login", () => {
   });
 
   it("navigates to /main-member on successful Member login", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        userType: "member",
-        memberId: "xyz-456",
-        name: "Test Member",
-        sessionId: "session-2",
-      }),
-    });
-
     render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
@@ -105,15 +118,10 @@ describe("Login", () => {
   });
 
   it("shows error message on 401 response", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-    });
-
     render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "test@example.com" },
+      target: { value: "invalid@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "wrongpassword" },

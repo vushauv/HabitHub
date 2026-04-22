@@ -10,6 +10,7 @@ public interface IMembershipRepository
     public Task<Membership?> GetMembershipByIdAsync(Guid membershipId);
     public Task<List<Membership>> GetMembershipsByTeamIdAsync(Guid teamId);
     public Task<List<Membership>> GetActiveMembershipsByTeamIdAsync(Guid teamId);
+    public Task<List<Membership>> GetActiveMembershipsByMemberIdAsync(Guid memberId);
     public Task<List<Membership>> GetMembershipsByMemberIdAsync(Guid memberId);
     public Task UpdateMembershipStatusAsync(Guid teamId, Guid memberId, MembershipStatus status);
     public Task<bool> IsActiveMembershipAsync(Guid teamId, Guid memberId);

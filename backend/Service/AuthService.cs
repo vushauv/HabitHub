@@ -5,8 +5,6 @@ using backend.Models;
 using backend.Exceptions;
 using backend.Enums;
 using backend.Utils;
-using System.Globalization;
-using backend.Dto.AuthDtos;
 
 namespace backend.Service
 {

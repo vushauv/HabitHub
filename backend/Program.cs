@@ -5,6 +5,7 @@ using backend.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using backend.Auth;
+using backend.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,9 @@ builder.Services.AddScoped<IHabitTeamRepository, HabitTeamRepository>();
 builder.Services.AddScoped<IMembershipRepository, MembershipRepository>();
 builder.Services.AddScoped<IInviteCodeRepository, InviteCodeRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+
+builder.Services.AddHostedService<InviteCodeExpiryService>();
 
 builder.Services.AddCors();
 builder.Services.AddControllers();

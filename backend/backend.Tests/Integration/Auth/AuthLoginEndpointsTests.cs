@@ -124,7 +124,7 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact(Skip = "TODO: Fix code to pass test")]
+    [Fact]
     public async Task Login_WithMissingUserType_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/auth/login", new

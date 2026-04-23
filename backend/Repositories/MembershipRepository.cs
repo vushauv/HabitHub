@@ -17,6 +17,9 @@ public class MembershipRepository(AppDbContext db) : IMembershipRepository
     public async Task<List<Membership>> GetActiveMembershipsByTeamIdAsync(Guid teamId) =>
         await db.Memberships.Where(m => m.TeamId == teamId && m.Status == MembershipStatus.Active).ToListAsync();
 
+    public async Task<List<Membership>> GetActiveMembershipsByMemberIdAsync(Guid memberId) =>
+        await db.Memberships.Where(m => m.MemberId == memberId && m.Status == MembershipStatus.Active).ToListAsync();
+
     public async Task<Membership?> GetMembershipByIdAsync(Guid membershipId) =>
         await db.Memberships.SingleOrDefaultAsync(m => m.MembershipId == membershipId);
 

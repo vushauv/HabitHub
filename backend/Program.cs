@@ -51,6 +51,12 @@ using (var scope = app.Services.CreateScope())
     await sessionRepository.ExpirePastDueSessionsAsync();
     var inviteCodeRepository = scope.ServiceProvider.GetRequiredService<IInviteCodeRepository>();
     await inviteCodeRepository.ExpirePastDueInviteCodesAsync();
+
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+    {
+        await SeedData.SeedUsersAsync(db);
+        await SeedData.SeedTeamsAsync(db);
+    }
 }
 
 if (app.Environment.IsDevelopment())

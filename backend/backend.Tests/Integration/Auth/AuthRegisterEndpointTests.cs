@@ -6,11 +6,11 @@ namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class AuthRegisterEndpointsTests
+public class AuthRegisterEndpointTests
 {
     private readonly HttpClient _client;
 
-    public AuthRegisterEndpointsTests(TestWebAppFactory factory)
+    public AuthRegisterEndpointTests(TestWebAppFactory factory)
     {
         _client = factory.CreateClient();
     }

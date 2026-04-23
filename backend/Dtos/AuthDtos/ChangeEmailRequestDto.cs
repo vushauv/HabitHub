@@ -1,4 +1,4 @@
-namespace backend.Dto.AuthDtos
+namespace backend.Dtos.AuthDtos
 {
     public record ChangeEmailRequestDto(
         string NewEmail,

@@ -8,6 +8,8 @@ namespace backend.Dtos.AuthDtos
         DateTime LastActiveAt,
         DateTime ExpiresAt, 
         SessionState SessionState,
-        bool IsCurrent
+        bool IsCurrent,
+        string? DeviceInfo,
+        string? IpAddress
     );
 }

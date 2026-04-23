@@ -1,27 +1,42 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
 import Register from "../../../src/pages/Register";
+import PathDisplay from "../PathDisplay";
+import { http, HttpResponse } from "msw"
+import { setupServer } from "msw/node";
+import { API_URL } from "../../const";
 
-const mockNavigate = vi.fn();
+const handlers = [
+  http.post(`${API_URL}/auth/register`, async ({ request }) => {
+    const data = await request.json() as {email: string} | undefined;
+    if (data == null || !("email" in data) || data.email.includes("400")) {
+      return new HttpResponse(null, {status: 400});
+    }
+    return new HttpResponse(null, {status: 201})
+  })
+]
+const server = setupServer(...handlers);
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
+const App = () => (
+  <MemoryRouter initialEntries={["/register"]}>
+    <Routes>
+      <Route path="register" element={<Register />}/>
+      <Route path="/*" element={<PathDisplay/>}/>
+    </Routes>
+  </MemoryRouter>
+)
 
 describe("Register", () => {
   beforeEach(() => {
-    mockNavigate.mockReset();
     vi.restoreAllMocks();
   });
 
   it("renders name, email, password, timezone and account type fields", () => {
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
@@ -32,21 +47,13 @@ describe("Register", () => {
   });
 
   it("submit button is disabled when form is empty", () => {
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByRole("button", { name: "Create account" })).toBeDisabled();
   });
 
   it("shows validation errors on blur with empty fields", async () => {
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.blur(screen.getByLabelText("Name"));
     fireEvent.blur(screen.getByLabelText("Email"));
@@ -60,15 +67,7 @@ describe("Register", () => {
   });
 
   it("navigates to /login on successful register", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true
-    });
-
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Creator" },
@@ -83,27 +82,18 @@ describe("Register", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/login");
+      expect(screen.getByText("This is /login!")).toBeInTheDocument();
     });
   });
 
   it("shows error message on 400 response", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-    });
-
-    render(
-      <MemoryRouter>
-        <Register />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Creator" },
     });
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "creator@example.com" },
+      target: { value: "400@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "password123" },
@@ -117,6 +107,6 @@ describe("Register", () => {
       );
     });
 
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByText("Create your account")).toBeInTheDocument();
   });
 });

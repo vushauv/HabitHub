@@ -49,6 +49,15 @@ public class InviteCodeRepository(AppDbContext db) : IInviteCodeRepository
         await db.SaveChangesAsync();
     }
 
+    public async Task InvalidateActiveInviteCodesByTeamIdAsync(Guid teamId)
+    {
+        List<InviteCode> activeCodes = await GetActiveInviteCodesByTeamIdAsync(teamId);
+        foreach (InviteCode code in activeCodes)
+            code.Status = CodeStatus.Invalid;
+
+        await db.SaveChangesAsync();
+    }
+
     public async Task ExpirePastDueInviteCodesAsync()
     {
         List<InviteCode> inviteCodes = await db.InviteCodes.Where(i => i.Status == CodeStatus.Active && i.ExpiryDate <= DateTime.UtcNow).ToListAsync();

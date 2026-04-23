@@ -7,7 +7,7 @@ namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.DatabaseInitializer>
+public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.DatabaseInitializer>
 {
     [Collection("Web app collection")]
     public class DatabaseInitializer
@@ -64,7 +64,7 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
     
     private readonly HttpClient _client;
 
-    public AuthLoginEndpointsTests(TestWebAppFactory factory)
+    public AuthLoginEndpointTests(TestWebAppFactory factory)
     {
         _client = factory.CreateClient();
     }

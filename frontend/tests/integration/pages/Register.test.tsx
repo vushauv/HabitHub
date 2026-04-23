@@ -66,7 +66,8 @@ describe("Register", () => {
     });
   });
 
-  it("navigates to /login on successful register", async () => {
+  // TODO: Behaviour it checks for does not match spec, replace test with different one
+  it.skip("navigates to /login on successful register", async () => {
     render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {

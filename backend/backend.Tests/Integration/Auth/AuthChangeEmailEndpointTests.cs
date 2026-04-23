@@ -7,9 +7,14 @@ namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class AuthChangeEmailEndpointsTests
+public class AuthChangeEmailEndpointTests
 {
     private readonly HttpClient _client;
+
+    public AuthChangeEmailEndpointTests(TestWebAppFactory factory)
+    {
+        _client = factory.CreateClient();
+    }
 
     private async Task RegisterUser(string email, int userType)
     {
@@ -37,11 +42,6 @@ public class AuthChangeEmailEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         return body.SessionId;
-    }
-
-    public AuthChangeEmailEndpointsTests(TestWebAppFactory factory)
-    {
-        _client = factory.CreateClient();
     }
 
     [Theory]

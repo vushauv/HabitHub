@@ -7,9 +7,13 @@ namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class AuthViewActiveSessionsEndpointsTests
+public class AuthViewActiveSessionsEndpointTests
 {
     private readonly HttpClient _client;
+    public AuthViewActiveSessionsEndpointTests(TestWebAppFactory factory)
+    {
+        _client = factory.CreateClient();
+    }
 
     private async Task<string> RegisterUser(string email, int userType)
     {
@@ -41,11 +45,6 @@ public class AuthViewActiveSessionsEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         return body.SessionId;
-    }
-
-    public AuthViewActiveSessionsEndpointsTests(TestWebAppFactory factory)
-    {
-        _client = factory.CreateClient();
     }
 
     [Theory]

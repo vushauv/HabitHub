@@ -1,8 +1,25 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
 import Register from "../../../src/pages/Register";
 import PathDisplay from "../PathDisplay";
+import { http, HttpResponse } from "msw"
+import { setupServer } from "msw/node";
+import { API_URL } from "../../const";
+
+const handlers = [
+  http.post(`${API_URL}/auth/register`, async ({ request }) => {
+    const data = await request.json() as {email: string} | undefined;
+    if (data == null || !("email" in data) || data.email.includes("400")) {
+      return new HttpResponse(null, {status: 400});
+    }
+    return new HttpResponse(null, {status: 201})
+  })
+]
+const server = setupServer(...handlers);
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 const App = () => (
   <MemoryRouter initialEntries={["/register"]}>
@@ -50,10 +67,6 @@ describe("Register", () => {
   });
 
   it("navigates to /login on successful register", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true
-    });
-
     render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {
@@ -74,18 +87,13 @@ describe("Register", () => {
   });
 
   it("shows error message on 400 response", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-    });
-
     render(App());
 
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Creator" },
     });
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "creator@example.com" },
+      target: { value: "400@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "password123" },

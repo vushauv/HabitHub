@@ -13,6 +13,6 @@ namespace backend.Dtos.AuthDtos
         [Required, ValidTimezone] 
         string Timezone,
         [Required] 
-        UserType UserType
+        UserType? UserType
     );
 }

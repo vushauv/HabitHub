@@ -1,28 +1,59 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
 import Login from "../../../src/pages/Login";
+import PathDisplay from "../PathDisplay";
+import { http, HttpResponse } from "msw"
+import { setupServer } from "msw/node";
+import { API_URL } from "../../const";
 
-const mockNavigate = vi.fn();
+const handlers = [
+  http.post(`${API_URL}/auth/login`, async ({ request }) => {
+    const data = await request.json() as {email: string} | undefined;
+    if (data == null || !("email" in data)) {
+      return new HttpResponse(null, {status: 400});
+    }
+    if (data.email.includes("creator")) {
+      return HttpResponse.json({
+        userType: "creator",
+        creatorId: "abc-123",
+        name: "Test Creator",
+        sessionId: "session-1",
+      })
+    }
+    if (data.email.includes("member")) {
+      return HttpResponse.json({
+        userType: "member",
+        memberId: "xyz-456",
+        name: "Test Member",
+        sessionId: "session-2",
+      })
+    }
+    return new HttpResponse(null, {status: 401})
+  })
+]
+const server = setupServer(...handlers);
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
+const App = () => (
+  <MemoryRouter initialEntries={["/login"]}>
+    <Routes>
+      <Route path="login" element={<Login/>}/>
+      <Route path="/*" element={<PathDisplay/>}/>
+    </Routes>
+  </MemoryRouter>
+)
 
 describe("Login", () => {
   beforeEach(() => {
-    mockNavigate.mockReset();
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
   it("renders email, password and account type fields", () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
@@ -31,21 +62,13 @@ describe("Login", () => {
   });
 
   it("submit button is disabled when form is empty", () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     expect(screen.getByRole("button", { name: "Log in" })).toBeDisabled();
   });
 
   it("shows validation errors on blur with empty fields", async () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.blur(screen.getByLabelText("Email"));
     fireEvent.blur(screen.getByLabelText("Password"));
@@ -57,21 +80,7 @@ describe("Login", () => {
   });
 
   it("navigates to /main-creator and stores auth on successful Creator login", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        userType: "creator",
-        creatorId: "abc-123",
-        name: "Test Creator",
-        sessionId: "session-1",
-      }),
-    });
-
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "creator@example.com" },
@@ -83,9 +92,7 @@ describe("Login", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/main-creator", {
-        replace: true,
-      });
+      expect(screen.getByText("This is /main-creator!")).toBeInTheDocument();
     });
 
     const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
@@ -95,21 +102,7 @@ describe("Login", () => {
   });
 
   it("navigates to /main-member on successful Member login", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        userType: "member",
-        memberId: "xyz-456",
-        name: "Test Member",
-        sessionId: "session-2",
-      }),
-    });
-
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "member@example.com" },
@@ -120,26 +113,15 @@ describe("Login", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/main-member", {
-        replace: true,
-      });
+      expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
     });
   });
 
   it("shows error message on 401 response", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-    });
-
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    render(App());
 
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "test@example.com" },
+      target: { value: "invalid@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "wrongpassword" },
@@ -152,7 +134,7 @@ describe("Login", () => {
       );
     });
 
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByText("Welcome back. Log in to continue with HabitHub.")).toBeInTheDocument();
     expect(localStorage.getItem("habithubAuth")).toBeNull();
   });
 });

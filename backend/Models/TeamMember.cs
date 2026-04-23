@@ -7,4 +7,5 @@ public class TeamMember
     public string PasswordHash { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Timezone { get; set; } = string.Empty;
+    public List<Membership> Memberships {get;set;} = new List<Membership>();
 }

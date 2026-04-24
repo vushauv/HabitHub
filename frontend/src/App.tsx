@@ -9,6 +9,11 @@ import Settings from "./pages/Settings";
 import Sessions from "./pages/Sessions";
 import ChangePassword from "./pages/ChangePassword";
 import ChangeEmail from "./pages/ChangeEmail";
+import TeamsCreator from "./pages/TeamsCreator";
+import TeamsMember from "./pages/TeamsMember";
+import CreateTeam from "./pages/CreateTeam";
+import JoinTeam from "./pages/JoinTeam";
+import MemberList from "./pages/MemberList";
 
 export default function App() {
   return (
@@ -20,10 +25,15 @@ export default function App() {
 
          <Route element={<ProtectedRoute allowedUserType="Creator" />}>
           <Route path="/main-creator" element={<MainCreator />} />
+          <Route path="/teams-creator" element={<TeamsCreator />} />
+          <Route path="/create-team" element={<CreateTeam />} />
+          <Route path="/member-list" element={<MemberList />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedUserType="Member" />}>
           <Route path="/main-member" element={<MainMember />} />
+          <Route path="/teams-member" element={<TeamsMember />} />
+          <Route path="/join-team" element={<JoinTeam />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

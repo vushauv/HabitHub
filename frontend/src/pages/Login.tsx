@@ -2,93 +2,15 @@ import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import "../App.css";
+import type { AuthResponseDto, LoginRequestDto } from "../services/dtos";
 import { type LoginForm } from "../services/Login";
 import { validateForm, hasValidationErrors } from "../services/Login";
 import {
   API_BASE_URL,
   type AccountType,
+  mapUserTypeFromEnum,
   mapUserTypeToEnum,
 } from "../services/User";
-
-type LoginResponse = {
-  sessionId?: string | null;
-  sessionID?: string | null;
-  SessionId?: string | null;
-  SessionID?: string | null;
-  userId?: string | null;
-  userID?: string | null;
-  UserId?: string | null;
-  UserID?: string | null;
-  memberId?: string | null;
-  memberID?: string | null;
-  MemberId?: string | null;
-  MemberID?: string | null;
-  creatorId?: string | null;
-  creatorID?: string | null;
-  CreatorId?: string | null;
-  CreatorID?: string | null;
-  userType?: string | number | null;
-  UserType?: string | number | null;
-  name?: string | null;
-  Name?: string | null;
-};
-
-function resolveAuthenticatedUserType(
-  data: LoginResponse,
-  fallback: AccountType,
-): AccountType {
-  const rawUserType = data.userType ?? data.UserType;
-
-  if (
-    rawUserType === "creator" ||
-    rawUserType === "Creator" ||
-    rawUserType === 0
-  ) {
-    return "Creator";
-  }
-
-  if (
-    rawUserType === "member" ||
-    rawUserType === "Member" ||
-    rawUserType === 1
-  ) {
-    return "Member";
-  }
-
-  return fallback;
-}
-
-function resolveSessionId(data: LoginResponse): string | null {
-  return (
-    data.sessionId ??
-    data.sessionID ??
-    data.SessionId ??
-    data.SessionID ??
-    null
-  );
-}
-
-function resolveUserId(data: LoginResponse): string | null {
-  return (
-    data.userId ??
-    data.userID ??
-    data.UserId ??
-    data.UserID ??
-    data.memberId ??
-    data.memberID ??
-    data.MemberId ??
-    data.MemberID ??
-    data.creatorId ??
-    data.creatorID ??
-    data.CreatorId ??
-    data.CreatorID ??
-    null
-  );
-}
-
-function resolveName(data: LoginResponse): string {
-  return data.name ?? data.Name ?? "John";
-}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -171,7 +93,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const payload = {
+      const payload: LoginRequestDto = {
         email: form.email.trim(),
         password: form.password,
         userType: mapUserTypeToEnum(form.userType),
@@ -198,22 +120,18 @@ export default function Login() {
         throw new Error(responseText || `Login failed (${response.status}).`);
       }
 
-      const data = (await response.json()) as LoginResponse;
-
-      const authenticatedUserType = resolveAuthenticatedUserType(
-        data,
-        form.userType,
-      );
-
-      const sessionId = resolveSessionId(data);
-      const userId = resolveUserId(data);
-      const name = resolveName(data);
+      const data = (await response.json()) as AuthResponseDto;
+      const sessionId = data.sessionId;
 
       if (!sessionId) {
         throw new Error(
           "Login succeeded but no session id was returned by the server.",
         );
       }
+
+      const authenticatedUserType = mapUserTypeFromEnum(data.user.userType);
+      const userId = data.user.id;
+      const name = data.user.name;
 
       localStorage.setItem(
         "habithubAuth",

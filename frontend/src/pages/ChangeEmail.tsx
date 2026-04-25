@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import "./ChangeEmail.css";
 import "../App.css";
+import type { ChangeEmailRequestDto } from "../services/dtos";
 import {
   API_BASE_URL,
   validateEmail,
@@ -13,11 +14,6 @@ type StoredAuth = {
   userType?: AccountType;
   sessionId?: string | null;
   userId?: string | null;
-};
-
-type ChangeEmailForm = {
-  newEmail: string;
-  password: string;
 };
 
 type ChangeEmailErrors = {
@@ -66,7 +62,7 @@ function validateCurrentPassword(password: string): string | undefined {
   return undefined;
 }
 
-function validateChangeEmailForm(form: ChangeEmailForm): ChangeEmailErrors {
+function validateChangeEmailForm(form: ChangeEmailRequestDto): ChangeEmailErrors {
   return {
     newEmail: validateEmail(form.newEmail),
     password: validateCurrentPassword(form.password),
@@ -116,7 +112,7 @@ function resolveChangeEmailErrorCode(
 export default function ChangeEmail() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [form, setForm] = useState<ChangeEmailForm>({
+  const [form, setForm] = useState<ChangeEmailRequestDto>({
     newEmail: "",
     password: "",
   });
@@ -171,13 +167,15 @@ export default function ChangeEmail() {
     setLoading(true);
 
     try {
+      const payload: ChangeEmailRequestDto = {
+        newEmail: form.newEmail.trim(),
+        password: form.password,
+      };
+
       const response = await fetch(`${API_BASE_URL}/auth/change-email`, {
         method: "POST",
         headers: getAuthHeaders(auth),
-        body: JSON.stringify({
-          newEmail: form.newEmail.trim(),
-          password: form.password,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

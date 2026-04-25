@@ -15,45 +15,19 @@ public class AuthInvalidateSpecificSessionEndpointTests
         _client = factory.CreateClient();
     }
 
-    private async Task<string> RegisterUser(string email, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/register", new
-        {
-            name = "Test User",
-            email,
-            password = "Test1234!",
-            timezone = "UTC",
-            userType
-        });
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
-        Assert.NotNull(body);
-        return body.SessionId;
-    }
-
-    private async Task<string> LogIn(string email, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/login", new
-        {
-            email,
-            password = "Test1234!",
-            userType
-        }, TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
-        Assert.NotNull(body);
-        return body.SessionId;
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
     public async Task InvalidateSpecificSession_InvalidatesSession(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        var sessionId = await RegisterUser($"{uuid}@example.com", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.GetAsync("/auth/sessions", TestContext.Current.CancellationToken);
@@ -78,8 +52,20 @@ public class AuthInvalidateSpecificSessionEndpointTests
     public async Task InvalidateSpecificSession_OfOtherUser_DoesNotInvalidateSession(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        var sessionIdA = await RegisterUser($"{uuid}-a@example.com", userType);
-        var sessionIdB = await RegisterUser($"{uuid}-b@example.com", userType);
+        var sessionIdA = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}-a@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
+        var sessionIdB = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}-b@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionIdA);
         
         var response1 = await _client.GetAsync("/auth/sessions", TestContext.Current.CancellationToken);
@@ -106,7 +92,13 @@ public class AuthInvalidateSpecificSessionEndpointTests
     public async Task InvalidateSpecificSession_WhichDoesNotExist_Returns404(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        var sessionId = await RegisterUser($"{uuid}@example.com", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response2 = await _client.DeleteAsync($"/auth/sessions/notreal", TestContext.Current.CancellationToken);

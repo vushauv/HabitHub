@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, getByText } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
 import Sessions from "../../../src/pages/Sessions";

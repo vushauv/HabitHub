@@ -4,8 +4,6 @@ using backend.Exceptions;
 using backend.Models;
 using backend.Repositories;
 using backend.Utils;
-using System.ComponentModel;
-using System.Reflection.Metadata.Ecma335;
 
 namespace backend.Service
 {
@@ -35,17 +33,6 @@ namespace backend.Service
             };
 
             HabitTeam createdTeam = await habitTeams.CreateHabitTeamAsync(team);
-
-            //Membership creatorMembership = new Membership
-            //{
-            //    MembershipId = Guid.NewGuid(),
-            //    TeamId = createdTeam.TeamId,
-            //    MemberId = creator.CreatorId,
-            //    Status = MembershipStatus.Active
-            //};
-
-            //await memberships.CreateMembershipAsync(creatorMembership);
-
             return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
         }
 
@@ -131,7 +118,7 @@ namespace backend.Service
 
             HabitTeam? habitTeam = await habitTeams.GetHabitTeamByIdAsync(inviteCode.TeamId);
             if (habitTeam == null)
-                throw new NotFoundException(); //TODO: Discuss during next sprint - this check is not in sequence but i believe its important (team can be deleted in between) 
+                throw new NotFoundException(); 
 
             TeamMember? member = await members.GetMemberByIdAsync(userId);
             if (member == null)
@@ -168,18 +155,11 @@ namespace backend.Service
             if (!isTeamCreator)
                 throw new ForbiddenException();
 
-            if (memberId == userId)
-                throw new ConflictException("cannot-kick-self", "Team Creator cannot kick himself."); //TODO: Discuss during next sprint - this check doesnt make sense 
-
-            TeamMember? member = await members.GetMemberByIdAsync(memberId);
-            if (member == null)
-                throw new NotFoundException(); //TODO: Discuss during next sprint - this is an additional check not specified in sequence diagram but I think useful
-
-            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
+            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, memberId);
             if (!isActiveMembership)
                 throw new NotFoundException();
 
-            await memberships.UpdateMembershipStatusAsync(team.TeamId, member.MemberId, MembershipStatus.Kicked);
+            await memberships.UpdateMembershipStatusAsync(team.TeamId, memberId, MembershipStatus.Kicked);
         }
         public async Task LeaveTeam(Guid userId, Guid teamId)
         {
@@ -187,19 +167,11 @@ namespace backend.Service
             if (team == null)
                 throw new NotFoundException();
 
-            TeamMember? member = await members.GetMemberByIdAsync(userId);
-            if (member == null)
-                throw new NotFoundException(); //TODO: Discuss during next sprint - this is an additional check not specified in sequence diagram but I think useful
-
-            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
+            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, userId);
             if (!isActiveMembership)
                 throw new NotFoundException();
 
-            bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
-            if (isTeamCreator)
-                throw new ConflictException("creator-cannot-leave", "Team Creator cannot leave the team."); //TODO: Discuss during next sprint - this check doesnt make sense if we assume team creator doesnt have a membership
-
-            await memberships.UpdateMembershipStatusAsync(team.TeamId, member.MemberId, MembershipStatus.Left);
+            await memberships.UpdateMembershipStatusAsync(team.TeamId, userId, MembershipStatus.Left);
         }
         public async Task DeleteTeam(Guid userId, Guid teamId)
         {

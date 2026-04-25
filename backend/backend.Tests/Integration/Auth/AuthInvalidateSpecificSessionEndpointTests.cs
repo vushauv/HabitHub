@@ -42,8 +42,6 @@ public class AuthInvalidateSpecificSessionEndpointTests
         
         var response3 = await _client.GetAsync("/auth/sessions", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, response3.StatusCode);
-        
-        _client.DefaultRequestHeaders.Remove("X-Session-Id");
     }
 
     [Theory]
@@ -82,8 +80,6 @@ public class AuthInvalidateSpecificSessionEndpointTests
         
         var response3 = await _client.GetAsync("/auth/sessions", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response3.StatusCode);
-        
-        _client.DefaultRequestHeaders.Remove("X-Session-Id");
     }
 
     [Theory]
@@ -106,7 +102,5 @@ public class AuthInvalidateSpecificSessionEndpointTests
         
         var response3 = await _client.GetAsync("/auth/sessions", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response3.StatusCode);
-        
-        _client.DefaultRequestHeaders.Remove("X-Session-Id");
     }
 }

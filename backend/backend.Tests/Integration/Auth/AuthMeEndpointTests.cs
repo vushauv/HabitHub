@@ -17,7 +17,7 @@ public class AuthMeEndpointTests
         _client = factory.CreateClient();
     }
 
-    private async Task RegisterUser(string name, string email, string timezone, int userType)
+    private async Task<string> RegisterUser(string name, string email, string timezone, int userType)
     {
         var response = await _client.PostAsJsonAsync("/auth/register", new
         {
@@ -28,18 +28,7 @@ public class AuthMeEndpointTests
             userType
         });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    }
-
-    private async Task<string> LogIn(string email, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/login", new
-        {
-            email,
-            password = "Test1234!",
-            userType
-        }, TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
+        
         var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         return body.SessionId;
@@ -63,10 +52,7 @@ public class AuthMeEndpointTests
         const string timezone = "UTC";
         
         // Register user
-        await RegisterUser(name, email, timezone, userType);
-        
-        // Log in as new user
-        var sessionId = await LogIn(email, userType);
+        var sessionId = await RegisterUser(name, email, timezone, userType);
         
         // Set session header
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);

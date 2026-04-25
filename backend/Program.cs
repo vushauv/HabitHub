@@ -74,8 +74,8 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         app.Logger.LogInformation("Seeding {Environment} data", app.Environment.EnvironmentName);
-        await SeedData.SeedUsersAsync(db);
-        await SeedData.SeedTeamsAsync(db);
+        await SeedData.SeedUsersAsync(db, app.Logger);
+        await SeedData.SeedTeamsAsync(db, app.Logger);
     }
 }
 

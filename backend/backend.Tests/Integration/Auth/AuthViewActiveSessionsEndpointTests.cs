@@ -62,8 +62,6 @@ public class AuthViewActiveSessionsEndpointTests
         var body = await response.Content.ReadFromJsonAsync<List<SessionDto>>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.Single(body);
-        
-        _client.DefaultRequestHeaders.Remove("X-Session-Id");
     }
 
     [Theory]
@@ -82,8 +80,6 @@ public class AuthViewActiveSessionsEndpointTests
         var body = await response.Content.ReadFromJsonAsync<List<SessionDto>>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.Equal(2, body.Count);
-        
-        _client.DefaultRequestHeaders.Remove("X-Session-Id");
     }
 
     [Fact]

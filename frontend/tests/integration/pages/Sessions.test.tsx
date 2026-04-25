@@ -11,26 +11,26 @@ const handlers = [
   http.get(`${API_URL}/auth/sessions`, async () => {
     return HttpResponse.json([
       {
-        SessionId: "1234",
-        UserType: 0,
-        CreatedAt: new Date().toISOString(),
-        LastActiveAt: new Date().toISOString(),
-        ExpiresAt: new Date().toISOString(),
-        SessionState: 0,
-        IsCurrent: true,
-        DeviceInfo: "Device1Info",
-        IpAddress: "Ip1Address"
+        sessionId: "1234",
+        userType: 0,
+        createdAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+        expiresAt: new Date().toISOString(),
+        sessionState: 0,
+        isCurrent: true,
+        deviceInfo: "Device1Info",
+        ipAddress: "Ip1Address"
       },
       {
-        SessionId: "1235",
-        UserType: 0,
-        CreatedAt: new Date().toISOString(),
-        LastActiveAt: new Date().toISOString(),
-        ExpiresAt: new Date().toISOString(),
-        SessionState: 0,
-        IsCurrent: false,
-        DeviceInfo: "Device2Info",
-        IpAddress: "Ip2Address"
+        sessionId: "1235",
+        userType: 0,
+        createdAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+        expiresAt: new Date().toISOString(),
+        sessionState: 0,
+        isCurrent: false,
+        deviceInfo: "Device2Info",
+        ipAddress: "Ip2Address"
       }
     ], {status: 200})
   }),

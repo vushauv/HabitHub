@@ -121,19 +121,19 @@ export default function JoinTeam() {
                 to="/"
                 className="button button-secondary join-team-nav-button"
               >
-                home
+                Home
               </Link>
 
               <Link
                 to="/teams-member"
                 className="button button-secondary join-team-nav-button"
               >
-                teams
+                Teams
               </Link>
             </div>
 
             <div className="content-centered join-team-header">
-              <h1 className="title join-team-title">join a new team</h1>
+              <h1 className="title join-team-title">Join A New Team</h1>
             </div>
 
             {serverError ? (
@@ -149,7 +149,7 @@ export default function JoinTeam() {
             <form className="join-team-form" onSubmit={handleSubmit} noValidate>
               <div className="form-field join-team-code-row">
                 <label className="form-label join-team-label" htmlFor="code">
-                  invite code
+                  Invite Code
                 </label>
 
                 <input
@@ -185,7 +185,7 @@ export default function JoinTeam() {
                 type="submit"
                 disabled={loading || !formIsValid}
               >
-                {loading ? "submitting..." : "submit"}
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </form>
           </div>

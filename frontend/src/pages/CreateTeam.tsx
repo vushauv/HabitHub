@@ -114,19 +114,19 @@ export default function CreateTeam() {
                 to="/"
                 className="button button-secondary create-team-nav-button"
               >
-                home
+                Home
               </Link>
 
               <Link
                 to="/teams-creator"
                 className="button button-secondary create-team-nav-button"
               >
-                teams
+                Teams
               </Link>
             </div>
 
             <div className="content-centered create-team-header">
-              <h1 className="title create-team-title">create a team</h1>
+              <h1 className="title create-team-title">Create a team</h1>
             </div>
 
             {serverError ? (
@@ -138,7 +138,7 @@ export default function CreateTeam() {
             <form className="create-team-form" onSubmit={handleSubmit} noValidate>
               <div className="form-field create-team-name-row">
                 <label className="form-label create-team-label" htmlFor="name">
-                  name
+                  Name
                 </label>
 
                 <input
@@ -149,7 +149,7 @@ export default function CreateTeam() {
                   value={form.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="book enjoyers"
+                  placeholder="Book Enjoyers"
                   autoComplete="off"
                   minLength={3}
                   maxLength={100}
@@ -174,7 +174,7 @@ export default function CreateTeam() {
                 type="submit"
                 disabled={loading || !formIsValid}
               >
-                {loading ? "submitting..." : "submit"}
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </form>
           </div>

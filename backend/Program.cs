@@ -58,14 +58,22 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    app.Logger.LogInformation("Applying database migrations");
     db.Database.Migrate();
+    app.Logger.LogInformation("Database migrations applied");
+
     var sessionRepository = scope.ServiceProvider.GetRequiredService<ISessionRepository>();
+    app.Logger.LogInformation("Expiring past-due sessions");
     await sessionRepository.ExpirePastDueSessionsAsync();
+
     var inviteCodeRepository = scope.ServiceProvider.GetRequiredService<IInviteCodeRepository>();
+    app.Logger.LogInformation("Expiring past-due invite codes");
     await inviteCodeRepository.ExpirePastDueInviteCodesAsync();
 
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
+        app.Logger.LogInformation("Seeding {Environment} data", app.Environment.EnvironmentName);
         await SeedData.SeedUsersAsync(db);
         await SeedData.SeedTeamsAsync(db);
     }
@@ -89,6 +97,7 @@ app.UseHttpsRedirection();
 app.UseMiddleware<SessionAuthenticationMiddleware>();
 app.MapControllers();
 
+app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);
 app.Run();
 
 public partial class Program {}

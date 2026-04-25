@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Repositories;
 
-public class TeamMemberRepository(AppDbContext db) : ITeamMemberRepository
+public class TeamMemberRepository(AppDbContext db, ILogger<TeamMemberRepository> logger) : ITeamMemberRepository
 {
-    public async Task<TeamMember?> GetMemberByEmailAsync(string email) => 
+    public async Task<TeamMember?> GetMemberByEmailAsync(string email) =>
         await db.TeamMembers.SingleOrDefaultAsync(m => m.Email == email);
 
     public async Task<TeamMember?> GetMemberByIdAsync(Guid memberId) =>
@@ -18,24 +18,35 @@ public class TeamMemberRepository(AppDbContext db) : ITeamMemberRepository
     {
         db.TeamMembers.Add(member);
         await db.SaveChangesAsync();
+        logger.LogInformation("Created team member {MemberId}", member.MemberId);
         return member;
     }
     public async Task UpdatePasswordAsync(Guid memberId, string newPasswordHash)
     {
         TeamMember? member = await db.TeamMembers.FindAsync(memberId);
-        if (member == null) return;
+        if (member == null)
+        {
+            logger.LogWarning("Update password skipped, member {MemberId} not found", memberId);
+            return;
+        }
 
         member.PasswordHash = newPasswordHash;
         await db.SaveChangesAsync();
+        logger.LogInformation("Updated password for member {MemberId}", memberId);
     }
 
     public async Task ChangeEmailAsync(Guid memberId, string newEmail)
     {
         TeamMember? member = await db.TeamMembers.FindAsync(memberId);
-        if (member == null) return;
+        if (member == null)
+        {
+            logger.LogWarning("Change email skipped, member {MemberId} not found", memberId);
+            return;
+        }
 
         member.Email = newEmail;
         await db.SaveChangesAsync();
+        logger.LogInformation("Changed email for member {MemberId}", memberId);
     }
 
     public async Task<bool> EmailAlreadyExistsAsync(string email) =>

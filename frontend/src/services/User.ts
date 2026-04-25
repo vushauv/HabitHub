@@ -1,3 +1,5 @@
+import type { UserTypeDto } from "./dtos";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export type AccountType = "Creator" | "Member";
@@ -71,8 +73,12 @@ export function validateUserType(userType: AccountType): string | undefined {
 }
 
 
-export function mapUserTypeToEnum(userType: AccountType): number {
+export function mapUserTypeToEnum(userType: AccountType): UserTypeDto {
   return userType === "Creator" ? 0 : 1;
+}
+
+export function mapUserTypeFromEnum(userType: UserTypeDto): AccountType {
+  return userType === 0 ? "Creator" : "Member";
 }
 
 export function validateTimezone(timezone: string): string | undefined {

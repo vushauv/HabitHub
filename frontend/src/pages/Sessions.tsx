@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./Sessions.css";
 import "../App.css";
+import type { SessionDto } from "../services/dtos";
 import { API_BASE_URL, type AccountType } from "../services/User";
 
 type StoredAuth = {
@@ -9,36 +10,6 @@ type StoredAuth = {
   userType?: AccountType;
   sessionId?: string | null;
   userId?: string | null;
-};
-
-type SessionState = "Active" | "Invalidated" | "Expired";
-
-type RawSessionDto = {
-  sessionId?: string | null;
-  sessionID?: string | null;
-  SessionId?: string | null;
-  SessionID?: string | null;
-  deviceType?: string | null;
-  deviceInfo?: string | null;
-  DeviceType?: string | null;
-  DeviceInfo?: string | null;
-  ipAddress?: string | null;
-  IpAddress?: string | null;
-  IPAddress?: string | null;
-  createdAt?: string | null;
-  CreatedAt?: string | null;
-  state?: SessionState | string | null;
-  sessionState?: SessionState | string | null;
-  State?: SessionState | string | null;
-  SessionState?: SessionState | string | null;
-};
-
-type ActiveSessionDto = {
-  sessionID: string;
-  deviceType: string;
-  ipAddress: string;
-  createdAt: string;
-  state: SessionState;
 };
 
 type SessionsErrorCode = "auth-required" | "not-found" | "unknown";
@@ -105,38 +76,10 @@ function getFriendlyErrorMessage(errorCode: SessionsErrorCode): string {
   }
 }
 
-function normalizeSession(raw: RawSessionDto): ActiveSessionDto {
-  const rawState =
-    raw.state ?? raw.sessionState ?? raw.State ?? raw.SessionState ?? "Active";
-
-  const normalizedState =
-    rawState === "Invalidated" || rawState === "Expired" || rawState === "Active"
-      ? rawState
-      : "Active";
-
-  return {
-    sessionID:
-      raw.sessionId ??
-      raw.sessionID ??
-      raw.SessionId ??
-      raw.SessionID ??
-      "",
-    deviceType:
-      raw.deviceType ??
-      raw.deviceInfo ??
-      raw.DeviceType ??
-      raw.DeviceInfo ??
-      "Unknown device",
-    ipAddress: raw.ipAddress ?? raw.IpAddress ?? raw.IPAddress ?? "Unknown IP",
-    createdAt: raw.createdAt ?? raw.CreatedAt ?? "",
-    state: normalizedState,
-  };
-}
-
 export default function Sessions() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [sessions, setSessions] = useState<ActiveSessionDto[]>([]);
+  const [sessions, setSessions] = useState<SessionDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [pendingSessionID, setPendingSessionID] = useState<string | null>(null);
@@ -186,18 +129,14 @@ export default function Sessions() {
           throw new Error(getFriendlyErrorMessage(errorCode));
         }
 
-        const rawData = (await response.json()) as RawSessionDto[];
+        const rawData = (await response.json()) as SessionDto[];
 
         if (!isMounted) {
           return;
         }
 
-        const normalizedSessions = rawData
-          .map(normalizeSession)
-          .filter((session) => session.sessionID);
-
-        const activeSessions = normalizedSessions.filter(
-          (session) => session.state === "Active",
+        const activeSessions = rawData.filter(
+          (session) => session.sessionState === 0,
         );
 
         setSessions(activeSessions);
@@ -266,7 +205,7 @@ export default function Sessions() {
       window.location.reload();
 
       setSessions((currentSessions) =>
-        currentSessions.filter((session) => session.sessionID !== sessionID),
+        currentSessions.filter((session) => session.sessionId !== sessionID),
       );
     } catch (error) {
       const message =
@@ -327,21 +266,25 @@ export default function Sessions() {
             ) : (
               <section className="sessions-list" aria-label="Active sessions list">
                 {sessions.map((session) => (
-                  <article key={session.sessionID} className="session-item">
+                  <article key={session.sessionId} className="session-item">
                     <div className="session-item-main">
                       <div className="session-item-row">
                         <span className="session-label">Session ID</span>
-                        <span className="session-value">{session.sessionID}</span>
+                        <span className="session-value">{session.sessionId}</span>
                       </div>
 
                       <div className="session-item-row">
                         <span className="session-label">Device type</span>
-                        <span className="session-value">{session.deviceType}</span>
+                        <span className="session-value">
+                          {session.deviceInfo ?? "Unknown device"}
+                        </span>
                       </div>
 
                       <div className="session-item-row">
                         <span className="session-label">IP address</span>
-                        <span className="session-value">{session.ipAddress}</span>
+                        <span className="session-value">
+                          {session.ipAddress ?? "Unknown IP"}
+                        </span>
                       </div>
 
                       <div className="session-item-row">
@@ -356,10 +299,10 @@ export default function Sessions() {
                       <button
                         type="button"
                         className="button button-primary session-invalidate-button"
-                        onClick={() => void handleInvalidateSession(session.sessionID)}
-                        disabled={pendingSessionID === session.sessionID}
+                        onClick={() => void handleInvalidateSession(session.sessionId)}
+                        disabled={pendingSessionID === session.sessionId}
                       >
-                        {pendingSessionID === session.sessionID
+                        {pendingSessionID === session.sessionId
                           ? "Invalidating..."
                           : "Invalidate"}
                       </button>

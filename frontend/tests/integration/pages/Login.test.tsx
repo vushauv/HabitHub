@@ -15,17 +15,21 @@ const handlers = [
     }
     if (data.email.includes("creator")) {
       return HttpResponse.json({
-        userType: "creator",
-        creatorId: "abc-123",
-        name: "Test Creator",
+        user: {
+          userType: 0,
+          id: "abc-123",
+          name: "Test Creator",
+        },
         sessionId: "session-1",
       })
     }
     if (data.email.includes("member")) {
       return HttpResponse.json({
-        userType: "member",
-        memberId: "xyz-456",
-        name: "Test Member",
+        user: {
+          userType: 1,
+          id: "xyz-456",
+          name: "Test Member",
+        },
         sessionId: "session-2",
       })
     }

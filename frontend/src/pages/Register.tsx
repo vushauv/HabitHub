@@ -2,107 +2,17 @@ import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
 import "../App.css";
+import type { AuthResponseDto, RegisterRequestDto } from "../services/dtos";
 import {type RegisterForm} from "../services/Register.ts";
 import {validateForm, hasValidationErrors} from "../services/Register.ts"
-import {API_BASE_URL, type AccountType, TIMEZONE_OPTIONS, DEFAULT_TIMEZONE, mapUserTypeToEnum } from "../services/User.ts"
-
-type RegisterUserResponse = {
-  id?: string | null;
-  Id?: string | null;
-  userId?: string | null;
-  userID?: string | null;
-  UserId?: string | null;
-  UserID?: string | null;
-  memberId?: string | null;
-  memberID?: string | null;
-  MemberId?: string | null;
-  MemberID?: string | null;
-  creatorId?: string | null;
-  creatorID?: string | null;
-  CreatorId?: string | null;
-  CreatorID?: string | null;
-  userType?: string | number | null;
-  UserType?: string | number | null;
-  name?: string | null;
-  Name?: string | null;
-};
-
-type RegisterResponse = RegisterUserResponse & {
-  sessionId?: string | null;
-  sessionID?: string | null;
-  SessionId?: string | null;
-  SessionID?: string | null;
-  user?: RegisterUserResponse | null;
-  User?: RegisterUserResponse | null;
-};
-
-function resolveRegisterUser(data: RegisterResponse): RegisterUserResponse {
-  return data.user ?? data.User ?? data;
-}
-
-function resolveAuthenticatedUserType(
-  data: RegisterResponse,
-  fallback: AccountType,
-): AccountType {
-  const user = resolveRegisterUser(data);
-  const rawUserType = user.userType ?? user.UserType ?? data.userType ?? data.UserType;
-
-  if (
-    rawUserType === "creator" ||
-    rawUserType === "Creator" ||
-    rawUserType === 0
-  ) {
-    return "Creator";
-  }
-
-  if (
-    rawUserType === "member" ||
-    rawUserType === "Member" ||
-    rawUserType === 1
-  ) {
-    return "Member";
-  }
-
-  return fallback;
-}
-
-function resolveSessionId(data: RegisterResponse): string | null {
-  return (
-    data.sessionId ??
-    data.sessionID ??
-    data.SessionId ??
-    data.SessionID ??
-    null
-  );
-}
-
-function resolveUserId(data: RegisterResponse): string | null {
-  const user = resolveRegisterUser(data);
-
-  return (
-    user.id ??
-    user.Id ??
-    user.userId ??
-    user.userID ??
-    user.UserId ??
-    user.UserID ??
-    user.memberId ??
-    user.memberID ??
-    user.MemberId ??
-    user.MemberID ??
-    user.creatorId ??
-    user.creatorID ??
-    user.CreatorId ??
-    user.CreatorID ??
-    null
-  );
-}
-
-function resolveName(data: RegisterResponse, fallback: string): string {
-  const user = resolveRegisterUser(data);
-
-  return user.name ?? user.Name ?? fallback;
-}
+import {
+  API_BASE_URL,
+  DEFAULT_TIMEZONE,
+  TIMEZONE_OPTIONS,
+  type AccountType,
+  mapUserTypeFromEnum,
+  mapUserTypeToEnum,
+} from "../services/User.ts"
 
 
 
@@ -195,7 +105,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const payload = {
+      const payload: RegisterRequestDto = {
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
@@ -224,20 +134,18 @@ export default function Register() {
         throw new Error(responseText || `Registration failed (${response.status}).`);
       }
 
-      const data = (await response.json()) as RegisterResponse;
-      const authenticatedUserType = resolveAuthenticatedUserType(
-        data,
-        form.userType,
-      );
-      const sessionId = resolveSessionId(data);
-      const userId = resolveUserId(data);
-      const name = resolveName(data, form.name.trim());
+      const data = (await response.json()) as AuthResponseDto;
+      const sessionId = data.sessionId;
 
       if (!sessionId) {
         throw new Error(
           "Registration succeeded but no session id was returned by the server.",
         );
       }
+
+      const authenticatedUserType = mapUserTypeFromEnum(data.user.userType);
+      const userId = data.user.id;
+      const name = data.user.name;
 
       localStorage.setItem(
         "habithubAuth",

@@ -1,4 +1,17 @@
 import { API_BASE_URL, type AccountType } from "./User";
+import type {
+  CreateTeamRequestDto,
+  CreateTeamResponseDto,
+  InviteCodeDto,
+  JoinTeamRequestDto,
+  JoinTeamResponseDto,
+  MembershipStatusDto,
+  TeamDetailsDto,
+  TeamMemberDto as TeamMemberResponseDto,
+  TeamSummaryDto,
+} from "./dtos";
+
+export type { InviteCodeDto, TeamDetailsDto, TeamSummaryDto } from "./dtos";
 
 export type StoredAuth = {
   isLoggedIn?: boolean;
@@ -7,39 +20,15 @@ export type StoredAuth = {
   userId?: string | null;
 };
 
-export type TeamSummaryDto = {
-  teamId: string;
-  name: string;
-};
-
-export type TeamDetailsDto = {
-  teamId: string;
-  name: string;
-};
-
-export type InviteCodeDto = {
-  codeId: string;
-  code: string;
-  teamId: string;
-  expiryDate: string;
-};
-
 export type TeamMemberStatus = "Active" | "Kicked" | "Left";
 
-export type TeamMemberDto = {
-  memberId: string;
-  name: string;
-  email: string;
+export type TeamMemberDto = Omit<TeamMemberResponseDto, "status"> & {
   status: TeamMemberStatus;
 };
 
-export type CreateTeamForm = {
-  name: string;
-};
+export type CreateTeamForm = CreateTeamRequestDto;
 
-export type JoinTeamForm = {
-  code: string;
-};
+export type JoinTeamForm = JoinTeamRequestDto;
 
 export type CreateTeamErrors = {
   name?: string;
@@ -81,43 +70,6 @@ type RawErrorResponse = {
   message?: string | null;
   Error?: string | null;
   Message?: string | null;
-};
-
-type RawTeamSummaryDto = {
-  teamId?: string | null;
-  TeamId?: string | null;
-  teamID?: string | null;
-  TeamID?: string | null;
-  name?: string | null;
-  Name?: string | null;
-};
-
-type RawInviteCodeDto = {
-  codeId?: string | null;
-  CodeId?: string | null;
-  codeID?: string | null;
-  CodeID?: string | null;
-  code?: string | null;
-  Code?: string | null;
-  teamId?: string | null;
-  TeamId?: string | null;
-  teamID?: string | null;
-  TeamID?: string | null;
-  expiryDate?: string | null;
-  ExpiryDate?: string | null;
-};
-
-type RawTeamMemberDto = {
-  memberId?: string | null;
-  MemberId?: string | null;
-  memberID?: string | null;
-  MemberID?: string | null;
-  name?: string | null;
-  Name?: string | null;
-  email?: string | null;
-  Email?: string | null;
-  status?: TeamMemberStatus | string | number | null;
-  Status?: TeamMemberStatus | string | number | null;
 };
 
 export function getStoredAuth(): StoredAuth | null {
@@ -239,39 +191,33 @@ export function formatInviteExpiryDate(dateString: string): string {
 }
 
 export async function getTeams(auth: StoredAuth | null): Promise<TeamSummaryDto[]> {
-  const response = await requestJson<RawTeamSummaryDto[]>("/teams", {
+  return requestJson<TeamSummaryDto[]>("/teams", {
     method: "GET",
     headers: getAuthHeaders(auth),
   });
-
-  return response.map(normalizeTeamSummary).filter((team) => team.teamId);
 }
 
 export async function getTeam(
   auth: StoredAuth | null,
   teamId: string,
 ): Promise<TeamDetailsDto> {
-  const response = await requestJson<RawTeamSummaryDto>(`/teams/${teamId}`, {
+  return requestJson<TeamDetailsDto>(`/teams/${teamId}`, {
     method: "GET",
     headers: getAuthHeaders(auth),
   });
-
-  return normalizeTeamSummary(response);
 }
 
 export async function createTeam(
   auth: StoredAuth | null,
   form: CreateTeamForm,
-): Promise<TeamDetailsDto> {
-  const response = await requestJson<RawTeamSummaryDto>("/teams", {
+): Promise<CreateTeamResponseDto> {
+  return requestJson<CreateTeamResponseDto>("/teams", {
     method: "POST",
     headers: getAuthHeaders(auth),
     body: JSON.stringify({
       name: form.name.trim(),
     }),
   });
-
-  return normalizeTeamSummary(response);
 }
 
 export async function deleteTeam(
@@ -288,7 +234,7 @@ export async function getTeamMembers(
   auth: StoredAuth | null,
   teamId: string,
 ): Promise<TeamMemberDto[]> {
-  const response = await requestJson<RawTeamMemberDto[]>(
+  const response = await requestJson<TeamMemberResponseDto[]>(
     `/teams/${teamId}/members`,
     {
       method: "GET",
@@ -296,7 +242,7 @@ export async function getTeamMembers(
     },
   );
 
-  return response.map(normalizeTeamMember).filter((member) => member.memberId);
+  return response.map(normalizeTeamMember);
 }
 
 export async function kickUser(
@@ -324,30 +270,26 @@ export async function getInviteCodes(
   auth: StoredAuth | null,
   teamId: string,
 ): Promise<InviteCodeDto[]> {
-  const response = await requestJson<RawInviteCodeDto[]>(
+  return requestJson<InviteCodeDto[]>(
     `/teams/${teamId}/invite-codes`,
     {
       method: "GET",
       headers: getAuthHeaders(auth),
     },
   );
-
-  return response.map(normalizeInviteCode).filter((code) => code.codeId);
 }
 
 export async function generateInviteCode(
   auth: StoredAuth | null,
   teamId: string,
 ): Promise<InviteCodeDto> {
-  const response = await requestJson<RawInviteCodeDto>(
+  return requestJson<InviteCodeDto>(
     `/teams/${teamId}/invite-codes`,
     {
       method: "POST",
       headers: getAuthHeaders(auth),
     },
   );
-
-  return normalizeInviteCode(response);
 }
 
 export async function invalidateInviteCode(
@@ -364,16 +306,14 @@ export async function invalidateInviteCode(
 export async function joinTeam(
   auth: StoredAuth | null,
   form: JoinTeamForm,
-): Promise<TeamDetailsDto> {
-  const response = await requestJson<RawTeamSummaryDto>("/teams/join", {
+): Promise<JoinTeamResponseDto> {
+  return requestJson<JoinTeamResponseDto>("/teams/join", {
     method: "POST",
     headers: getAuthHeaders(auth),
     body: JSON.stringify({
       code: form.code.trim(),
     }),
   });
-
-  return normalizeTeamSummary(response);
 }
 
 async function requestJson<T>(
@@ -449,46 +389,20 @@ function normalizeErrorCode(rawCode: string | null | undefined): TeamErrorCode {
     : "unknown";
 }
 
-function normalizeTeamSummary(raw: RawTeamSummaryDto): TeamSummaryDto {
+function normalizeTeamMember(raw: TeamMemberResponseDto): TeamMemberDto {
   return {
-    teamId: raw.teamId ?? raw.TeamId ?? raw.teamID ?? raw.TeamID ?? "",
-    name: raw.name ?? raw.Name ?? "Unnamed team",
+    ...raw,
+    status: normalizeMembershipStatus(raw.status),
   };
 }
 
-function normalizeInviteCode(raw: RawInviteCodeDto): InviteCodeDto {
-  return {
-    codeId: raw.codeId ?? raw.CodeId ?? raw.codeID ?? raw.CodeID ?? "",
-    code: raw.code ?? raw.Code ?? "",
-    teamId: raw.teamId ?? raw.TeamId ?? raw.teamID ?? raw.TeamID ?? "",
-    expiryDate: raw.expiryDate ?? raw.ExpiryDate ?? "",
-  };
-}
-
-function normalizeTeamMember(raw: RawTeamMemberDto): TeamMemberDto {
-  return {
-    memberId:
-      raw.memberId ?? raw.MemberId ?? raw.memberID ?? raw.MemberID ?? "",
-    name: raw.name ?? raw.Name ?? "Unknown",
-    email: raw.email ?? raw.Email ?? "Unknown",
-    status: normalizeMembershipStatus(raw.status ?? raw.Status),
-  };
-}
-
-function normalizeMembershipStatus(
-  status: TeamMemberStatus | string | number | null | undefined,
-): TeamMemberStatus {
-  if (status === "Active" || status === 0) {
-    return "Active";
+function normalizeMembershipStatus(status: MembershipStatusDto): TeamMemberStatus {
+  switch (status) {
+    case 1:
+      return "Kicked";
+    case 2:
+      return "Left";
+    default:
+      return "Active";
   }
-
-  if (status === "Kicked" || status === 1) {
-    return "Kicked";
-  }
-
-  if (status === "Left" || status === 2) {
-    return "Left";
-  }
-
-  return "Active";
 }

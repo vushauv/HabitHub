@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import "./ChangePassword.css";
 import "../App.css";
+import type { ChangePasswordRequestDto } from "../services/dtos";
 import {
   API_BASE_URL,
   validatePassword,
@@ -13,11 +14,6 @@ type StoredAuth = {
   userType?: AccountType;
   sessionId?: string | null;
   userId?: string | null;
-};
-
-type ChangePasswordForm = {
-  currentPassword: string;
-  newPassword: string;
 };
 
 type ChangePasswordErrors = {
@@ -66,7 +62,7 @@ function validateCurrentPassword(currentPassword: string): string | undefined {
 }
 
 function validateChangePasswordForm(
-  form: ChangePasswordForm,
+  form: ChangePasswordRequestDto,
 ): ChangePasswordErrors {
   return {
     currentPassword: validateCurrentPassword(form.currentPassword),
@@ -113,7 +109,7 @@ function getFriendlyErrorMessage(errorCode: ChangePasswordErrorCode): string {
 export default function ChangePassword() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [form, setForm] = useState<ChangePasswordForm>({
+  const [form, setForm] = useState<ChangePasswordRequestDto>({
     currentPassword: "",
     newPassword: "",
   });
@@ -168,13 +164,15 @@ export default function ChangePassword() {
     setLoading(true);
 
     try {
+      const payload: ChangePasswordRequestDto = {
+        currentPassword: form.currentPassword,
+        newPassword: form.newPassword,
+      };
+
       const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: "POST",
         headers: getAuthHeaders(auth),
-        body: JSON.stringify({
-          currentPassword: form.currentPassword,
-          newPassword: form.newPassword,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

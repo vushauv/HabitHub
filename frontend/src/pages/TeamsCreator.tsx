@@ -217,18 +217,18 @@ export default function TeamsCreator() {
                 to="/"
                 className="button button-secondary teams-creator-nav-button"
               >
-                home
+                Home
               </Link>
             </div>
 
             <div className="content-centered teams-creator-header">
-              <h1 className="title teams-creator-title">your teams</h1>
+              <h1 className="title teams-creator-title">Your Teams</h1>
 
               <Link
                 to="/create-team"
                 className="button button-primary teams-creator-create-button"
               >
-                create a new team
+                Create A New Team
               </Link>
             </div>
 
@@ -257,13 +257,13 @@ export default function TeamsCreator() {
                 </p>
               </div>
             ) : (
-              <section className="teams-creator-table" aria-label="your teams">
+              <section className="teams-creator-table" aria-label="Your teams">
                 <div className="teams-creator-table-row teams-creator-table-head">
-                  <span>name</span>
-                  <span>habits</span>
-                  <span>chat</span>
-                  <span>invite code</span>
-                  <span>members</span>
+                  <span>Name</span>
+                  <span>Habits</span>
+                  <span>Chat</span>
+                  <span>Invite code</span>
+                  <span>Members</span>
                   <span></span>
                 </div>
 
@@ -293,7 +293,7 @@ export default function TeamsCreator() {
                         className="button button-secondary teams-creator-row-button"
                         disabled
                       >
-                        show habits
+                        Show Habits
                       </button>
 
                       <button
@@ -301,7 +301,7 @@ export default function TeamsCreator() {
                         className="button button-secondary teams-creator-row-button"
                         disabled
                       >
-                        show chat
+                        Show Chat
                       </button>
 
                       <div className="teams-creator-code-cell">
@@ -312,7 +312,7 @@ export default function TeamsCreator() {
                             </span>
 
                             <span className="teams-creator-code-expiry">
-                              expires{" "}
+                              Expires{" "}
                               {formatInviteExpiryDate(
                                 currentInviteCode.expiryDate,
                               )}
@@ -329,12 +329,12 @@ export default function TeamsCreator() {
                               }
                               disabled={isInvalidating}
                             >
-                              {isInvalidating ? "invalidating..." : "invalidate"}
+                              {isInvalidating ? "Invalidating..." : "Invalidate"}
                             </button>
                           </>
                         ) : (
                           <span className="teams-creator-code-empty">
-                            no active code
+                            No Active Code
                           </span>
                         )}
 
@@ -344,7 +344,7 @@ export default function TeamsCreator() {
                           onClick={() => void handleGenerateInviteCode(team.teamId)}
                           disabled={isGenerating}
                         >
-                          {isGenerating ? "creating..." : "new code"}
+                          {isGenerating ? "Creating..." : "New code"}
                         </button>
                       </div>
 
@@ -354,7 +354,7 @@ export default function TeamsCreator() {
                         )}`}
                         className="button button-secondary teams-creator-row-button"
                       >
-                        show list
+                        Show List
                       </Link>
 
                       <button
@@ -363,7 +363,7 @@ export default function TeamsCreator() {
                         onClick={() => void handleDeleteTeam(team)}
                         disabled={isDeleting}
                       >
-                        {isDeleting ? "deleting..." : "delete team"}
+                        {isDeleting ? "Deleting..." : "Delete team"}
                       </button>
                     </article>
                   );

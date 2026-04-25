@@ -4,12 +4,14 @@ using Microsoft.Extensions.Hosting;
 
 namespace backend.BackgroundServices
 {
-    public class InviteCodeExpiryService(IServiceScopeFactory scopeFactory): BackgroundService
+    public class InviteCodeExpiryService(IServiceScopeFactory scopeFactory, ILogger<InviteCodeExpiryService> logger): BackgroundService
     {
         private static readonly TimeSpan Time = TimeSpan.FromMinutes(5);
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            logger.LogInformation("InviteCodeExpiryService started, interval {IntervalMinutes}m", Time.TotalMinutes);
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -21,11 +23,13 @@ namespace backend.BackgroundServices
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine($"InviteCodeExpiryService error: {ex.Message}");
+                    logger.LogError(ex, "InviteCodeExpiryService cycle failed");
                 }
 
                 await Task.Delay(Time, cancellationToken);
             }
+
+            logger.LogInformation("InviteCodeExpiryService stopped");
         }
     }
 }

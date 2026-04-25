@@ -60,9 +60,6 @@ public class AuthMeEndpointTests
         // Get /auth/me
         var response = await _client.GetAsync("/auth/me", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-        // Remove session header
-        _client.DefaultRequestHeaders.Remove("X-Session-Id");
 
         // Read the body and ensure that the password is not there
         var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);

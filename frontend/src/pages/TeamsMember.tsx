@@ -147,7 +147,7 @@ export default function TeamsMember() {
                 to="/join-team"
                 className="button button-primary teams-member-join-button"
               >
-                Join A New Team
+                Join a New Team
               </Link>
             </div>
 

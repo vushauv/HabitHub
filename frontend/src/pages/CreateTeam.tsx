@@ -126,7 +126,7 @@ export default function CreateTeam() {
             </div>
 
             <div className="content-centered create-team-header">
-              <h1 className="title create-team-title">Create a team</h1>
+              <h1 className="title create-team-title">Create a Team</h1>
             </div>
 
             {serverError ? (

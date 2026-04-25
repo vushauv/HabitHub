@@ -133,7 +133,7 @@ export default function JoinTeam() {
             </div>
 
             <div className="content-centered join-team-header">
-              <h1 className="title join-team-title">Join A New Team</h1>
+              <h1 className="title join-team-title">Join a New Team</h1>
             </div>
 
             {serverError ? (

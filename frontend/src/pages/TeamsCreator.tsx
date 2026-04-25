@@ -228,7 +228,7 @@ export default function TeamsCreator() {
                 to="/create-team"
                 className="button button-primary teams-creator-create-button"
               >
-                Create A New Team
+                Create a New Team
               </Link>
             </div>
 

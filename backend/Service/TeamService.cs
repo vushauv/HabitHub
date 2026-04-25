@@ -12,7 +12,8 @@ namespace backend.Service
         ITeamMemberRepository members,
         IMembershipRepository memberships,
         ITeamCreatorRepository creators,
-        IInviteCodeRepository inviteCodes
+        IInviteCodeRepository inviteCodes,
+        ILogger<TeamService> logger
         ): ITeamService
     {
         public async Task<CreateTeamResponseDto> CreateTeam(Guid userId, CreateTeamRequestDto request)
@@ -23,7 +24,10 @@ namespace backend.Service
             
             TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
             if (creator == null)
+            {
+                logger.LogWarning("Create team rejected: creator {UserId} not found", userId);
                 throw new ForbiddenException();
+            }
 
             HabitTeam team = new HabitTeam
             {
@@ -33,6 +37,7 @@ namespace backend.Service
             };
 
             HabitTeam createdTeam = await habitTeams.CreateHabitTeamAsync(team);
+            logger.LogInformation("Created team {TeamId} for creator {CreatorId}", createdTeam.TeamId, creator.CreatorId);
             return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
         }
 
@@ -40,11 +45,17 @@ namespace backend.Service
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
+            {
+                logger.LogWarning("Generate invite code rejected: team {TeamId} not found", teamId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(teamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Generate invite code rejected: user {UserId} is not owner of team {TeamId}", userId, teamId);
                 throw new ForbiddenException();
+            }
 
             await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId);
 
@@ -58,6 +69,7 @@ namespace backend.Service
             };
 
             InviteCode createdInviteCode = await inviteCodes.CreateInviteCodeAsync(inviteCode);
+            logger.LogInformation("Generated invite code {CodeId} for team {TeamId}", createdInviteCode.CodeId, team.TeamId);
 
             return new InviteCodeDto(
                 createdInviteCode.CodeId,
@@ -71,29 +83,46 @@ namespace backend.Service
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
+            {
+                logger.LogWarning("Invalidate invite code rejected: team {TeamId} not found", teamId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(teamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Invalidate invite code rejected: user {UserId} is not owner of team {TeamId}", userId, teamId);
                 throw new ForbiddenException();
+            }
 
             InviteCode? inviteCode = await inviteCodes.GetInviteCodeByIdAsync(codeId);
             if (inviteCode == null || inviteCode.TeamId != teamId)
+            {
+                logger.LogWarning("Invalidate invite code rejected: code {CodeId} not found in team {TeamId}", codeId, teamId);
                 throw new NotFoundException();
+            }
 
             if (inviteCode.Status == CodeStatus.Active && inviteCode.ExpiryDate <= DateTime.UtcNow)
             {
                 await inviteCodes.UpdateInviteCodeStatusAsync(inviteCode.CodeId, CodeStatus.Expired);
+                logger.LogWarning("Invalidate invite code rejected: code {CodeId} was active but already expired", codeId);
                 throw new ConflictException(errorCode: "code-expired", "The invite code is expired.");
             }
 
             if(inviteCode.Status == CodeStatus.Expired)
+            {
+                logger.LogWarning("Invalidate invite code rejected: code {CodeId} already expired", codeId);
                 throw new ConflictException(errorCode: "code-expired", "The invite code is expired.");
+            }
 
             if (inviteCode.Status == CodeStatus.Invalid)
+            {
+                logger.LogWarning("Invalidate invite code rejected: code {CodeId} already invalid", codeId);
                 throw new ConflictException("code-invalid", "The invite code is invalid.");
+            }
 
             await inviteCodes.UpdateInviteCodeStatusAsync(inviteCode.CodeId, CodeStatus.Invalid);
+            logger.LogInformation("Invalidated invite code {CodeId} for team {TeamId} by creator {UserId}", codeId, teamId, userId);
         }
 
         public async Task<JoinTeamResponseDto> JoinTeam(Guid userId, JoinTeamRequestDto request)
@@ -102,31 +131,50 @@ namespace backend.Service
 
             InviteCode? inviteCode = await inviteCodes.GetInviteCodeByCodeAsync(codeValue);
             if (inviteCode == null)
+            {
+                logger.LogWarning("Join team rejected: invite code not found for member {UserId}", userId);
                 throw new NotFoundException("code-not-found", "Invite code not found");
+            }
 
             if (inviteCode.Status == CodeStatus.Active && inviteCode.ExpiryDate <= DateTime.UtcNow)
             {
                 await inviteCodes.UpdateInviteCodeStatusAsync(inviteCode.CodeId, CodeStatus.Expired);
+                logger.LogWarning("Join team rejected: invite code {CodeId} was active but already expired", inviteCode.CodeId);
                 throw new ConflictException("code-expired", "Invite code has expired.");
             }
 
             if (inviteCode.Status == CodeStatus.Expired)
+            {
+                logger.LogWarning("Join team rejected: invite code {CodeId} is expired", inviteCode.CodeId);
                 throw new ConflictException("code-expired", "Invite code has expired.");
+            }
 
             if (inviteCode.Status == CodeStatus.Invalid)
+            {
+                logger.LogWarning("Join team rejected: invite code {CodeId} is invalid", inviteCode.CodeId);
                 throw new ConflictException("code-invalid", "Invite code is invalid.");
+            }
 
             HabitTeam? habitTeam = await habitTeams.GetHabitTeamByIdAsync(inviteCode.TeamId);
             if (habitTeam == null)
-                throw new NotFoundException(); 
+            {
+                logger.LogWarning("Join team rejected: team {TeamId} not found for invite code {CodeId}", inviteCode.TeamId, inviteCode.CodeId);
+                throw new NotFoundException();
+            }
 
             TeamMember? member = await members.GetMemberByIdAsync(userId);
             if (member == null)
+            {
+                logger.LogWarning("Join team rejected: member {UserId} not found", userId);
                 throw new ForbiddenException();
+            }
 
             Membership? membership = await memberships.GetMembershipByTeamIdAndMemberIdAsync(inviteCode.TeamId, member.MemberId);
             if (membership != null && membership.Status == MembershipStatus.Active)
+            {
+                logger.LogWarning("Join team rejected: member {MemberId} already active in team {TeamId}", member.MemberId, inviteCode.TeamId);
                 throw new ConflictException("already-member", "User is already a member of this team.");
+            }
 
             if(membership == null)
             {
@@ -143,48 +191,73 @@ namespace backend.Service
             {
                 await memberships.UpdateMembershipStatusAsync(inviteCode.TeamId, member.MemberId, MembershipStatus.Active);
             }
+            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}", member.MemberId, inviteCode.TeamId, inviteCode.CodeId);
             return new JoinTeamResponseDto(inviteCode.TeamId, member.MemberId);
         }
         public async Task KickUser(Guid userId, Guid teamId, Guid memberId)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
+            {
+                logger.LogWarning("Kick user rejected: team {TeamId} not found", teamId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Kick user rejected: user {UserId} is not owner of team {TeamId}", userId, teamId);
                 throw new ForbiddenException();
+            }
 
             bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, memberId);
             if (!isActiveMembership)
+            {
+                logger.LogWarning("Kick user rejected: member {MemberId} not active in team {TeamId}", memberId, teamId);
                 throw new NotFoundException();
+            }
 
             await memberships.UpdateMembershipStatusAsync(team.TeamId, memberId, MembershipStatus.Kicked);
+            logger.LogInformation("Kicked member {MemberId} from team {TeamId} by creator {UserId}", memberId, teamId, userId);
         }
         public async Task LeaveTeam(Guid userId, Guid teamId)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
+            {
+                logger.LogWarning("Leave team rejected: team {TeamId} not found", teamId);
                 throw new NotFoundException();
+            }
 
             bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, userId);
             if (!isActiveMembership)
+            {
+                logger.LogWarning("Leave team rejected: member {UserId} not active in team {TeamId}", userId, teamId);
                 throw new NotFoundException();
+            }
 
             await memberships.UpdateMembershipStatusAsync(team.TeamId, userId, MembershipStatus.Left);
+            logger.LogInformation("Member {UserId} left team {TeamId}", userId, teamId);
         }
         public async Task DeleteTeam(Guid userId, Guid teamId)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
+            {
+                logger.LogWarning("Delete team rejected: team {TeamId} not found", teamId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Delete team rejected: user {UserId} is not owner of team {TeamId}", userId, teamId);
                 throw new ForbiddenException();
+            }
 
             await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId); //TODO: Discuss, not in sequence but i believe useful
             await habitTeams.DeleteHabitTeamAsync(team.TeamId);
+            logger.LogInformation("Deleted team {TeamId} by creator {UserId}", teamId, userId);
         }
         public async Task<List<TeamSummaryDto>> GetTeams(Guid userId, UserType userType)
         {

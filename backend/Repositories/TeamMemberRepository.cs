@@ -11,7 +11,10 @@ public class TeamMemberRepository(AppDbContext db) : ITeamMemberRepository
 
     public async Task<TeamMember?> GetMemberByIdAsync(Guid memberId) =>
         await db.TeamMembers.FindAsync(memberId);
-    public async Task<TeamMember?> CreateMemberAsync(TeamMember member)
+    public async Task<List<TeamMember>> GetMembersByIdsAsync(List<Guid> memberIds) =>
+        await db.TeamMembers.Where(m => memberIds.Contains(m.MemberId)).ToListAsync();
+
+    public async Task<TeamMember> CreateMemberAsync(TeamMember member)
     {
         db.TeamMembers.Add(member);
         await db.SaveChangesAsync();

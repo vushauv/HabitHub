@@ -8,6 +8,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TeamCreator> TeamCreators => Set<TeamCreator>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
     public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<HabitTeam> HabitTeams => Set<HabitTeam>();
+    public DbSet<Membership> Memberships => Set<Membership>();
+    public DbSet<InviteCode> InviteCodes => Set<InviteCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +42,55 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.LastActiveAt).IsRequired();
             e.Property(s => s.ExpiresAt).IsRequired();
             e.Property(s => s.SessionState).IsRequired();
+        });
+        modelBuilder.Entity<HabitTeam>(e =>
+        {
+           e.HasKey(t => t.TeamId);
+           e.Property(t => t.Name).IsRequired().HasMaxLength(256);
+           e.Property(t => t.CreatorId).IsRequired();
+
+           e.HasOne(t => t.Creator)
+            .WithMany(c => c.Teams)
+            .HasForeignKey(t => t.CreatorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+           e.HasIndex(t => t.CreatorId);
+        });
+        modelBuilder.Entity<Membership>(e =>
+        {
+            e.HasKey(m => m.MembershipId);
+            e.Property(m => m.TeamId).IsRequired();
+            e.Property(m => m.MemberId).IsRequired();
+            e.Property(m => m.Status).IsRequired();
+
+            e.HasOne(m => m.Team)
+            .WithMany(t => t.Memberships)
+            .HasForeignKey(m => m.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(m => m.Member)
+            .WithMany(mem => mem.Memberships)
+            .HasForeignKey(m => m.MemberId)
+            .OnDelete(DeleteBehavior.Restrict); // we don't specify account deletion
+
+            e.HasIndex(m => new {m.TeamId, m.MemberId}).IsUnique();
+        });
+        modelBuilder.Entity<InviteCode>(e =>
+        {
+           e.HasKey(i => i.CodeId);
+           e.Property(i => i.Code).IsRequired().HasMaxLength(64);
+           e.Property(i => i.TeamId).IsRequired();
+           e.Property(i => i.ExpiryDate).IsRequired();
+           e.Property(i => i.Status).IsRequired(); 
+
+
+           e.HasOne(m => m.Team)
+            .WithMany(t => t.InviteCodes)
+            .HasForeignKey(m => m.TeamId)
+            .OnDelete(DeleteBehavior.Cascade); // what delete?
+
+           e.HasIndex(i => i.Code).IsUnique();
+           e.HasIndex(i => i.TeamId);
         });
     }
 }

@@ -7,7 +7,7 @@ namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.DatabaseInitializer>
+public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.DatabaseInitializer>
 {
     [Collection("Web app collection")]
     public class DatabaseInitializer
@@ -64,7 +64,7 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
     
     private readonly HttpClient _client;
 
-    public AuthLoginEndpointsTests(TestWebAppFactory factory)
+    public AuthLoginEndpointTests(TestWebAppFactory factory)
     {
         _client = factory.CreateClient();
     }
@@ -79,10 +79,10 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
             email = $"infra-test-login-type{userType}@example.com",
             password = "Test1234!",
             userType
-        });
+        }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.NotNull(body.User);
         Assert.Equal($"infra-test-login-type{userType}@example.com", body.User.Email);
@@ -99,10 +99,10 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
             email = $"infra-test-login-shared@example.com",
             password = "Test1234!",
             userType
-        });
+        }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.NotNull(body.User);
         Assert.Equal("infra-test-login-shared@example.com", body.User.Email);
@@ -119,12 +119,12 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
             email = $"infra-test-login-type{userTypeA}@example.com",
             password = "Test1234!",
             userType = userTypeB
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact(Skip = "TODO: Fix code to pass test")]
+    [Fact]
     public async Task Login_WithMissingUserType_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/auth/login", new
@@ -132,7 +132,7 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
             email = "infra-test-login-shared@example.com",
             password = "Test1234!",
             //userType = 0  // UserType.Creator
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -147,7 +147,7 @@ public class AuthLoginEndpointsTests : IClassFixture<AuthLoginEndpointsTests.Dat
             email = field != "email" ? "infra-test-login-shared@example.com" : null,
             password = field != "password" ? "Test1234!" : null,
             userType = 0  // UserType.Creator
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }

@@ -6,11 +6,11 @@ namespace backend.Tests.Integration.Auth;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class AuthRegisterEndpointsTests
+public class AuthRegisterEndpointTests
 {
     private readonly HttpClient _client;
 
-    public AuthRegisterEndpointsTests(TestWebAppFactory factory)
+    public AuthRegisterEndpointTests(TestWebAppFactory factory)
     {
         _client = factory.CreateClient();
     }
@@ -25,7 +25,7 @@ public class AuthRegisterEndpointsTests
             password = "Test1234!",
             timezone = "UTC",
             userType = 0  // UserType.Creator
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -36,12 +36,12 @@ public class AuthRegisterEndpointsTests
         var response = await _client.PostAsJsonAsync("/auth/register", new
         {
             invalidField = "Test",
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact(Skip = "TODO: Fix code to pass test")]
+    [Fact]
     public async Task Register_WithMissingUserType_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/auth/register", new
@@ -51,7 +51,7 @@ public class AuthRegisterEndpointsTests
             password = "Test1234!",
             timezone = "UTC",
             //userType = 0  // UserType.Creator
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -70,7 +70,7 @@ public class AuthRegisterEndpointsTests
             password = field != "password" ? "Test1234!" : null,
             timezone = field != "timezone" ? "UTC" : null,
             userType = 0  // UserType.Creator
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -85,7 +85,7 @@ public class AuthRegisterEndpointsTests
             password = "Test1234!",
             timezone = "UTC",
             userType = 0  // UserType.Creator
-        });
+        }, TestContext.Current.CancellationToken);
         var response2 = await _client.PostAsJsonAsync("/auth/register", new
         {
             name = "Test User",
@@ -93,7 +93,7 @@ public class AuthRegisterEndpointsTests
             password = "Test1234!",
             timezone = "UTC",
             userType = 1  // UserType.Member
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response1.StatusCode);
         Assert.Equal(HttpStatusCode.Created, response2.StatusCode);
@@ -111,7 +111,7 @@ public class AuthRegisterEndpointsTests
             password = "Test1234!",
             timezone = "UTC",
             userType = userType
-        });
+        }, TestContext.Current.CancellationToken);
         var response2 = await _client.PostAsJsonAsync("/auth/register", new
         {
             name = "Test User",
@@ -119,7 +119,7 @@ public class AuthRegisterEndpointsTests
             password = "Test1234!",
             timezone = "UTC",
             userType = userType
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response1.StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);

@@ -6,11 +6,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using backend.Auth;
 using backend.BackgroundServices;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.SetMinimumLevel(LogLevel.Information);
-builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+builder.Host.UseSerilog((ctx, cfg) => cfg
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/backend-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        fileSizeLimitBytes: 50_000_000,
+        rollOnFileSizeLimit: true));
 
 builder.Configuration.AddEnvironmentVariables(prefix: "BACKEND__");
 builder.Services
@@ -70,6 +82,8 @@ app.UseCors(policy => policy
     .WithOrigins(settings.CorsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
     .AllowAnyHeader()
     .AllowAnyMethod());
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseMiddleware<SessionAuthenticationMiddleware>();

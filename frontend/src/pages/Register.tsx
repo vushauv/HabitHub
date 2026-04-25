@@ -145,7 +145,7 @@ export default function Register() {
 
       const authenticatedUserType = mapUserTypeFromEnum(data.user.userType);
       const userId = data.user.id;
-      const name = data.user.name || form.name.trim();
+      const name = data.user.name;
 
       localStorage.setItem(
         "habithubAuth",

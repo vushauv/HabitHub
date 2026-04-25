@@ -16,42 +16,19 @@ public class AuthChangeEmailEndpointTests
         _client = factory.CreateClient();
     }
 
-    private async Task RegisterUser(string email, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/register", new
-        {
-            name = "Test User",
-            email,
-            password = "Test1234!",
-            timezone = "UTC",
-            userType
-        });
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    }
-
-    private async Task<string> LogIn(string email, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/login", new
-        {
-            email,
-            password = "Test1234!",
-            userType
-        }, TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
-        Assert.NotNull(body);
-        return body.SessionId;
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
     public async Task ChangeEmail_ToUnusedEmail_Returns200_AndLoginWorks(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", userType);
-        var sessionId = await LogIn($"{uuid}@example.com", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-email", new
@@ -87,9 +64,20 @@ public class AuthChangeEmailEndpointTests
     {
         var uuid1 = Guid.NewGuid().ToString();
         var uuid2 = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid1}@example.com", userType);
-        await RegisterUser($"{uuid2}@example.com", userType);
-        var sessionId = await LogIn($"{uuid1}@example.com", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid1}@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
+        await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid2}@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-email", new
@@ -116,9 +104,20 @@ public class AuthChangeEmailEndpointTests
     public async Task ChangeEmail_ToEmailUsedByOtherUserType_Returns200_AndLoginWorks(int userTypeA, int userTypeB)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}-a@example.com", userTypeA);
-        await RegisterUser($"{uuid}-b@example.com", userTypeB);
-        var sessionId = await LogIn($"{uuid}-a@example.com", userTypeA);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}-a@example.com",
+            "Test1234!",
+            "UTC",
+            userTypeA);
+        await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}-b@example.com",
+            "Test1234!",
+            "UTC",
+            userTypeB);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-email", new
@@ -153,8 +152,13 @@ public class AuthChangeEmailEndpointTests
     public async Task ChangeEmail_WithWrongPassword_Returns401_AndEmailDoesNotChange(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", userType);
-        var sessionId = await LogIn($"{uuid}@example.com", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234!",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-email", new
@@ -181,8 +185,13 @@ public class AuthChangeEmailEndpointTests
     public async Task ChangeEmail_WithMissingField_Returns400_AndEmailDoesNotChange(string field)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", 0);
-        var sessionId = await LogIn($"{uuid}@example.com", 0);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234!",
+            "UTC",
+            0);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-email", new

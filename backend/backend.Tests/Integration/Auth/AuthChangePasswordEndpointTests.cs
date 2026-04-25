@@ -16,42 +16,19 @@ public class AuthChangePasswordEndpointTests
         _client = factory.CreateClient();
     }
 
-    private async Task RegisterUser(string email, string password, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/register", new
-        {
-            name = "Test User",
-            email,
-            password,
-            timezone = "UTC",
-            userType
-        });
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    }
-
-    private async Task<string> LogIn(string email, string password, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/login", new
-        {
-            email,
-            password,
-            userType
-        }, TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
-        Assert.NotNull(body);
-        return body.SessionId;
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
     public async Task ChangePassword_ToValidPassword_Returns200_AndLoginWorks(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", "Test1234", userType);
-        var sessionId = await LogIn($"{uuid}@example.com", "Test1234", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-password", new
@@ -86,8 +63,13 @@ public class AuthChangePasswordEndpointTests
     public async Task ChangePassword_WithWrongPassword_Returns401_AndPasswordDoesNotChange(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", "Test1234", userType);
-        var sessionId = await LogIn($"{uuid}@example.com", "Test1234", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-password", new
@@ -114,8 +96,13 @@ public class AuthChangePasswordEndpointTests
     public async Task ChangePassword_WithWeakPassword_Returns400_AndPasswordDoesNotChange(int userType)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", "Test1234", userType);
-        var sessionId = await LogIn($"{uuid}@example.com", "Test1234", userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234",
+            "UTC",
+            userType);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-password", new
@@ -142,8 +129,13 @@ public class AuthChangePasswordEndpointTests
     public async Task ChangePassword_WithMissingField_Returns400_AndPasswordDoesNotChange(string field)
     {
         var uuid = Guid.NewGuid().ToString();
-        await RegisterUser($"{uuid}@example.com", "Test1234", 0);
-        var sessionId = await LogIn($"{uuid}@example.com", "Test1234", 0);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            "Test User",
+            $"{uuid}@example.com",
+            "Test1234",
+            "UTC",
+            0);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-password", new

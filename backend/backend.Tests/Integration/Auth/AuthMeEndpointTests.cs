@@ -17,23 +17,6 @@ public class AuthMeEndpointTests
         _client = factory.CreateClient();
     }
 
-    private async Task<string> RegisterUser(string name, string email, string timezone, int userType)
-    {
-        var response = await _client.PostAsJsonAsync("/auth/register", new
-        {
-            name,
-            email,
-            password = "Test1234!",
-            timezone,
-            userType
-        });
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
-        Assert.NotNull(body);
-        return body.SessionId;
-    }
-
     [Fact(Skip = "TODO: Enable test and implement endpoint")]
     public async Task GetMe_WithoutSession_Returns401()
     {
@@ -52,7 +35,13 @@ public class AuthMeEndpointTests
         const string timezone = "UTC";
         
         // Register user
-        var sessionId = await RegisterUser(name, email, timezone, userType);
+        var sessionId = await TestUtils.AuthRegister(
+            _client,
+            name,
+            email,
+            "Test1234!",
+            timezone,
+            userType);
         
         // Set session header
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);

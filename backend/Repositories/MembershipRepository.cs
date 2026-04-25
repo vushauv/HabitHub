@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Repositories;
 
-public class MembershipRepository(AppDbContext db) : IMembershipRepository
+public class MembershipRepository(AppDbContext db, ILogger<MembershipRepository> logger) : IMembershipRepository
 {
     public async Task<Membership> CreateMembershipAsync(Membership membership)
     {
         db.Memberships.Add(membership);
         await db.SaveChangesAsync();
+        logger.LogInformation("Created membership {MembershipId} for member {MemberId} in team {TeamId}", membership.MembershipId, membership.MemberId, membership.TeamId);
         return membership;
     }
 
@@ -45,9 +46,13 @@ public class MembershipRepository(AppDbContext db) : IMembershipRepository
     {
         Membership? membership = await GetMembershipByTeamIdAndMemberIdAsync(teamId, memberId);
         if(membership == null)
+        {
+            logger.LogWarning("Update membership status skipped, membership for member {MemberId} in team {TeamId} not found", memberId, teamId);
             return;
+        }
 
         membership.Status = status;
         await db.SaveChangesAsync();
+        logger.LogInformation("Updated membership {MembershipId} status to {Status}", membership.MembershipId, status);
     }
 }

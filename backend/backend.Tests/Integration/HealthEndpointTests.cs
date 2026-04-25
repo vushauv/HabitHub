@@ -17,7 +17,7 @@ public class HealthEndpointTests
     [Fact]
     public async Task Health_Returns200()
     {
-        var response = await _client.GetAsync("/api/health");
+        var response = await _client.GetAsync("/api/health", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

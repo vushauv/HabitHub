@@ -22,43 +22,116 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-   
+            modelBuilder.Entity("backend.Models.HabitTeam", b =>
+                {
+                    b.Property<Guid>("TeamId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("TeamId");
+
+                    b.HasIndex("CreatorId");
+
+                    b.ToTable("HabitTeams");
+                });
+
+            modelBuilder.Entity("backend.Models.InviteCode", b =>
+                {
+                    b.Property<Guid>("CodeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("CodeId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("InviteCodes");
+                });
+
+            modelBuilder.Entity("backend.Models.Membership", b =>
+                {
+                    b.Property<Guid>("MembershipId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("MembershipId");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TeamId", "MemberId")
+                        .IsUnique();
+
+                    b.ToTable("Memberships");
+                });
+
             modelBuilder.Entity("backend.Models.Session", b =>
-            {
-                b.Property<string>("SessionId")
-                    .IsRequired()
-                    .HasMaxLength(64)
-                    .HasColumnType("character varying(64)");
+                {
+                    b.Property<string>("SessionId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                b.Property<DateTime>("CreatedAt")
-                .HasColumnType("timestamp with time zone");
+                    b.Property<string>("DeviceInfo")
+                        .HasColumnType("text");
 
-                b.Property<string>("DeviceInfo")
-                    .HasColumnType("text");
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
 
-                b.Property<DateTime>("ExpiresAt")
-                    .HasColumnType("timestamp with time zone");
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text");
 
-                b.Property<string>("IpAddress")
-                    .HasColumnType("text");
+                    b.Property<DateTime>("LastActiveAt")
+                        .HasColumnType("timestamp with time zone");
 
-                b.Property<DateTime>("LastActiveAt")
-                    .HasColumnType("timestamp with time zone");
+                    b.Property<int>("SessionState")
+                        .HasColumnType("integer");
 
-                b.Property<int>("SessionState")
-                    .HasColumnType("integer");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uuid");
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
 
-                b.Property<int>("UserType")
-                    .HasColumnType("integer");
+                    b.HasKey("SessionId");
 
-                b.HasKey("SessionId");
-
-                b.ToTable("Sessions");
-            });
+                    b.ToTable("Sessions");
+                });
 
             modelBuilder.Entity("backend.Models.TeamCreator", b =>
                 {
@@ -119,6 +192,64 @@ namespace backend.Migrations
                         .IsUnique();
 
                     b.ToTable("TeamMembers");
+                });
+
+            modelBuilder.Entity("backend.Models.HabitTeam", b =>
+                {
+                    b.HasOne("backend.Models.TeamCreator", "Creator")
+                        .WithMany("Teams")
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("backend.Models.InviteCode", b =>
+                {
+                    b.HasOne("backend.Models.HabitTeam", "Team")
+                        .WithMany("InviteCodes")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("backend.Models.Membership", b =>
+                {
+                    b.HasOne("backend.Models.TeamMember", "Member")
+                        .WithMany("Memberships")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.HabitTeam", "Team")
+                        .WithMany("Memberships")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("backend.Models.HabitTeam", b =>
+                {
+                    b.Navigation("InviteCodes");
+
+                    b.Navigation("Memberships");
+                });
+
+            modelBuilder.Entity("backend.Models.TeamCreator", b =>
+                {
+                    b.Navigation("Teams");
+                });
+
+            modelBuilder.Entity("backend.Models.TeamMember", b =>
+                {
+                    b.Navigation("Memberships");
                 });
 #pragma warning restore 612, 618
         }

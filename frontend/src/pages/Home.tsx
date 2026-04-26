@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Home.css";
 import "../App.css";
-
-type AccountType = "Creator" | "Member";
+import { API_BASE_URL, type AccountType } from "../services/User";
 
 type StoredAuth = {
   isLoggedIn?: boolean;
   userType?: AccountType;
   sessionId?: string | null;
   userId?: string | null;
+};
+
+type LogoutErrorResponse = {
+  message?: string | null;
 };
 
 function getStoredAuth(): StoredAuth | null {
@@ -26,9 +30,47 @@ function getStoredAuth(): StoredAuth | null {
   }
 }
 
+function clearStoredAuth(): void {
+  localStorage.removeItem("habithubAuth");
+}
+
+function getLogoutErrorMessage(responseText: string, status: number): string {
+  const fallbackMessage = `Logout failed (${status}).`;
+
+  if (!responseText) {
+    return fallbackMessage;
+  }
+
+  try {
+    const parsedResponse = JSON.parse(responseText) as LogoutErrorResponse;
+    return parsedResponse.message ?? fallbackMessage;
+  } catch {
+    return responseText;
+  }
+}
+
+async function logoutCurrentSession(sessionId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Session-Id": sessionId,
+    },
+  });
+
+  if (response.ok || response.status === 401) {
+    return;
+  }
+
+  const responseText = await response.text().catch(() => "");
+  throw new Error(getLogoutErrorMessage(responseText, response.status));
+}
+
 export default function Home() {
   const navigate = useNavigate();
-  const auth = getStoredAuth();
+  const [auth, setAuth] = useState<StoredAuth | null>(() => getStoredAuth());
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
 
   const isLoggedIn = auth?.isLoggedIn === true;
 
@@ -39,9 +81,35 @@ export default function Home() {
       ? "/main-member"
       : "/login";
 
-  function handleLogout() {
-    localStorage.removeItem("habithubAuth");
-    navigate("/");
+  function clearAuthSession() {
+    clearStoredAuth();
+    setAuth(null);
+  }
+
+  async function handleLogout() {
+    setLogoutError("");
+
+    if (!auth?.isLoggedIn || !auth.sessionId) {
+      clearAuthSession();
+      navigate("/", { replace: true });
+      return;
+    }
+
+    setIsLoggingOut(true);
+
+    try {
+      await logoutCurrentSession(auth.sessionId);
+      clearAuthSession();
+      navigate("/", { replace: true });
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while logging out.",
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
   }
 
   return (
@@ -60,6 +128,12 @@ export default function Home() {
             in one place.
           </p>
 
+          {logoutError ? (
+            <p className="form-error" role="alert">
+              {logoutError}
+            </p>
+          ) : null}
+
           <div className="buttons">
             {isLoggedIn ? (
               <>
@@ -70,9 +144,10 @@ export default function Home() {
                 <button
                   type="button"
                   className="button button-secondary"
-                  onClick={handleLogout}
+                  onClick={() => void handleLogout()}
+                  disabled={isLoggingOut}
                 >
-                  Log out
+                  {isLoggingOut ? "Logging out..." : "Log out"}
                 </button>
               </>
             ) : (

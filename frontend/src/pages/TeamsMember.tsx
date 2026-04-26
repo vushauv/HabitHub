@@ -136,18 +136,18 @@ export default function TeamsMember() {
                 to="/"
                 className="button button-secondary teams-member-nav-button"
               >
-                home
+                Home
               </Link>
             </div>
 
             <div className="content-centered teams-member-header">
-              <h1 className="title teams-member-title">your memberships</h1>
+              <h1 className="title teams-member-title">Your Memberships</h1>
 
               <Link
                 to="/join-team"
                 className="button button-primary teams-member-join-button"
               >
-                join a new team
+                Join a New Team
               </Link>
             </div>
 
@@ -182,12 +182,12 @@ export default function TeamsMember() {
             ) : (
               <section
                 className="teams-member-table"
-                aria-label="your memberships"
+                aria-label="Your memberships"
               >
                 <div className="teams-member-table-row teams-member-table-head">
-                  <span>name</span>
-                  <span>habits</span>
-                  <span>chat</span>
+                  <span>Name</span>
+                  <span>Habits</span>
+                  <span>Chat</span>
                   <span></span>
                 </div>
 
@@ -203,7 +203,7 @@ export default function TeamsMember() {
                         className="button button-secondary teams-member-row-button"
                         disabled
                       >
-                        show habits
+                        Show Habits
                       </button>
 
                       <button
@@ -211,7 +211,7 @@ export default function TeamsMember() {
                         className="button button-secondary teams-member-row-button"
                         disabled
                       >
-                        show chat
+                        Show Chat
                       </button>
 
                       <button
@@ -220,7 +220,7 @@ export default function TeamsMember() {
                         onClick={() => void handleLeaveTeam(team)}
                         disabled={isLeaving}
                       >
-                        {isLeaving ? "leaving..." : "leave the team"}
+                        {isLeaving ? "Leaving..." : "Leave the team"}
                       </button>
                     </article>
                   );

@@ -13,7 +13,6 @@ type StoredAuth = {
 
 type LogoutErrorResponse = {
   message?: string | null;
-  Message?: string | null;
 };
 
 function getStoredAuth(): StoredAuth | null {
@@ -44,7 +43,7 @@ function getLogoutErrorMessage(responseText: string, status: number): string {
 
   try {
     const parsedResponse = JSON.parse(responseText) as LogoutErrorResponse;
-    return parsedResponse.message ?? parsedResponse.Message ?? fallbackMessage;
+    return parsedResponse.message ?? fallbackMessage;
   } catch {
     return responseText;
   }

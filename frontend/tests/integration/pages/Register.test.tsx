@@ -60,7 +60,7 @@ it("shows validation errors on blur with empty fields", async () => {
 
   await waitFor(() => {
     expect(screen.getByText("Name is required.")).toBeInTheDocument();
-    expect(screen.getByText("Email is required.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
     expect(screen.getByText("Password is required.")).toBeInTheDocument();
   });
 });
@@ -99,7 +99,7 @@ it("shows error message on 400 response", async () => {
     target: { value: "password123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Creator" }));
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.submit(screen.getByLabelText("Name"))
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(

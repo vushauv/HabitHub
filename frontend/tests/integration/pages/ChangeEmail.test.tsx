@@ -49,21 +49,21 @@ it("renders email and password fields", () => {
   expect(screen.getByLabelText("Password")).toBeInTheDocument();
 });
 
-it.skip("submit button is disabled when form is empty", () => { // TODO: Fails, inconsistent behaviour
+it("submit button is disabled when form is empty", () => { // TODO: Fails, inconsistent behaviour
   render(App());
 
   expect(screen.getByRole("button", { name: "Update email" })).toBeDisabled();
 });
 
-it.skip("shows validation errors on blur with empty fields", async () => { // TODO: Fails, inconsistent behaviour
+it("shows validation errors on blur with empty fields", async () => { // TODO: Fails, inconsistent behaviour
   render(App());
 
   fireEvent.blur(screen.getByLabelText("New email"));
   fireEvent.blur(screen.getByLabelText("Password"));
 
   await waitFor(() => {
-    expect(screen.getByText("Email is required.")).toBeInTheDocument();
-    expect(screen.getByText("Password is required.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
+    expect(screen.getByText("Current password is required.")).toBeInTheDocument();
   });
 });
 
@@ -76,14 +76,14 @@ it("shows success message on 200 response", async () => {
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: "password123" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Update email" }));
+  fireEvent.submit(screen.getByLabelText("New email"));
 
   await waitFor(() => {
     expect(screen.getByText("Email changed successfully.", {exact: false})).toBeInTheDocument();
   });
 });
 
-it.skip("shows error message on 401 response", async () => { // TODO: Fails! The error is not considered to be an alert
+it("shows error message on 401 response", async () => { // TODO: Fails! The error is not considered to be an alert
   render(App());
 
   fireEvent.change(screen.getByLabelText("New email"), {
@@ -92,7 +92,7 @@ it.skip("shows error message on 401 response", async () => { // TODO: Fails! The
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: "wrongpassword" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Update email" }));
+  fireEvent.submit(screen.getByLabelText("New email"));
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(

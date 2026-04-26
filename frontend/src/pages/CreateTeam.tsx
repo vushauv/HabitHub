@@ -1,17 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./CreateTeam.css";
 import "../App.css";
 import {
   clearStoredAuth,
   createTeam,
+  createTeamFormSchema,
   getStoredAuth,
   getTeamErrorMessage,
-  hasCreateTeamErrors,
   TeamRequestError,
-  validateCreateTeamForm,
   type CreateTeamForm,
 } from "../services/Team";
+import { useForm } from "react-hook-form";
+import { useLens } from "@hookform/lenses";
+import { zodResolver } from "@hookform/resolvers/zod";
+import TextInput from "../components/form/TextInput";
+import SubmitButton from "../components/form/SubmitButton";
 
 function resolveErrorMessage(error: unknown): string {
   if (error instanceof TeamRequestError) {
@@ -24,50 +28,36 @@ function resolveErrorMessage(error: unknown): string {
 export default function CreateTeam() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [form, setForm] = useState<CreateTeamForm>({
-    name: "",
-  });
-  const [touched, setTouched] = useState<Record<keyof CreateTeamForm, boolean>>({
-    name: false,
-  });
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const errors = useMemo(() => validateCreateTeamForm(form), [form]);
-  const formIsValid = !hasCreateTeamErrors(errors);
+  const { handleSubmit, control, formState, subscribe } = useForm<CreateTeamForm>({
+    defaultValues: {
+      name: ""
+    },
+    disabled: loading,
+    resolver: zodResolver(createTeamFormSchema),
+    mode: "all"
+  });
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    setForm({
-      name: event.target.value,
-    });
+  const lens = useLens({ control });
+  
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setServerError("");
+      },
+    })
 
-    setTouched({
-      name: true,
-    });
+    return () => callback()
+  }, [subscribe]);
 
+  async function onSubmit(form: CreateTeamForm) {
     setServerError("");
-  }
-
-  function handleBlur() {
-    setTouched({
-      name: true,
-    });
-  }
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setTouched({
-      name: true,
-    });
-
-    setServerError("");
-
-    const currentErrors = validateCreateTeamForm(form);
-
-    if (hasCreateTeamErrors(currentErrors)) {
-      return;
-    }
 
     if (!auth?.isLoggedIn || !auth.sessionId) {
       clearStoredAuth();
@@ -135,47 +125,23 @@ export default function CreateTeam() {
               </p>
             ) : null}
 
-            <form className="create-team-form" onSubmit={handleSubmit} noValidate>
-              <div className="form-field create-team-name-row">
-                <label className="form-label create-team-label" htmlFor="name">
-                  Name
-                </label>
+            <form className="create-team-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <TextInput
+                label="Name"
+                lens={lens.focus("name")}
+                type="text"
+                placeholder="Book Enjoyers"
+                autoComplete="off"
+                required
+                className="create-team-name-row"
+              />
 
-                <input
-                  id="name"
-                  className="form-input create-team-input"
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Book Enjoyers"
-                  autoComplete="off"
-                  minLength={3}
-                  maxLength={100}
-                  aria-invalid={Boolean(touched.name && errors.name)}
-                  aria-describedby={
-                    touched.name && errors.name
-                      ? "create-team-name-error"
-                      : undefined
-                  }
-                  required
-                />
-
-                {touched.name && errors.name ? (
-                  <p id="create-team-name-error" className="field-error">
-                    {errors.name}
-                  </p>
-                ) : null}
-              </div>
-
-              <button
-                className="button button-primary create-team-submit"
-                type="submit"
-                disabled={loading || !formIsValid}
+              <SubmitButton
+                formState={formState}
+                disabled={loading}
               >
                 {loading ? "Submitting..." : "Submit"}
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

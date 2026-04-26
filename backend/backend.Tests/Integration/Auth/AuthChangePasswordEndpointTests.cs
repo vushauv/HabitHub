@@ -90,7 +90,7 @@ public class AuthChangePasswordEndpointTests
         Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
     }
 
-    [Theory(Skip = "TODO: Test fails")]
+    [Theory]
     [InlineData(0)]
     [InlineData(1)]
     public async Task ChangePassword_WithWeakPassword_Returns400_AndPasswordDoesNotChange(int userType)
@@ -110,7 +110,7 @@ public class AuthChangePasswordEndpointTests
             currentPassword = "Test1234",
             newPassword = "T",
         }, TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.Unauthorized, response1.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response1.StatusCode);
         
         _client.DefaultRequestHeaders.Remove("X-Session-Id");
         

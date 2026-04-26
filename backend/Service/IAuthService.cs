@@ -11,5 +11,6 @@ namespace backend.Service
         public Task InvalidateSpecificSession(Guid userId, UserType userType, string sessionId);
         public Task ChangePassword(Guid userId, UserType userType, string currentSessionId, ChangePasswordRequestDto request);
         public Task ChangeEmail(Guid userId, UserType userType, string currentSessionId, ChangeEmailRequestDto request);
+        public Task<UserDto> GetMe(Guid userId, UserType userType);
     }
 }

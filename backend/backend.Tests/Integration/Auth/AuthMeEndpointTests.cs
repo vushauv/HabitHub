@@ -17,14 +17,14 @@ public class AuthMeEndpointTests
         _client = factory.CreateClient();
     }
 
-    [Fact(Skip = "TODO: Enable test and implement endpoint")]
+    [Fact]
     public async Task GetMe_WithoutSession_Returns401()
     {
         var response = await _client.GetAsync("/auth/me", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory(Skip = "TODO: Enable test and implement endpoint")]
+    [Theory]
     [InlineData(0)]
     [InlineData(1)]
     public async Task GetMe_Returns200_AndCorrectData(int userType)

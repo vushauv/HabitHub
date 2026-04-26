@@ -4,13 +4,13 @@ import { useController } from 'react-hook-form';
 export type TextInputProps = {
   label: string,
   lens: Lens<string>,
-} & Pick<React.InputHTMLAttributes<HTMLInputElement>, "required" | "type" | "placeholder" | "autoComplete">
+} & Pick<React.InputHTMLAttributes<HTMLInputElement>, "className" | "required" | "type" | "placeholder" | "autoComplete">
 
-export default function TextInput({ label, lens, ...inputProps }: TextInputProps) {
+export default function TextInput({ label, lens, className, ...inputProps }: TextInputProps) {
   const { field, fieldState } = useController(lens.interop())
   const name = field.name;
   return (
-    <div className="form-field">
+    <div className={"form-field "+className}>
       <label className="form-label" htmlFor={name}>
         {label}
       </label>

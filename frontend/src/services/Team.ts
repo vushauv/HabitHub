@@ -1,3 +1,4 @@
+import z from "zod";
 import { API_BASE_URL, type AccountType } from "./User";
 import type {
   CreateTeamRequestDto,
@@ -29,14 +30,6 @@ export type TeamMemberDto = Omit<TeamMemberResponseDto, "status"> & {
 export type CreateTeamForm = CreateTeamRequestDto;
 
 export type JoinTeamForm = JoinTeamRequestDto;
-
-export type CreateTeamErrors = {
-  name?: string;
-};
-
-export type JoinTeamErrors = {
-  code?: string;
-};
 
 export type TeamErrorCode =
   | "auth-required"
@@ -98,57 +91,30 @@ export function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
   };
 }
 
-export function validateTeamName(name: string): string | undefined {
-  const trimmedName = name.trim();
+export const teamNameSchema = z
+  .string()
+  .trim()
+  .nonempty({ error: "Team name is required." })
+  .min(3, { error: "Team name must be at least 3 characters long." })
+  .max(100, { error: "Team name must be 100 characters or shorter." });
 
-  if (!trimmedName) {
-    return "Team name is required.";
-  }
+export const inviteCodeSchema = z
+  .string()
+  .trim()
+  .nonempty({ error: "Invite code is required." })
+  .length(8, { error: "Invite code must be exactly 8 characters long." });
 
-  if (trimmedName.length < 3) {
-    return "Team name must be at least 3 characters long.";
-  }
+export const createTeamFormSchema = z
+  .object({
+    name: teamNameSchema
+  })
+  .required();
 
-  if (trimmedName.length > 100) {
-    return "Team name must be 100 characters or shorter.";
-  }
-
-  return undefined;
-}
-
-export function validateInviteCode(code: string): string | undefined {
-  if (!code.trim()) {
-    return "Invite code is required.";
-  }
-
-  if (code.trim().length !== 8) {
-    return "Invite code must be exactly 8 characters long.";
-  }
-
-  return undefined;
-}
-
-export function validateCreateTeamForm(
-  form: CreateTeamForm,
-): CreateTeamErrors {
-  return {
-    name: validateTeamName(form.name),
-  };
-}
-
-export function validateJoinTeamForm(form: JoinTeamForm): JoinTeamErrors {
-  return {
-    code: validateInviteCode(form.code),
-  };
-}
-
-export function hasCreateTeamErrors(errors: CreateTeamErrors): boolean {
-  return Boolean(errors.name);
-}
-
-export function hasJoinTeamErrors(errors: JoinTeamErrors): boolean {
-  return Boolean(errors.code);
-}
+export const joinTeamFormSchema = z
+  .object({
+    code: inviteCodeSchema
+  })
+  .required();
 
 export function getTeamErrorMessage(errorCode: TeamErrorCode): string {
   switch (errorCode) {

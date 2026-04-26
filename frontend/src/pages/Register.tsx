@@ -1,113 +1,71 @@
-import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
 import "../App.css";
 import type { AuthResponseDto, RegisterRequestDto } from "../services/dtos";
-import {type RegisterForm} from "../services/Register.ts";
-import {validateForm, hasValidationErrors} from "../services/Register.ts"
+import {registerFormSchema, type RegisterForm} from "../services/Register.ts";
 import {
   API_BASE_URL,
   DEFAULT_TIMEZONE,
   TIMEZONE_OPTIONS,
-  type AccountType,
   mapUserTypeFromEnum,
   mapUserTypeToEnum,
 } from "../services/User.ts"
-
+import { useForm } from "react-hook-form"
+import TextInput from "../components/form/TextInput.tsx";
+import { useLens } from "@hookform/lenses";
+import SelectInput from "../components/form/SelectInput.tsx";
+import AccountTypeInput from "../components/form/AccountTypeInput.tsx";
+import SubmitButton from "../components/form/SubmitButton.tsx";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 
 export default function Register() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState<RegisterForm>({
-    name: "",
-    email: "",
-    password: "",
-    timezone: TIMEZONE_OPTIONS.includes(DEFAULT_TIMEZONE)
-      ? DEFAULT_TIMEZONE
-      : "Europe/Warsaw",
-    userType: "Member",
-  });
-
-  const [touched, setTouched] = useState<Record<keyof RegisterForm, boolean>>({
-    name: false,
-    email: false,
-    password: false,
-    timezone: false,
-    userType: false,
-  });
-
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const errors = useMemo(() => validateForm(form), [form]);
-  const formIsValid = !hasValidationErrors(errors);
+  const { handleSubmit, control, formState, subscribe } = useForm<RegisterForm>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      timezone: TIMEZONE_OPTIONS.includes(DEFAULT_TIMEZONE)
+        ? DEFAULT_TIMEZONE
+        : "Europe/Warsaw",
+      userType: "Member",
+    },
+    disabled: loading,
+    resolver: zodResolver(registerFormSchema),
+    mode: "all"
+  });
 
-  function handleChange(
-    field: keyof RegisterForm,
-    event: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) {
-    const value = event.target.value;
+  const lens = useLens({ control });
 
-    setForm((previousForm) => ({
-      ...previousForm,
-      [field]: value,
-    }));
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setServerError("");
+      },
+    })
 
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      [field]: true,
-    }));
+    return () => callback()
+  }, [subscribe]);
 
+  async function onSubmit(form: RegisterForm) {
     setServerError("");
-  }
-
-  function handleBlur(field: keyof RegisterForm) {
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      [field]: true,
-    }));
-  }
-
-  function handleUserTypeChange(userType: AccountType) {
-    setForm((previousForm) => ({
-      ...previousForm,
-      userType,
-    }));
-
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      userType: true,
-    }));
-
-    setServerError("");
-  }
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setTouched({
-      name: true,
-      email: true,
-      password: true,
-      timezone: true,
-      userType: true,
-    });
-
-    setServerError("");
-
-    const currentErrors = validateForm(form);
-
-    if (hasValidationErrors(currentErrors)) {
-      return;
-    }
 
     setLoading(true);
 
     try {
       const payload: RegisterRequestDto = {
-        name: form.name.trim(),
-        email: form.email.trim(),
+        name: form.name,
+        email: form.email,
         password: form.password,
         timezone: form.timezone,
         userType: mapUserTypeToEnum(form.userType),
@@ -198,161 +156,57 @@ export default function Register() {
           </p>
         )}
 
-        <form className="register-form" onSubmit={handleSubmit} noValidate>
-          <div className="form-field">
-            <label className="form-label" htmlFor="name">
-              Name
-            </label>
-            <input
-              id="name"
-              className="form-input"
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={(event) => handleChange("name", event)}
-              onBlur={() => handleBlur("name")}
-              placeholder="John"
-              autoComplete="name"
-              aria-invalid={Boolean(touched.name && errors.name)}
-              aria-describedby={touched.name && errors.name ? "name-error" : undefined}
-              required
-            />
-            {touched.name && errors.name && (
-              <p id="name-error" className="field-error">
-                {errors.name}
-              </p>
-            )}
-          </div>
+        <form className="register-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <TextInput
+            label="Name"
+            lens={lens.focus("name")}
+            required
+            type="text"
+            placeholder="John"
+            autoComplete="name"
+          />
 
-          <div className="form-field">
-            <label className="form-label" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              className="form-input"
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={(event) => handleChange("email", event)}
-              onBlur={() => handleBlur("email")}
-              placeholder="john@gmail.com"
-              autoComplete="email"
-              aria-invalid={Boolean(touched.email && errors.email)}
-              aria-describedby={touched.email && errors.email ? "email-error" : undefined}
-              required
-            />
-            {touched.email && errors.email && (
-              <p id="email-error" className="field-error">
-                {errors.email}
-              </p>
-            )}
-          </div>
+          <TextInput
+            label="Email"
+            lens={lens.focus("email")}
+            required
+            type="email"
+            placeholder="john@example.com"
+            autoComplete="email"
+          />
 
-          <div className="form-field">
-            <label className="form-label" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              className="form-input"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={(event) => handleChange("password", event)}
-              onBlur={() => handleBlur("password")}
-              placeholder="Enter your password"
-              autoComplete="new-password"
-              aria-invalid={Boolean(touched.password && errors.password)}
-              aria-describedby={
-                touched.password && errors.password ? "password-error" : undefined
-              }
-              required
-            />
-            {touched.password && errors.password && (
-              <p id="password-error" className="field-error">
-                {errors.password}
-              </p>
-            )}
-          </div>
+          <TextInput
+            label="Password"
+            lens={lens.focus("password")}
+            required
+            type="password"
+            placeholder="Enter your password"
+            autoComplete="new-password"
+          />
 
-          <div className="form-field">
-            <label className="form-label" htmlFor="timezone">
-              Timezone
-            </label>
-            <select
-              id="timezone"
-              className="form-input"
-              name="timezone"
-              value={form.timezone}
-              onChange={(event) => handleChange("timezone", event)}
-              onBlur={() => handleBlur("timezone")}
-              aria-invalid={Boolean(touched.timezone && errors.timezone)}
-              aria-describedby={
-                touched.timezone && errors.timezone ? "timezone-error" : undefined
-              }
-              required
-            >
-              {TIMEZONE_OPTIONS.map((timezone) => (
-                <option key={timezone} value={timezone}>
-                  {timezone}
-                </option>
-              ))}
-            </select>
-            {touched.timezone && errors.timezone && (
-              <p id="timezone-error" className="field-error">
-                {errors.timezone}
-              </p>
-            )}
-          </div>
+          <SelectInput
+            label="Timezone"
+            lens={lens.focus("timezone")}
+            required
+          >
+            {TIMEZONE_OPTIONS.map((timezone) => (
+              <option key={timezone} value={timezone}>
+                {timezone}
+              </option>
+            ))}
+          </SelectInput>
 
-          <div className="form-field">
-            <span className="form-label">Account type</span>
+          <AccountTypeInput
+            label="Account type"
+            lens={lens.focus("userType")}
+          />
 
-            <div
-              className="role-group"
-              role="radiogroup"
-              aria-label="Account type"
-            >
-              <button
-                type="button"
-                className={
-                  form.userType === "Creator"
-                    ? "role-button role-button-active"
-                    : "role-button"
-                }
-                onClick={() => handleUserTypeChange("Creator")}
-                aria-pressed={form.userType === "Creator"}
-              >
-                Creator
-              </button>
-
-              <button
-                type="button"
-                className={
-                  form.userType === "Member"
-                    ? "role-button role-button-active"
-                    : "role-button"
-                }
-                onClick={() => handleUserTypeChange("Member")}
-                aria-pressed={form.userType === "Member"}
-              >
-                Member
-              </button>
-            </div>
-
-            {touched.userType && errors.userType && (
-              <p className="field-error">{errors.userType}</p>
-            )}
-          </div>
-
-          <button
-            className="button button-primary form-submit"
-            type="submit"
-            disabled={loading || !formIsValid}
+          <SubmitButton
+            formState={formState}
+            disabled={loading}
           >
             {loading ? "Creating account..." : "Create account"}
-          </button>
+          </SubmitButton>
 
           <p className="form-footer-text">
             Already have an account?{" "}

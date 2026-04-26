@@ -158,19 +158,19 @@ export default function MemberList() {
                 to="/"
                 className="button button-secondary member-list-nav-button"
               >
-                home
+                Home
               </Link>
 
               <Link
                 to="/teams-creator"
                 className="button button-secondary member-list-nav-button"
               >
-                teams
+                Teams
               </Link>
             </div>
 
             <div className="content-centered member-list-header">
-              <h1 className="title member-list-title">team members</h1>
+              <h1 className="title member-list-title">Team members</h1>
 
               {team ? <p className="text member-list-text">{team.name}</p> : null}
             </div>
@@ -200,10 +200,10 @@ export default function MemberList() {
                 </p>
               </div>
             ) : (
-              <section className="member-list-table" aria-label="team members">
+              <section className="member-list-table" aria-label="Team members">
                 <div className="member-list-table-row member-list-table-head">
-                  <span>name</span>
-                  <span>email</span>
+                  <span>Name</span>
+                  <span>Email</span>
                   <span></span>
                 </div>
 
@@ -224,7 +224,7 @@ export default function MemberList() {
                         onClick={() => void handleKickMember(member)}
                         disabled={isKicking}
                       >
-                        {isKicking ? "kicking..." : "kick"}
+                        {isKicking ? "Kicking..." : "Kick"}
                       </button>
                     </article>
                   );

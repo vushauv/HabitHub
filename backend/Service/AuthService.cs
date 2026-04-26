@@ -249,6 +249,31 @@ namespace backend.Service
 
             await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
         }
+
+        public async Task<UserDto> GetMe(Guid userId, UserType userType)
+        {
+            if (userType == UserType.Creator)
+            {
+                TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
+                if (creator == null)
+                    throw new NotFoundException();
+
+                return new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null);
+            }
+            else if (userType == UserType.Member)
+            {
+                TeamMember? member = await members.GetMemberByIdAsync(userId);
+                if (member == null)
+                    throw new NotFoundException();
+
+                return new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone);
+            }
+            else
+            {
+                throw new AuthRequiredException();
+            }
+        }
+
         private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
         private static string NormalizeName(string name) => name.Trim();
         private static string NormalizeTimezone(string timezone) => timezone.Trim();

@@ -55,11 +55,18 @@ public class AuthMeEndpointTests
         Assert.DoesNotContain("Test1234!", body);
 
         // Verify that all user fields are correct
-        var user = JsonSerializer.Deserialize<UserDto>(body);
+        var user = JsonSerializer.Deserialize<UserDto>(body, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.NotNull(user);
         Assert.Equal(name, user.Name);
         Assert.Equal(email, user.Email);
-        Assert.Equal(timezone, user.Timezone);
+        if(userType == 0)
+        {
+            Assert.Null(user.Timezone);
+        }
+        else
+        {
+            Assert.Equal(timezone, user.Timezone);
+        }
         Assert.Equal(userType, (int)user.UserType);
     }
 }

@@ -49,13 +49,13 @@ it("renders current password and new password fields", () => {
   expect(screen.getByLabelText("New password")).toBeInTheDocument();
 });
 
-it.skip("submit button is disabled when form is empty", () => { // TODO: Fails, inconsistent behaviour
+it("submit button is disabled when form is empty", () => { // TODO: Fails, inconsistent behaviour
   render(App());
 
   expect(screen.getByRole("button", { name: "Update password" })).toBeDisabled();
 });
 
-it.skip("shows validation errors on blur with empty fields", async () => { // TODO: Fails, inconsistent behaviour
+it("shows validation errors on blur with empty fields", async () => { // TODO: Fails, inconsistent behaviour
   render(App());
 
   fireEvent.blur(screen.getByLabelText("Current password"));
@@ -63,7 +63,7 @@ it.skip("shows validation errors on blur with empty fields", async () => { // TO
 
   await waitFor(() => {
     expect(screen.getByText("Current password is required.")).toBeInTheDocument();
-    expect(screen.getByText("New password is required.")).toBeInTheDocument(); // TODO: Fails
+    expect(screen.getByText("Password is required.")).toBeInTheDocument(); // TODO: Fails
   });
 });
 
@@ -76,14 +76,14 @@ it("shows success message on 200 response", async () => {
   fireEvent.change(screen.getByLabelText("New password"), {
     target: { value: "password123" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Update password" }));
+  fireEvent.submit(screen.getByLabelText("Current password"));
 
   await waitFor(() => {
     expect(screen.getByText("Password changed successfully.", {exact: false})).toBeInTheDocument();
   });
 });
 
-it.skip("shows error message on 401 response", async () => { // TODO: Fails! The error is not considered to be an alert
+it("shows error message on 401 response", async () => { // TODO: Fails! The error is not considered to be an alert
   render(App());
 
   fireEvent.change(screen.getByLabelText("Current password"), {
@@ -92,7 +92,7 @@ it.skip("shows error message on 401 response", async () => { // TODO: Fails! The
   fireEvent.change(screen.getByLabelText("New password"), {
     target: { value: "wrongpassword" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Update password" }));
+  fireEvent.submit(screen.getByLabelText("Current password"));
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(

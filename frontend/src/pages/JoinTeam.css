@@ -39,16 +39,6 @@
   margin-top: 0;
 }
 
-.join-team-success {
-  margin: 0;
-  padding: 0.9rem 1rem;
-  border-radius: 1rem;
-  background: rgba(22, 163, 74, 0.08);
-  border: 1px solid rgba(22, 163, 74, 0.16);
-  color: #166534;
-  text-align: center;
-}
-
 .join-team-form {
   display: flex;
   flex-direction: column;

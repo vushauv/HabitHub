@@ -288,7 +288,7 @@ export default function ChangeEmail() {
               {formError ? <p className="form-error">{formError}</p> : null}
 
               {successMessage ? (
-                <p className="change-email-success">{successMessage}</p>
+                <p className="alert-success">{successMessage}</p>
               ) : null}
 
               <button

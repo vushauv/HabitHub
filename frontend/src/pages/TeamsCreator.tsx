@@ -239,7 +239,7 @@ export default function TeamsCreator() {
             ) : null}
 
             {successMessage ? (
-              <p className="teams-creator-success">{successMessage}</p>
+              <p className="alert-success">{successMessage}</p>
             ) : null}
 
             {loading ? (

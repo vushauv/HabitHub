@@ -182,7 +182,7 @@ export default function MemberList() {
             ) : null}
 
             {successMessage ? (
-              <p className="member-list-success">{successMessage}</p>
+              <p className="alert-success">{successMessage}</p>
             ) : null}
 
             {loading ? (

@@ -1,100 +1,62 @@
-import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import "../App.css";
 import type { AuthResponseDto, LoginRequestDto } from "../services/dtos";
-import { type LoginForm } from "../services/Login";
-import { validateForm, hasValidationErrors } from "../services/Login";
+import { loginFormSchema, type LoginForm } from "../services/Login";
 import {
   API_BASE_URL,
-  type AccountType,
   mapUserTypeFromEnum,
   mapUserTypeToEnum,
 } from "../services/User";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import TextInput from "../components/form/TextInput";
+import { useLens } from "@hookform/lenses";
+import AccountTypeInput from "../components/form/AccountTypeInput";
+import SubmitButton from "../components/form/SubmitButton";
 
 export default function Login() {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState<LoginForm>({
-    email: "",
-    password: "",
-    userType: "Member",
-  });
-
-  const [touched, setTouched] = useState<Record<keyof LoginForm, boolean>>({
-    email: false,
-    password: false,
-    userType: false,
-  });
-
+  
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const errors = useMemo(() => validateForm(form), [form]);
-  const formIsValid = !hasValidationErrors(errors);
+  const { handleSubmit, control, formState, subscribe } = useForm<LoginForm>({
+    defaultValues: {
+      email: "",
+      password: "",
+      userType: "Member",
+    },
+    disabled: loading,
+    resolver: zodResolver(loginFormSchema),
+    mode: "all"
+  });
 
-  function handleChange(
-    field: keyof LoginForm,
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
-    const value = event.target.value;
+  const lens = useLens({ control });
+  
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setServerError("");
+      },
+    })
 
-    setForm((previousForm) => ({
-      ...previousForm,
-      [field]: value,
-    }));
+    return () => callback()
+  }, [subscribe])
 
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      [field]: true,
-    }));
-
+  async function onSubmit(form: LoginForm) {
     setServerError("");
-  }
-
-  function handleBlur(field: keyof LoginForm) {
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      [field]: true,
-    }));
-  }
-
-  function handleUserTypeChange(userType: AccountType) {
-    setForm((previousForm) => ({
-      ...previousForm,
-      userType,
-    }));
-
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      userType: true,
-    }));
-
-    setServerError("");
-  }
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setTouched({
-      email: true,
-      password: true,
-      userType: true,
-    });
-
-    setServerError("");
-
-    const currentErrors = validateForm(form);
-
-    if (hasValidationErrors(currentErrors)) {
-      return;
-    }
 
     setLoading(true);
 
     try {
       const payload: LoginRequestDto = {
-        email: form.email.trim(),
+        email: form.email,
         password: form.password,
         userType: mapUserTypeToEnum(form.userType),
       };
@@ -186,110 +148,35 @@ export default function Login() {
             </p>
           )}
 
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <div className="form-field">
-              <label className="form-label" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                className="form-input"
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={(event) => handleChange("email", event)}
-                onBlur={() => handleBlur("email")}
-                placeholder="example@gmail.com"
-                autoComplete="email"
-                aria-invalid={Boolean(touched.email && errors.email)}
-                aria-describedby={
-                  touched.email && errors.email ? "login-email-error" : undefined
-                }
-                required
-              />
-              {touched.email && errors.email && (
-                <p id="login-email-error" className="field-error">
-                  {errors.email}
-                </p>
-              )}
-            </div>
+          <form className="login-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+            <TextInput
+              label="Email"
+              lens={lens.focus("email")}
+              required
+              type="email"
+              placeholder="john@example.com"
+              autoComplete="email"
+            />
+            <TextInput
+              label="Password"
+              lens={lens.focus("password")}
+              required
+              type="password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
 
-            <div className="form-field">
-              <label className="form-label" htmlFor="password">
-                Password
-              </label>
-              <input
-                id="password"
-                className="form-input"
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={(event) => handleChange("password", event)}
-                onBlur={() => handleBlur("password")}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                aria-invalid={Boolean(touched.password && errors.password)}
-                aria-describedby={
-                  touched.password && errors.password
-                    ? "login-password-error"
-                    : undefined
-                }
-                required
-              />
-              {touched.password && errors.password && (
-                <p id="login-password-error" className="field-error">
-                  {errors.password}
-                </p>
-              )}
-            </div>
+            <AccountTypeInput
+              label="Account type"
+              lens={lens.focus("userType")}
+            />
 
-            <div className="form-field">
-              <span className="form-label">Account type</span>
-
-              <div
-                className="role-group"
-                role="radiogroup"
-                aria-label="Account type"
-              >
-                <button
-                  type="button"
-                  className={
-                    form.userType === "Creator"
-                      ? "role-button role-button-active"
-                      : "role-button"
-                  }
-                  onClick={() => handleUserTypeChange("Creator")}
-                  aria-pressed={form.userType === "Creator"}
-                >
-                  Creator
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    form.userType === "Member"
-                      ? "role-button role-button-active"
-                      : "role-button"
-                  }
-                  onClick={() => handleUserTypeChange("Member")}
-                  aria-pressed={form.userType === "Member"}
-                >
-                  Member
-                </button>
-              </div>
-
-              {touched.userType && errors.userType && (
-                <p className="field-error">{errors.userType}</p>
-              )}
-            </div>
-
-            <button
-              className="button button-primary form-submit"
-              type="submit"
-              disabled={loading || !formIsValid}
+            <SubmitButton
+              formState={formState}
+              disabled={loading}
             >
               {loading ? "Logging in..." : "Log in"}
-            </button>
+            </SubmitButton>
 
             <p className="form-footer-text">
               Don&apos;t have an account?{" "}

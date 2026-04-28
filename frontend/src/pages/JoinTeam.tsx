@@ -1,17 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./JoinTeam.css";
 import "../App.css";
 import {
   clearStoredAuth,
   getStoredAuth,
   getTeamErrorMessage,
-  hasJoinTeamErrors,
   joinTeam,
+  joinTeamFormSchema,
   TeamRequestError,
-  validateJoinTeamForm,
   type JoinTeamForm,
 } from "../services/Team";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useLens } from "@hookform/lenses";
+import TextInput from "../components/form/TextInput";
+import SubmitButton from "../components/form/SubmitButton";
 
 function resolveErrorMessage(error: unknown): string {
   if (error instanceof TeamRequestError) {
@@ -24,53 +28,39 @@ function resolveErrorMessage(error: unknown): string {
 export default function JoinTeam() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [form, setForm] = useState<JoinTeamForm>({
-    code: "",
-  });
-  const [touched, setTouched] = useState<Record<keyof JoinTeamForm, boolean>>({
-    code: false,
-  });
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const errors = useMemo(() => validateJoinTeamForm(form), [form]);
-  const formIsValid = !hasJoinTeamErrors(errors);
+  const { handleSubmit, control, formState, subscribe } = useForm<JoinTeamForm>({
+    defaultValues: {
+      code: ""
+    },
+    disabled: loading,
+    resolver: zodResolver(joinTeamFormSchema),
+    mode: "all"
+  });
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    setForm({
-      code: event.target.value,
-    });
+  const lens = useLens({ control });
+  
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setServerError("");
+        setSuccessMessage("");
+      },
+    })
 
-    setTouched({
-      code: true,
-    });
+    return () => callback()
+  }, [subscribe]);
 
+  async function onSubmit(form: JoinTeamForm) {
     setServerError("");
     setSuccessMessage("");
-  }
-
-  function handleBlur() {
-    setTouched({
-      code: true,
-    });
-  }
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setTouched({
-      code: true,
-    });
-
-    setServerError("");
-    setSuccessMessage("");
-
-    const currentErrors = validateJoinTeamForm(form);
-
-    if (hasJoinTeamErrors(currentErrors)) {
-      return;
-    }
 
     if (!auth?.isLoggedIn || !auth.sessionId) {
       clearStoredAuth();
@@ -146,47 +136,23 @@ export default function JoinTeam() {
               <p className="alert-success">{successMessage}</p>
             ) : null}
 
-            <form className="join-team-form" onSubmit={handleSubmit} noValidate>
-              <div className="form-field join-team-code-row">
-                <label className="form-label join-team-label" htmlFor="code">
-                  Invite Code
-                </label>
+            <form className="join-team-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <TextInput
+                label="Invite Code"
+                lens={lens.focus("code")}
+                type="text"
+                placeholder="A1B2C3D4"
+                autoComplete="off"
+                required
+                className="join-team-code-row"
+              />
 
-                <input
-                  id="code"
-                  className="form-input join-team-input"
-                  type="text"
-                  name="code"
-                  value={form.code}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="A1B2C3D4"
-                  autoComplete="off"
-                  minLength={8}
-                  maxLength={8}
-                  aria-invalid={Boolean(touched.code && errors.code)}
-                  aria-describedby={
-                    touched.code && errors.code
-                      ? "join-team-code-error"
-                      : undefined
-                  }
-                  required
-                />
-
-                {touched.code && errors.code ? (
-                  <p id="join-team-code-error" className="field-error">
-                    {errors.code}
-                  </p>
-                ) : null}
-              </div>
-
-              <button
-                className="button button-primary join-team-submit"
-                type="submit"
-                disabled={loading || !formIsValid}
+              <SubmitButton
+                formState={formState}
+                disabled={loading}
               >
                 {loading ? "Submitting..." : "Submit"}
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

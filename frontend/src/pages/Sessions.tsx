@@ -236,8 +236,8 @@ export default function Sessions() {
               </Link>
             </div>
 
-            <div className="content-centered sessions-header">
-              <h1 className="title sessions-title">Active sessions</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Active sessions</h1>
               <p className="text sessions-text">
                 Review devices currently signed in to your account and invalidate
                 any session you do not recognize.

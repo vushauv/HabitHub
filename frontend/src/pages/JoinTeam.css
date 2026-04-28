@@ -3,19 +3,8 @@
   gap: 2rem;
 }
 
-.join-team-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .join-team-title {
   width: min(100%, 32rem);
-  font-size: clamp(2.6rem, 6vw, 4rem);
-}
-
-.join-team-message {
-  margin-top: 0;
 }
 
 .join-team-form {
@@ -58,10 +47,6 @@
 @media (max-width: 768px) {
   .join-team-content {
     gap: 1.5rem;
-  }
-
-  .join-team-title {
-    font-size: clamp(2.2rem, 10vw, 3rem);
   }
 
   .join-team-code-row {

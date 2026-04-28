@@ -141,7 +141,7 @@ export default function TeamsMember() {
             </div>
 
             <div className="content-centered teams-member-header">
-              <h1 className="title teams-member-title pill-title">Your Memberships</h1>
+              <h1 className="title page-title teams-member-title pill-title">Your Memberships</h1>
 
               <Link
                 to="/join-team"
@@ -152,7 +152,7 @@ export default function TeamsMember() {
             </div>
 
             {pageError ? (
-              <p className="form-error teams-member-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {pageError}
               </p>
             ) : null}
@@ -181,7 +181,7 @@ export default function TeamsMember() {
               </div>
             ) : (
               <section
-                className="teams-member-table"
+                className="table-list teams-member-table"
                 aria-label="Your memberships"
               >
                 <div className="data-table-row teams-member-table-row data-table-head teams-member-table-head">

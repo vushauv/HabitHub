@@ -132,12 +132,12 @@ export default function JoinTeam() {
               </Link>
             </div>
 
-            <div className="content-centered join-team-header">
-              <h1 className="title join-team-title pill-title">Join a New Team</h1>
+            <div className="content-centered">
+              <h1 className="title page-title-md join-team-title pill-title">Join a New Team</h1>
             </div>
 
             {serverError ? (
-              <p className="form-error join-team-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {serverError}
               </p>
             ) : null}

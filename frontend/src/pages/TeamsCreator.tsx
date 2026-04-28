@@ -222,7 +222,7 @@ export default function TeamsCreator() {
             </div>
 
             <div className="content-centered teams-creator-header">
-              <h1 className="title teams-creator-title pill-title">Your Teams</h1>
+              <h1 className="title page-title teams-creator-title pill-title">Your Teams</h1>
 
               <Link
                 to="/create-team"
@@ -233,7 +233,7 @@ export default function TeamsCreator() {
             </div>
 
             {pageError ? (
-              <p className="form-error teams-creator-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {pageError}
               </p>
             ) : null}
@@ -257,7 +257,7 @@ export default function TeamsCreator() {
                 </p>
               </div>
             ) : (
-              <section className="teams-creator-table" aria-label="Your teams">
+              <section className="table-list teams-creator-table" aria-label="Your teams">
                 <div className="data-table-row teams-creator-table-row data-table-head teams-creator-table-head">
                   <span>Name</span>
                   <span>Habits</span>

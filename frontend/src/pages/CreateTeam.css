@@ -3,19 +3,8 @@
   gap: 2rem;
 }
 
-.create-team-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .create-team-title {
   width: min(100%, 30rem);
-  font-size: clamp(2.6rem, 6vw, 4rem);
-}
-
-.create-team-message {
-  margin-top: 0;
 }
 
 .create-team-form {
@@ -57,10 +46,6 @@
 @media (max-width: 768px) {
   .create-team-content {
     gap: 1.5rem;
-  }
-
-  .create-team-title {
-    font-size: clamp(2.2rem, 10vw, 3rem);
   }
 
   .create-team-name-row {

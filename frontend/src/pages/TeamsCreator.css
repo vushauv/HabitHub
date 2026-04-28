@@ -9,22 +9,11 @@
 
 .teams-creator-title {
   width: min(100%, 34rem);
-  font-size: clamp(2.7rem, 6vw, 4.4rem);
 }
 
 .teams-creator-create-button {
   min-width: 14rem;
   padding-block: 0.78rem;
-}
-
-.teams-creator-message {
-  margin-top: 0;
-}
-
-.teams-creator-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
 .teams-creator-table-row {
@@ -83,10 +72,6 @@
 @media (max-width: 768px) {
   .teams-creator-content {
     gap: 1.35rem;
-  }
-
-  .teams-creator-title {
-    font-size: clamp(2.2rem, 10vw, 3rem);
   }
 
   .teams-creator-table-row {

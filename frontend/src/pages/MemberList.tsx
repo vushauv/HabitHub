@@ -170,13 +170,13 @@ export default function MemberList() {
             </div>
 
             <div className="content-centered member-list-header">
-              <h1 className="title member-list-title pill-title">Team members</h1>
+              <h1 className="title page-title-md member-list-title pill-title">Team members</h1>
 
               {team ? <p className="text member-list-text">{team.name}</p> : null}
             </div>
 
             {pageError ? (
-              <p className="form-error member-list-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {pageError}
               </p>
             ) : null}
@@ -200,7 +200,7 @@ export default function MemberList() {
                 </p>
               </div>
             ) : (
-              <section className="member-list-table" aria-label="Team members">
+              <section className="table-list member-list-table" aria-label="Team members">
                 <div className="data-table-row member-list-table-row data-table-head member-list-table-head">
                   <span>Name</span>
                   <span>Email</span>

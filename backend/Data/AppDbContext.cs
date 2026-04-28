@@ -125,7 +125,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(he => he.MemberId).IsRequired();
             e.Property(he => he.Status).IsRequired();
             e.Property(he => he.Notes).HasMaxLength(1000);
-            e.Property(he => he.Date).IsRequired();
+            e.Property(he => he.LoggedAt).IsRequired();
+            e.Property(he => he.LogDate).IsRequired();
 
             e.HasOne(he => he.Habit)
             .WithMany(h => h.Entries)
@@ -137,7 +138,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(he => he.MemberId)
             .OnDelete(DeleteBehavior.Restrict);
             
-            e.HasIndex(he => new { he.HabitId, he.MemberId, he.Date })
+            e.HasIndex(he => new { he.HabitId, he.MemberId, he.LogDate })
             .IsUnique();
         });
     }

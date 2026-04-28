@@ -236,8 +236,8 @@ export default function ChangeEmail() {
               </Link>
             </div>
 
-            <div className="content-centered change-email-header">
-              <h1 className="title change-email-title">Change email</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Change email</h1>
               <p className="text change-email-text">
                 Update the email connected to your account. The new email must be
                 unique and your password is required to confirm identity.

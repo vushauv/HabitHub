@@ -125,12 +125,12 @@ export default function CreateTeam() {
               </Link>
             </div>
 
-            <div className="content-centered create-team-header">
-              <h1 className="title create-team-title pill-title">Create a Team</h1>
+            <div className="content-centered">
+              <h1 className="title page-title-md create-team-title pill-title">Create a Team</h1>
             </div>
 
             {serverError ? (
-              <p className="form-error create-team-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {serverError}
               </p>
             ) : null}

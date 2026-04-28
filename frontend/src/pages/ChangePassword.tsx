@@ -232,8 +232,8 @@ export default function ChangePassword() {
               </Link>
             </div>
 
-            <div className="content-centered change-password-header">
-              <h1 className="title change-password-title">Change password</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Change password</h1>
               <p className="text change-password-text">
                 Update your password securely. After a successful change, other
                 active sessions should be invalidated by the server.

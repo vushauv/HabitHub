@@ -21,18 +21,18 @@ jobs:
         with:
           filters: |
             backend-unit:
-              - '/.github/workflows/tests.yml'
-              - '/backend/**'
+              - '.github/workflows/tests.yml'
+              - 'backend/**'
             backend-integration:
-              - '/.github/workflows/tests.yml'
-              - '/backend/**'
-              - '/docker-compose.test.yml'
+              - '.github/workflows/tests.yml'
+              - 'backend/**'
+              - 'docker-compose.test.yml'
             frontend-unit:
-              - '/.github/workflows/tests.yml'
-              - '/frontend/**'
+              - '.github/workflows/tests.yml'
+              - 'frontend/**'
             frontend-integration:
-              - '/.github/workflows/tests.yml'
-              - '/frontend/**'
+              - '.github/workflows/tests.yml'
+              - 'frontend/**'
 
   backend-unit:
     name: Backend Unit Tests

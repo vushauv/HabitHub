@@ -1,24 +1,25 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./ChangePassword.css";
 import "../App.css";
 import type { ChangePasswordRequestDto } from "../services/dtos";
 import {
   API_BASE_URL,
-  validatePassword,
+  passwordSchema,
   type AccountType,
 } from "../services/User";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
+import { useLens } from "@hookform/lenses";
+import TextInput from "../components/form/TextInput";
+import SubmitButton from "../components/form/SubmitButton";
 
 type StoredAuth = {
   isLoggedIn?: boolean;
   userType?: AccountType;
   sessionId?: string | null;
   userId?: string | null;
-};
-
-type ChangePasswordErrors = {
-  currentPassword?: string;
-  newPassword?: string;
 };
 
 type ChangePasswordErrorCode =
@@ -53,26 +54,16 @@ function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
   };
 }
 
-function validateCurrentPassword(currentPassword: string): string | undefined {
-  if (!currentPassword) {
-    return "Current password is required.";
-  }
+const currentPasswordSchema = z
+  .string()
+  .nonempty({ error: "Current password is required." });
 
-  return undefined;
-}
-
-function validateChangePasswordForm(
-  form: ChangePasswordRequestDto,
-): ChangePasswordErrors {
-  return {
-    currentPassword: validateCurrentPassword(form.currentPassword),
-    newPassword: validatePassword(form.newPassword),
-  };
-}
-
-function hasErrors(errors: ChangePasswordErrors): boolean {
-  return Object.values(errors).some(Boolean);
-}
+const changePasswordFormSchema = z
+  .object({
+    currentPassword: currentPasswordSchema,
+    newPassword: passwordSchema
+  })
+  .required();
 
 function getErrorCode(
   status: number,
@@ -109,46 +100,40 @@ function getFriendlyErrorMessage(errorCode: ChangePasswordErrorCode): string {
 export default function ChangePassword() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [form, setForm] = useState<ChangePasswordRequestDto>({
-    currentPassword: "",
-    newPassword: "",
-  });
-  const [errors, setErrors] = useState<ChangePasswordErrors>({});
+  const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
+  const { handleSubmit, control, formState, subscribe, setValues } = useForm<ChangePasswordRequestDto>({
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+    },
+    disabled: loading,
+    resolver: zodResolver(changePasswordFormSchema),
+    mode: "all"
+  });
 
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value,
-    }));
+  const lens = useLens({ control });
+  
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setFormError(null);
+        setSuccessMessage(null);
+      },
+    })
 
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      [name]:
-        name === "currentPassword"
-          ? validateCurrentPassword(value)
-          : validatePassword(value),
-    }));
+    return () => callback()
+  }, [subscribe]);
 
+  const onSubmit = async (form: ChangePasswordRequestDto) => {
     setFormError(null);
     setSuccessMessage(null);
-  };
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
-    const validationErrors = validateChangePasswordForm(form);
-    setErrors(validationErrors);
-    setFormError(null);
-    setSuccessMessage(null);
-
-    if (hasErrors(validationErrors)) {
-      return;
-    }
 
     if (!auth?.isLoggedIn || !auth.sessionId) {
       setFormError("Your session is no longer valid. Please log in again.");
@@ -193,16 +178,14 @@ export default function ChangePassword() {
         throw new Error(getFriendlyErrorMessage(errorCode));
       }
 
-      setSuccessMessage(
-        "Password changed successfully. Other active sessions should now be invalidated.",
-      );
-
-      setForm({
+      setValues({
         currentPassword: "",
         newPassword: "",
       });
 
-      setErrors({});
+      setSuccessMessage(
+        "Password changed successfully. Other active sessions should now be invalidated.",
+      );
     } catch (error) {
       const message =
         error instanceof Error
@@ -242,62 +225,39 @@ export default function ChangePassword() {
 
             <form
               className="change-password-form"
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onSubmit)}
               noValidate
             >
-              <div className="form-field">
-                <label className="form-label" htmlFor="currentPassword">
-                  Current password
-                </label>
-                <input
-                  id="currentPassword"
-                  name="currentPassword"
-                  type="password"
-                  className="form-input"
-                  value={form.currentPassword}
-                  onChange={handleChange}
-                  placeholder="Enter your current password"
-                  aria-invalid={errors.currentPassword ? "true" : "false"}
-                  autoComplete="current-password"
-                />
-                {errors.currentPassword ? (
-                  <p className="field-error">{errors.currentPassword}</p>
-                ) : null}
-              </div>
+              <TextInput
+                label="Current password"
+                lens={lens.focus("currentPassword")}
+                type="password"
+                required
+                placeholder="Enter your current password"
+                autoComplete="current-password"
+              />
 
-              <div className="form-field">
-                <label className="form-label" htmlFor="newPassword">
-                  New password
-                </label>
-                <input
-                  id="newPassword"
-                  name="newPassword"
-                  type="password"
-                  className="form-input"
-                  value={form.newPassword}
-                  onChange={handleChange}
-                  placeholder="Enter your new password"
-                  aria-invalid={errors.newPassword ? "true" : "false"}
-                  autoComplete="new-password"
-                />
-                {errors.newPassword ? (
-                  <p className="field-error">{errors.newPassword}</p>
-                ) : null}
-              </div>
+              <TextInput
+                label="New password"
+                lens={lens.focus("newPassword")}
+                type="password"
+                required
+                placeholder="Enter your new password"
+                autoComplete="new-password"
+              />
 
-              {formError ? <p className="form-error">{formError}</p> : null}
+              {formError ? <p className="form-error" role="alert">{formError}</p> : null}
 
               {successMessage ? (
                 <p className="alert-success">{successMessage}</p>
               ) : null}
 
-              <button
-                type="submit"
-                className="button button-primary form-submit change-password-submit"
+              <SubmitButton
+                formState={formState}
                 disabled={loading}
               >
                 {loading ? "Updating..." : "Update password"}
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

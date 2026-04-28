@@ -77,7 +77,7 @@ it("shows validation errors on blur with empty fields", async () => {
   fireEvent.blur(screen.getByLabelText("Password"));
 
   await waitFor(() => {
-    expect(screen.getByText("Email is required.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
     expect(screen.getByText("Password is required.")).toBeInTheDocument();
   });
 });
@@ -92,7 +92,7 @@ it("navigates to /main-creator and stores auth on successful Creator login", asy
     target: { value: "password123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Creator" }));
-  fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+  fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
     expect(screen.getByText("This is /main-creator!")).toBeInTheDocument();
@@ -113,7 +113,7 @@ it("navigates to /main-member on successful Member login", async () => {
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: "password123" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+  fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
     expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
@@ -129,7 +129,7 @@ it("shows error message on 401 response", async () => {
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: "wrongpassword" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+  fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(

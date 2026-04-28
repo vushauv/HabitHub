@@ -19,6 +19,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@hookform/lenses": "^0.9.0",
+    "@hookform/resolvers": "^5.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.12.0",
@@ -31,9 +33,11 @@
     "globals": "^17.4.0",
     "jsdom": "^29.0.1",
     "msw": "^2.13.4",
+    "react-hook-form": "^7.74.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
     "vite": "^8.0.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "zod": "^4.3.6"
   }
 }

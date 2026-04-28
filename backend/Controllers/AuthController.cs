@@ -158,5 +158,27 @@ namespace backend.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
             }
         }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            try
+            {
+                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
+                if (currentUser == null)
+                    throw new AuthRequiredException();
+
+                UserDto userInfo = await authService.GetMe(currentUser.UserId, currentUser.UserType);
+                return StatusCode(StatusCodes.Status200OK, userInfo);
+            }
+            catch (AppException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
+            }
+        }
     }
 }

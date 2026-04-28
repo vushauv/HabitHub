@@ -143,7 +143,7 @@ export default function JoinTeam() {
             ) : null}
 
             {successMessage ? (
-              <p className="join-team-success">{successMessage}</p>
+              <p className="alert-success">{successMessage}</p>
             ) : null}
 
             <form className="join-team-form" onSubmit={handleSubmit} noValidate>

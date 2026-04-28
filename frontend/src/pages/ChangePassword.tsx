@@ -288,7 +288,7 @@ export default function ChangePassword() {
               {formError ? <p className="form-error">{formError}</p> : null}
 
               {successMessage ? (
-                <p className="change-password-success">{successMessage}</p>
+                <p className="alert-success">{successMessage}</p>
               ) : null}
 
               <button

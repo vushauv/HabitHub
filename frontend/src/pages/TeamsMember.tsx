@@ -158,7 +158,7 @@ export default function TeamsMember() {
             ) : null}
 
             {successMessage ? (
-              <p className="teams-member-success">{successMessage}</p>
+              <p className="alert-success">{successMessage}</p>
             ) : null}
 
             {loading ? (

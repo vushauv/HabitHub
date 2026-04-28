@@ -221,12 +221,12 @@ export default function ChangePassword() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card change-password-card-shell">
+        <div className="card page-card-shell">
           <div className="content change-password-content">
-            <div className="change-password-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary change-password-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>

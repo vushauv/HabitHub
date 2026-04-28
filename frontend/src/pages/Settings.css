@@ -1,20 +1,6 @@
-.settings-card-shell {
-  align-items: stretch;
-}
-
 .settings-content {
   max-width: 58rem;
   gap: 2rem;
-}
-
-.settings-topbar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.settings-back-button {
-  min-width: auto;
-  padding-inline: 1.1rem;
 }
 
 .settings-header {

@@ -210,19 +210,19 @@ export default function TeamsCreator() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card teams-creator-card-shell">
+        <div className="card page-card-shell">
           <div className="content teams-creator-content">
-            <div className="teams-creator-topbar">
+            <div className="page-topbar">
               <Link
                 to="/"
-                className="button button-secondary teams-creator-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Home
               </Link>
             </div>
 
             <div className="content-centered teams-creator-header">
-              <h1 className="title teams-creator-title">Your Teams</h1>
+              <h1 className="title teams-creator-title pill-title">Your Teams</h1>
 
               <Link
                 to="/create-team"
@@ -243,22 +243,22 @@ export default function TeamsCreator() {
             ) : null}
 
             {loading ? (
-              <div className="teams-creator-state-card">
-                <p className="teams-creator-state-title">Loading teams...</p>
-                <p className="teams-creator-state-text">
+              <div className="state-card">
+                <p className="state-title">Loading teams...</p>
+                <p className="state-text">
                   We are retrieving the teams you created.
                 </p>
               </div>
             ) : teams.length === 0 ? (
-              <div className="teams-creator-state-card">
-                <p className="teams-creator-state-title">No teams found</p>
-                <p className="teams-creator-state-text">
+              <div className="state-card">
+                <p className="state-title">No teams found</p>
+                <p className="state-text">
                   Create a new team to start inviting members.
                 </p>
               </div>
             ) : (
               <section className="teams-creator-table" aria-label="Your teams">
-                <div className="teams-creator-table-row teams-creator-table-head">
+                <div className="data-table-row teams-creator-table-row data-table-head teams-creator-table-head">
                   <span>Name</span>
                   <span>Habits</span>
                   <span>Chat</span>
@@ -281,7 +281,7 @@ export default function TeamsCreator() {
 
                   return (
                     <article
-                      className="teams-creator-table-row"
+                      className="data-table-row teams-creator-table-row"
                       key={team.teamId}
                     >
                       <span className="teams-creator-team-name">
@@ -290,7 +290,7 @@ export default function TeamsCreator() {
 
                       <button
                         type="button"
-                        className="button button-secondary teams-creator-row-button"
+                        className="button button-secondary table-row-button"
                         disabled
                       >
                         Show Habits
@@ -298,7 +298,7 @@ export default function TeamsCreator() {
 
                       <button
                         type="button"
-                        className="button button-secondary teams-creator-row-button"
+                        className="button button-secondary table-row-button"
                         disabled
                       >
                         Show Chat
@@ -320,7 +320,7 @@ export default function TeamsCreator() {
 
                             <button
                               type="button"
-                              className="button button-secondary teams-creator-inline-button"
+                              className="button button-secondary table-row-button"
                               onClick={() =>
                                 void handleInvalidateInviteCode(
                                   team.teamId,
@@ -340,7 +340,7 @@ export default function TeamsCreator() {
 
                         <button
                           type="button"
-                          className="button button-secondary teams-creator-inline-button"
+                          className="button button-secondary table-row-button"
                           onClick={() => void handleGenerateInviteCode(team.teamId)}
                           disabled={isGenerating}
                         >
@@ -352,14 +352,14 @@ export default function TeamsCreator() {
                         to={`/member-list?teamId=${encodeURIComponent(
                           team.teamId,
                         )}`}
-                        className="button button-secondary teams-creator-row-button"
+                        className="button button-secondary table-row-button"
                       >
                         Show List
                       </Link>
 
                       <button
                         type="button"
-                        className="button button-secondary teams-creator-row-button teams-creator-danger-button"
+                        className="button button-secondary table-row-button teams-creator-danger-button"
                         onClick={() => void handleDeleteTeam(team)}
                         disabled={isDeleting}
                       >

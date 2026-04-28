@@ -1,20 +1,6 @@
-.teams-creator-card-shell {
-  align-items: stretch;
-}
-
 .teams-creator-content {
   max-width: 64rem;
   gap: 1.75rem;
-}
-
-.teams-creator-topbar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.teams-creator-nav-button {
-  min-width: auto;
-  padding-inline: 1.1rem;
 }
 
 .teams-creator-header {
@@ -23,11 +9,6 @@
 
 .teams-creator-title {
   width: min(100%, 34rem);
-  padding: 1rem 1.5rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  text-align: center;
   font-size: clamp(2.7rem, 6vw, 4.4rem);
 }
 
@@ -40,29 +21,6 @@
   margin-top: 0;
 }
 
-.teams-creator-state-card {
-  padding: 1.5rem;
-  border-radius: var(--radius-medium);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  background: rgba(255, 255, 255, 0.56);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  text-align: center;
-}
-
-.teams-creator-state-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.teams-creator-state-text {
-  margin: 0.75rem 0 0;
-  color: var(--text-color-soft);
-  line-height: 1.65;
-}
-
 .teams-creator-table {
   display: flex;
   flex-direction: column;
@@ -70,29 +28,9 @@
 }
 
 .teams-creator-table-row {
-  display: grid;
   grid-template-columns:
     minmax(7rem, 1fr) minmax(7rem, 0.85fr) minmax(7rem, 0.8fr)
     minmax(12rem, 1.2fr) minmax(7rem, 0.85fr) minmax(8rem, 0.9fr);
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.85rem;
-  border-radius: var(--radius-medium);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  background: rgba(255, 255, 255, 0.56);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-.teams-creator-table-head {
-  padding-block: 0.7rem;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: none;
-  color: var(--text-color-soft);
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-align: center;
 }
 
 .teams-creator-team-name {
@@ -100,15 +38,6 @@
   color: var(--text-color);
   text-align: center;
   word-break: break-word;
-}
-
-.teams-creator-row-button,
-.teams-creator-inline-button {
-  width: 100%;
-  min-width: 0;
-  min-height: 2.75rem;
-  padding: 0.65rem 0.8rem;
-  font-size: 0.95rem;
 }
 
 .teams-creator-code-cell {

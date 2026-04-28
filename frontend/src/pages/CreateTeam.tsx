@@ -107,26 +107,26 @@ export default function CreateTeam() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card create-team-card-shell">
+        <div className="card page-card-shell">
           <div className="content create-team-content">
-            <div className="create-team-topbar">
+            <div className="page-topbar">
               <Link
                 to="/"
-                className="button button-secondary create-team-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Home
               </Link>
 
               <Link
                 to="/teams-creator"
-                className="button button-secondary create-team-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Teams
               </Link>
             </div>
 
             <div className="content-centered create-team-header">
-              <h1 className="title create-team-title">Create a Team</h1>
+              <h1 className="title create-team-title pill-title">Create a Team</h1>
             </div>
 
             {serverError ? (

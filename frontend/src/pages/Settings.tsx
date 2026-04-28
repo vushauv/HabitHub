@@ -10,10 +10,10 @@ export default function Settings() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card settings-card-shell">
+        <div className="card page-card-shell">
           <div className="content settings-content">
-            <div className="settings-topbar">
-              <Link to="/" className="button button-secondary settings-back-button">
+            <div className="page-topbar">
+              <Link to="/" className="button button-secondary page-nav-button">
                 Home
               </Link>
             </div>

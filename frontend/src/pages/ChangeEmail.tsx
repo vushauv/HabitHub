@@ -225,12 +225,12 @@ export default function ChangeEmail() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card change-email-card-shell">
+        <div className="card page-card-shell">
           <div className="content change-email-content">
-            <div className="change-email-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary change-email-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>

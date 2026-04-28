@@ -114,26 +114,26 @@ export default function JoinTeam() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card join-team-card-shell">
+        <div className="card page-card-shell">
           <div className="content join-team-content">
-            <div className="join-team-topbar">
+            <div className="page-topbar">
               <Link
                 to="/"
-                className="button button-secondary join-team-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Home
               </Link>
 
               <Link
                 to="/teams-member"
-                className="button button-secondary join-team-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Teams
               </Link>
             </div>
 
             <div className="content-centered join-team-header">
-              <h1 className="title join-team-title">Join a New Team</h1>
+              <h1 className="title join-team-title pill-title">Join a New Team</h1>
             </div>
 
             {serverError ? (

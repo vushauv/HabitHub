@@ -1,20 +1,6 @@
-.change-email-card-shell {
-  align-items: stretch;
-}
-
 .change-email-content {
   max-width: 42rem;
   gap: 2rem;
-}
-
-.change-email-topbar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.change-email-back-button {
-  min-width: auto;
-  padding-inline: 1.1rem;
 }
 
 .change-email-header {

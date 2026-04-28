@@ -225,12 +225,12 @@ export default function Sessions() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card sessions-card-shell">
+        <div className="card page-card-shell">
           <div className="content sessions-content">
-            <div className="sessions-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary sessions-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>
@@ -245,21 +245,21 @@ export default function Sessions() {
             </div>
 
             {loading ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">Loading sessions...</p>
-                <p className="sessions-state-text">
+              <div className="state-card">
+                <p className="state-title">Loading sessions...</p>
+                <p className="state-text">
                   We are retrieving your currently active sessions.
                 </p>
               </div>
             ) : pageError ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">Could not load sessions</p>
-                <p className="sessions-state-text">{pageError}</p>
+              <div className="state-card">
+                <p className="state-title">Could not load sessions</p>
+                <p className="state-text">{pageError}</p>
               </div>
             ) : sessions.length === 0 ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">No active sessions found</p>
-                <p className="sessions-state-text">
+              <div className="state-card">
+                <p className="state-title">No active sessions found</p>
+                <p className="state-text">
                   There are no active sessions available to display right now.
                 </p>
               </div>

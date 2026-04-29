@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using backend.Enums;
 
-namespace backend.Dtos.AuthDtos
+namespace backend.Dtos.HabitDtos
 {
     public record CreateHabitRequestDto(
         [Required, StringLength(256)]

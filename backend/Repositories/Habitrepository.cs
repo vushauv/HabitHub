@@ -1,72 +1,92 @@
+using backend.Data;
 using backend.Enums;
 using backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Repositories;
 
-public class HabitRepository : IHabitRepository
+public class HabitRepository(AppDbContext db) : IHabitRepository
 {
-    public Task ArchiveExpiredActiveHabitsAsync()
+    public async Task ArchiveExpiredActiveHabitsAsync()
     {
-        throw new NotImplementedException();
+        DateTime now = DateTime.UtcNow;
+        List<Habit> toArchive = await db.Habits.Where(h => h.HabitState == HabitState.Active && h.ExpiryDate != null && h.ExpiryDate <= now).ToListAsync();
+        foreach( var habit in toArchive)
+        {
+            habit.HabitState = HabitState.Archived;
+        }
+        await db.SaveChangesAsync();
     }
 
-    public Task<bool> ArchiveHabitAsync(Guid habitId)
+    public async Task<bool> ArchiveHabitAsync(Guid habitId)
     {
-        throw new NotImplementedException();
+        Habit? habit = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
+        if(habit == null)
+            return false;
+        habit.HabitState = HabitState.Archived;
+        await db.SaveChangesAsync();
+        return true;
     }
 
-    public Task<Habit> CreateHabitAsync(Habit habit)
+    public async Task<Habit> CreateHabitAsync(Habit habit)
     {
-        throw new NotImplementedException();
+        db.Habits.Add(habit);
+        await db.SaveChangesAsync();
+        return habit;
     }
 
-    public Task<bool> DeleteHabitAsync(Guid habitId)
+    public async Task<bool> DeleteHabitAsync(Guid habitId)
     {
-        throw new NotImplementedException();
+        Habit? habit = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
+        if(habit == null)
+            return false;
+        habit.HabitState = HabitState.Closed;
+        await db.SaveChangesAsync();
+        return true;
     }
 
-    public Task<List<Habit>> GetActiveHabitsByTeamIdAsync(Guid teamId)
+    public async Task<List<Habit>> GetActiveHabitsByTeamIdAsync(Guid teamId) => 
+        await db.Habits.Where(h => h.TeamId == teamId && h.HabitState == HabitState.Active).ToListAsync();
+
+    public async Task<List<Habit>> GetArchivedHabitsByTeamIdAsync(Guid teamId) =>
+        await db.Habits.Where(h => h.TeamId == teamId && h.HabitState == HabitState.Archived).ToListAsync();
+
+    public async Task<Habit?> GetHabitByIdAsync(Guid habitId) =>
+        await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
+
+    public async Task<List<Habit>> GetHabitsByCreatorIdAsync(Guid creatorId) => 
+        await db.Habits.Where(h => h.CreatorId == creatorId).ToListAsync();
+
+    public async Task<List<Habit>> GetHabitsByTeamIdAsync(Guid teamId) =>
+        await db.Habits.Where(h => h.TeamId == teamId).ToListAsync();
+
+    public async Task<Habit?> GetHabitWithEntriesByIdAsync(Guid habitId) =>
+        await db.Habits.Include(h => h.Entries).FirstOrDefaultAsync(h => h.HabitId == habitId);
+
+    public async Task<bool> HabitExistsAsync(Guid habitId) =>
+        await db.Habits.AnyAsync(h => h.HabitId == habitId);
+
+    public async Task UpdateHabitAsync(Habit habit)
     {
-        throw new NotImplementedException();
+        Habit? existing = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habit.HabitId);
+        if (existing == null)
+            throw new KeyNotFoundException("Habit not found.");
+        existing.Name = habit.Name;
+        existing.Goal = habit.Goal;
+        existing.HabitType = habit.HabitType;
+        existing.Unit = habit.Unit;
+        existing.ExpiryDate = habit.ExpiryDate;
+        existing.HabitState = habit.HabitState;
+
+        await db.SaveChangesAsync();
     }
 
-    public Task<List<Habit>> GetArchivedHabitsByTeamIdAsync(Guid teamId)
+    public async Task UpdateHabitStateAsync(Guid habitId, HabitState state)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task<Habit?> GetHabitByIdAsync(Guid habitId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<Habit>> GetHabitsByCreatorIdAsync(Guid creatorId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<Habit>> GetHabitsByTeamIdAsync(Guid teamId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Habit?> GetHabitWithEntriesByIdAsync(Guid habitId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> HabitExistsAsync(Guid habitId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task UpdateHabitAsync(Habit habit)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task UpdateHabitStateAsync(Guid habitId, HabitState state)
-    {
-        throw new NotImplementedException();
+        Habit? habit = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
+        if(habit == null)
+            throw new KeyNotFoundException("Habit not found.");
+        habit.HabitState = state;
+        await db.SaveChangesAsync();
     }
 }

@@ -5,7 +5,7 @@
 * @vushauv
 
 # Backend
-/backend/ @paulamat1 @rybaks72
+/backend/ @paulamat1 @rybaks72 @vushauv
 /backend/backend.Tests/ @fumple @paulamat1 @rybaks72
 
 # Frontend
@@ -15,3 +15,9 @@
 # Workflow files
 /.github/ @vushauv @fumple
 /scripts/ @vushauv @fumple
+
+# Docker
+docker-compose*.yml @vushauv @fumple
+**/docker-compose*.yml @vushauv @fumple
+Dockerfile* @vushauv @fumple
+**/Dockerfile* @vushauv @fumple

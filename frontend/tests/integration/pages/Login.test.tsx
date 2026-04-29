@@ -104,7 +104,7 @@ it("navigates to /main-creator and stores auth on successful Creator login", asy
   expect(stored.name).toBe("Test Creator");
 });
 
-it("navigates to /main-member on successful Member login", async () => {
+it("navigates to /main-member and stores auth on successful Member login", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Email"), {
@@ -113,11 +113,17 @@ it("navigates to /main-member on successful Member login", async () => {
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: "password123" },
   });
+  fireEvent.click(screen.getByRole("button", { name: "Member" }));
   fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
     expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
   });
+
+  const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
+  expect(stored.isLoggedIn).toBe(true);
+  expect(stored.userType).toBe("Member");
+  expect(stored.name).toBe("Test Member");
 });
 
 it("shows error message on 401 response", async () => {

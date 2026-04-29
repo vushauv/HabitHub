@@ -1,8 +1,10 @@
+using backend.Data;
+using backend.Enums;
 using backend.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace backend.Repositories;
 
-public class HabitEntryRepository : IHabitEntryRepository
+public class HabitEntryRepository(AppDbContext db) : IHabitEntryRepository
 {
     public Task<HabitEntry> CreateHabitEntryAsync(HabitEntry entry)
     {
@@ -14,12 +16,12 @@ public class HabitEntryRepository : IHabitEntryRepository
         throw new NotImplementedException();
     }
 
-    public Task<bool> DeleteHabitEntryByHabitMemberDateAsync(Guid habitId, Guid memberId, DateOnly logDate)
+    public Task<bool> DeleteHabitEntryByHabitMemberLogDateAsync(Guid habitId, Guid memberId, DateOnly logDate)
     {
         throw new NotImplementedException();
     }
 
-    public Task<List<HabitEntry>> GetHabitEntriesByHabitAndDateRangeAsync(Guid habitId, DateOnly from, DateOnly to)
+    public Task<List<HabitEntry>> GetHabitEntriesByHabitAndLogDateRangeAsync(Guid habitId, DateOnly from, DateOnly to)
     {
         throw new NotImplementedException();
     }
@@ -44,7 +46,7 @@ public class HabitEntryRepository : IHabitEntryRepository
         throw new NotImplementedException();
     }
 
-    public Task<HabitEntry?> GetHabitEntryByHabitMemberDateAsync(Guid habitId, Guid memberId, DateOnly logDate)
+    public Task<HabitEntry?> GetHabitEntryByHabitMemberLogDateAsync(Guid habitId, Guid memberId, DateOnly logDate)
     {
         throw new NotImplementedException();
     }
@@ -54,7 +56,7 @@ public class HabitEntryRepository : IHabitEntryRepository
         throw new NotImplementedException();
     }
 
-    public Task<bool> HasHabitEntryForDateAsync(Guid habitId, Guid memberId, DateOnly logDate)
+    public Task<bool> HasHabitEntryForLogDateAsync(Guid habitId, Guid memberId, DateOnly logDate)
     {
         throw new NotImplementedException();
     }

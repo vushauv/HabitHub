@@ -10,16 +10,16 @@ export default function Settings() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card settings-card-shell">
+        <div className="card page-card-shell">
           <div className="content settings-content">
-            <div className="settings-topbar">
-              <Link to="/" className="button button-secondary settings-back-button">
+            <div className="page-topbar">
+              <Link to="/" className="button button-secondary page-nav-button">
                 Home
               </Link>
             </div>
 
-            <div className="content-centered settings-header">
-              <h1 className="title settings-title">Security settings</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Security settings</h1>
               <p className="text settings-text">
                 Manage your account security in one place. You can change your
                 password, update your email, and review active sessions.

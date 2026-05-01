@@ -1,0 +1,23 @@
+# The first person is the primary owner (expect /backend/ where both are primary owners)
+# The remaining people are secondary owners, so that if the primary owner makes a change, there is still a person who can review it.
+
+# If none of the below patterns match, then it should be manually determined who should review it
+* @vushauv
+
+# Backend
+/backend/ @paulamat1 @rybaks72 @vushauv
+/backend/backend.Tests/ @fumple @paulamat1 @rybaks72
+
+# Frontend
+/frontend/ @kamilasw @fumple
+/frontend/tests/ @fumple @kamilasw
+
+# Workflow files
+/.github/ @vushauv @fumple
+/scripts/ @vushauv @fumple
+
+# Docker
+docker-compose*.yml @vushauv @fumple
+**/docker-compose*.yml @vushauv @fumple
+Dockerfile* @vushauv @fumple
+**/Dockerfile* @vushauv @fumple

@@ -12,7 +12,7 @@ namespace backend.Controllers
     public class TeamController(ITeamService teamService) : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> CreateTeam([FromBody] CreateTeamRequestDto request)
+        public async Task<IActionResult> CreateTeam([FromBody] CreateTeamRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("{teamId}/invite-codes")]
-        public async Task<IActionResult> GenerateInviteCode(Guid teamId)
+        public async Task<IActionResult> GenerateInviteCode(Guid teamId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete("{teamId}/invite-codes/{codeId}")]
-        public async Task<IActionResult> InvalidateInviteCode(Guid teamId, Guid codeId)
+        public async Task<IActionResult> InvalidateInviteCode(Guid teamId, Guid codeId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -78,7 +78,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("join")]
-        public async Task<IActionResult> JoinTeam([FromBody] JoinTeamRequestDto request)
+        public async Task<IActionResult> JoinTeam([FromBody] JoinTeamRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -100,7 +100,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("{teamId}/members/{memberId}/kick")]
-        public async Task<IActionResult> KickUser(Guid teamId, Guid memberId)
+        public async Task<IActionResult> KickUser(Guid teamId, Guid memberId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("{teamId}/leave")]
-        public async Task<IActionResult> LeaveTeam(Guid teamId)
+        public async Task<IActionResult> LeaveTeam(Guid teamId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -144,7 +144,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete("{teamId}")]
-        public async Task<IActionResult> DeleteTeam(Guid teamId)
+        public async Task<IActionResult> DeleteTeam(Guid teamId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -166,7 +166,7 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTeams()
+        public async Task<IActionResult> GetTeams([FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -189,7 +189,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{teamId}")]
-        public async Task<IActionResult> GetTeam(Guid teamId)
+        public async Task<IActionResult> GetTeam(Guid teamId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -212,7 +212,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{teamId}/members")]
-        public async Task<IActionResult> GetTeamMembers(Guid teamId)
+        public async Task<IActionResult> GetTeamMembers(Guid teamId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {
@@ -235,7 +235,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("{teamId}/invite-codes")]
-        public async Task<IActionResult> GetInviteCodes(Guid teamId)
+        public async Task<IActionResult> GetInviteCodes(Guid teamId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {

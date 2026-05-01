@@ -471,6 +471,10 @@ textarea {
   box-shadow: 0 12px 28px rgba(0, 113, 227, 0.18);
 }
 
+.role-button-active:hover {
+  background: rgba(0, 113, 227, 0.80);
+}
+
 @media (max-width: 640px) {
   .role-group {
     grid-template-columns: 1fr;

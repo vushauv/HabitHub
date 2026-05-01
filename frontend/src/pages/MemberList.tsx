@@ -151,57 +151,57 @@ export default function MemberList() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card member-list-card-shell">
+        <div className="card page-card-shell">
           <div className="content member-list-content">
-            <div className="member-list-topbar">
+            <div className="page-topbar">
               <Link
                 to="/"
-                className="button button-secondary member-list-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Home
               </Link>
 
               <Link
                 to="/teams-creator"
-                className="button button-secondary member-list-nav-button"
+                className="button button-secondary page-nav-button"
               >
                 Teams
               </Link>
             </div>
 
             <div className="content-centered member-list-header">
-              <h1 className="title member-list-title">Team members</h1>
+              <h1 className="title page-title-md member-list-title pill-title">Team members</h1>
 
               {team ? <p className="text member-list-text">{team.name}</p> : null}
             </div>
 
             {pageError ? (
-              <p className="form-error member-list-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {pageError}
               </p>
             ) : null}
 
             {successMessage ? (
-              <p className="member-list-success">{successMessage}</p>
+              <p className="alert-success">{successMessage}</p>
             ) : null}
 
             {loading ? (
-              <div className="member-list-state-card">
-                <p className="member-list-state-title">Loading members...</p>
-                <p className="member-list-state-text">
+              <div className="state-card">
+                <p className="state-title">Loading members...</p>
+                <p className="state-text">
                   We are retrieving the active team members.
                 </p>
               </div>
             ) : members.length === 0 ? (
-              <div className="member-list-state-card">
-                <p className="member-list-state-title">No members found</p>
-                <p className="member-list-state-text">
+              <div className="state-card">
+                <p className="state-title">No members found</p>
+                <p className="state-text">
                   This team has no active members right now.
                 </p>
               </div>
             ) : (
-              <section className="member-list-table" aria-label="Team members">
-                <div className="member-list-table-row member-list-table-head">
+              <section className="table-list member-list-table" aria-label="Team members">
+                <div className="data-table-row member-list-table-row data-table-head member-list-table-head">
                   <span>Name</span>
                   <span>Email</span>
                   <span></span>
@@ -212,7 +212,7 @@ export default function MemberList() {
 
                   return (
                     <article
-                      className="member-list-table-row"
+                      className="data-table-row member-list-table-row"
                       key={member.memberId}
                     >
                       <span className="member-list-name">{member.name}</span>
@@ -220,7 +220,7 @@ export default function MemberList() {
 
                       <button
                         type="button"
-                        className="button button-secondary member-list-kick-button"
+                        className="button button-secondary table-row-button member-list-kick-button"
                         onClick={() => void handleKickMember(member)}
                         disabled={isKicking}
                       >

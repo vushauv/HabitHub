@@ -204,19 +204,19 @@ export default function ChangePassword() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card change-password-card-shell">
+        <div className="card page-card-shell">
           <div className="content change-password-content">
-            <div className="change-password-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary change-password-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>
             </div>
 
-            <div className="content-centered change-password-header">
-              <h1 className="title change-password-title">Change password</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Change password</h1>
               <p className="text change-password-text">
                 Update your password securely. After a successful change, other
                 active sessions should be invalidated by the server.
@@ -249,7 +249,7 @@ export default function ChangePassword() {
               {formError ? <p className="form-error" role="alert">{formError}</p> : null}
 
               {successMessage ? (
-                <p className="change-password-success" role="alert">{successMessage}</p>
+                <p className="alert-success">{successMessage}</p>
               ) : null}
 
               <SubmitButton

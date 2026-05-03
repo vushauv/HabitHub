@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
 import "../App.css";
-import type { AuthResponseDto, RegisterRequestDto } from "../services/dtos";
+import type { RegisterRequestDto } from "../services/dtos";
 import {registerFormSchema, type RegisterForm} from "../services/Register.ts";
 import {
   API_BASE_URL,
   DEFAULT_TIMEZONE,
   TIMEZONE_OPTIONS,
-  mapUserTypeFromEnum,
   mapUserTypeToEnum,
 } from "../services/User.ts"
 import { useForm } from "react-hook-form"
@@ -18,6 +17,10 @@ import SelectInput from "../components/form/SelectInput.tsx";
 import AccountTypeInput from "../components/form/AccountTypeInput.tsx";
 import SubmitButton from "../components/form/SubmitButton.tsx";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  getDashboardPathForUser,
+  storeSessionAndLoadCurrentUser,
+} from "../services/Auth";
 
 
 export default function Register() {
@@ -92,7 +95,7 @@ export default function Register() {
         throw new Error(responseText || `Registration failed (${response.status}).`);
       }
 
-      const data = (await response.json()) as AuthResponseDto;
+      const data = (await response.json()) as { sessionId?: string | null };
       const sessionId = data.sessionId;
 
       if (!sessionId) {
@@ -101,25 +104,9 @@ export default function Register() {
         );
       }
 
-      const authenticatedUserType = mapUserTypeFromEnum(data.user.userType);
-      const userId = data.user.id;
-      const name = data.user.name;
+      const currentUser = await storeSessionAndLoadCurrentUser(sessionId);
 
-      localStorage.setItem(
-        "habithubAuth",
-        JSON.stringify({
-          isLoggedIn: true,
-          userType: authenticatedUserType,
-          sessionId,
-          userId,
-          name,
-        }),
-      );
-
-      navigate(
-        authenticatedUserType === "Creator" ? "/main-creator" : "/main-member",
-        { replace: true },
-      );
+      navigate(getDashboardPathForUser(currentUser), { replace: true });
     } catch (error) {
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",

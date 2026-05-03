@@ -1,38 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Home.css";
 import "../App.css";
-import { API_BASE_URL, type AccountType } from "../services/User";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+import { API_BASE_URL } from "../services/User";
+import {
+  clearStoredAuth,
+  getDashboardPathForUser,
+  getStoredAuth,
+  type StoredAuth,
+} from "../services/Auth";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 type LogoutErrorResponse = {
   message?: string | null;
 };
-
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
 
 function getLogoutErrorMessage(responseText: string, status: number): string {
   const fallbackMessage = `Logout failed (${status}).`;
@@ -71,15 +52,21 @@ export default function Home() {
   const [auth, setAuth] = useState<StoredAuth | null>(() => getStoredAuth());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const { currentUser, isLoading, error } = useCurrentUser(auth);
 
-  const isLoggedIn = auth?.isLoggedIn === true;
+  const isLoggedIn = auth !== null;
+  const dashboardPath = currentUser ? getDashboardPathForUser(currentUser) : "/login";
 
-  const dashboardPath =
-    auth?.userType === "Creator"
-      ? "/main-creator"
-      : auth?.userType === "Member"
-      ? "/main-member"
-      : "/login";
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    if (error.code === "auth-required" || error.code === "not-found") {
+      clearStoredAuth();
+      setAuth(null);
+    }
+  }, [error]);
 
   function clearAuthSession() {
     clearStoredAuth();
@@ -89,7 +76,7 @@ export default function Home() {
   async function handleLogout() {
     setLogoutError("");
 
-    if (!auth?.isLoggedIn || !auth.sessionId) {
+    if (!auth) {
       clearAuthSession();
       navigate("/", { replace: true });
       return;
@@ -134,12 +121,28 @@ export default function Home() {
             </p>
           ) : null}
 
+          {error?.code === "unknown" ? (
+            <p className="form-error" role="alert">
+              {error.message}
+            </p>
+          ) : null}
+
           <div className="buttons">
             {isLoggedIn ? (
               <>
-                <Link to={dashboardPath} className="button button-primary">
-                  Go to dashboard
-                </Link>
+                {currentUser ? (
+                  <Link to={dashboardPath} className="button button-primary">
+                    Go to dashboard
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="button button-primary"
+                    disabled
+                  >
+                    {isLoading ? "Loading dashboard..." : "Go to dashboard"}
+                  </button>
+                )}
 
                 <button
                   type="button"

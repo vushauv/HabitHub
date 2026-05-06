@@ -201,7 +201,7 @@ namespace backend.Service
                 await members.UpdatePasswordAsync(userId, newHash);
             } else
             {
-                throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid user type.");
+                throw new AuthRequiredException(); 
             }
 
             await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
@@ -244,7 +244,7 @@ namespace backend.Service
             }
             else
             {
-                throw new AppException(StatusCodes.Status400BadRequest, "validation-error", "Invalid user type.");
+                throw new AuthRequiredException();
             }
 
             await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);

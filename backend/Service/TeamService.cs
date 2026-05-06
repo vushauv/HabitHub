@@ -1,4 +1,5 @@
-﻿using backend.Dtos.TeamDtos;
+﻿using backend.Dtos.HabitDtos;
+using backend.Dtos.TeamDtos;
 using backend.Enums;
 using backend.Exceptions;
 using backend.Models;
@@ -12,7 +13,8 @@ namespace backend.Service
         ITeamMemberRepository members,
         IMembershipRepository memberships,
         ITeamCreatorRepository creators,
-        IInviteCodeRepository inviteCodes
+        IInviteCodeRepository inviteCodes,
+        IHabitRepository habits
         ): ITeamService
     {
         public async Task<CreateTeamResponseDto> CreateTeam(Guid userId, CreateTeamRequestDto request)
@@ -196,7 +198,7 @@ namespace backend.Service
                 results.AddRange(teams.Select(t => new TeamSummaryDto(t.TeamId, t.Name)));
             }
 
-            if(userType == UserType.Member)
+            else if(userType == UserType.Member)
             {
                 List<Membership> activeMemberships = await memberships.GetActiveMembershipsByMemberIdAsync(userId);
                 List<Guid> teamIds = activeMemberships.Select(m => m.TeamId).ToList();
@@ -205,10 +207,12 @@ namespace backend.Service
 
                 results.AddRange(teams.Select(t => new TeamSummaryDto(t.TeamId, t.Name)));
             }
+            else
+                throw new AuthRequiredException();
 
             return results;
         }
-        public async Task<TeamDetailsDto> GetTeam(Guid userId, UserType userType, Guid teamId)
+        public async Task<TeamSummaryDto> GetTeam(Guid userId, UserType userType, Guid teamId)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
@@ -216,17 +220,20 @@ namespace backend.Service
 
             if(userType == UserType.Member)
             {
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, userId);
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, userId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
-            if (userType == UserType.Creator)
+            else if (userType == UserType.Creator)
             {
                 bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
                 if (!isTeamCreator)
                     throw new ForbiddenException();
             }
-            return new TeamDetailsDto(team.TeamId, team.Name);
+            else
+                throw new AuthRequiredException();
+
+            return new TeamSummaryDto(team.TeamId, team.Name);
         }
         public async Task<List<TeamMemberDto>> GetTeamMembers(Guid userId, UserType userType, Guid teamId)
         {
@@ -242,12 +249,14 @@ namespace backend.Service
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
-            if (userType == UserType.Creator)
+            else if (userType == UserType.Creator)
             {
                 bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
                 if (!isTeamCreator)
                     throw new ForbiddenException();
             }
+            else
+                throw new AuthRequiredException();
 
             List<Membership> membershipList = await memberships.GetMembershipsByTeamIdAsync(teamId);
             List<Guid> memberIds = membershipList.Select(m => m.MemberId).ToList();

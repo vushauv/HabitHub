@@ -8,8 +8,7 @@ namespace backend.Dtos.HabitDtos
         string Name,
         [StringLength(512)]
         string? Goal,
-        [Required]
-        HabitType HabitType,
+        HabitType? HabitType,
         Unit? Unit,
         DateTime? ExpiryDate
     );

@@ -3,7 +3,7 @@ using backend.Enums;
 
 namespace backend.Dtos.HabitDtos
 {
-    public record HabitSummaryResponseDto(
+    public record HabitSummaryDto(
         Guid HabitId,
         string Name,
         string? Goal,

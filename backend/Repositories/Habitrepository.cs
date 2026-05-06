@@ -40,7 +40,14 @@ public class HabitRepository(AppDbContext db) : IHabitRepository
         Habit? habit = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
         if(habit == null)
             return false;
+
         habit.HabitState = HabitState.Closed;
+
+        List<HabitEntry> entries = await db.HabitEntries.Where(e => e.HabitId == habitId).ToListAsync();
+
+        db.HabitEntries.RemoveRange(entries);
+        db.Habits.Remove(habit);
+
         await db.SaveChangesAsync();
         return true;
     }
@@ -71,12 +78,10 @@ public class HabitRepository(AppDbContext db) : IHabitRepository
         Habit? existing = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habit.HabitId);
         if (existing == null)
             throw new KeyNotFoundException("Habit not found.");
+
         existing.Name = habit.Name;
         existing.Goal = habit.Goal;
-        existing.HabitType = habit.HabitType;
-        existing.Unit = habit.Unit;
         existing.ExpiryDate = habit.ExpiryDate;
-        existing.HabitState = habit.HabitState;
 
         await db.SaveChangesAsync();
     }

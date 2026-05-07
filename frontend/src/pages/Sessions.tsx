@@ -3,42 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import "./Sessions.css";
 import "../App.css";
 import type { SessionDto } from "../services/dtos";
-import { API_BASE_URL, type AccountType } from "../services/User";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+import { API_BASE_URL } from "../services/User";
+import {
+  clearStoredAuth,
+  getAuthHeaders,
+  getStoredAuth,
+} from "../services/Auth";
 
 type SessionsErrorCode = "auth-required" | "not-found" | "unknown";
-
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
 
 function getErrorCode(status: number): SessionsErrorCode {
   if (status === 401) {
@@ -91,7 +63,7 @@ export default function Sessions() {
       setLoading(true);
       setPageError(null);
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         if (!isMounted) {
           return;
         }

@@ -9,7 +9,7 @@ namespace backend.Dtos.HabitDtos
         string? Name,
         [StringLength(512)]
         string? Goal,
-        DateTime? ExpiryDate, //UPDATED VERSION
+        DateTime? ExpiryDate, 
         bool ClearGoal = false,
         bool ClearExpiryDate = false
     );

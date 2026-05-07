@@ -62,6 +62,24 @@ jobs:
     if: needs.check-for-changes.outputs.backend-integration == 'true'
     steps:
       - uses: actions/checkout@v4
+      - name: Cache Docker images
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.docker-image-cache
+          key: docker-images-${{ hashFiles('docker-compose.test.yml') }}
+          restore-keys: docker-images-
+      - name: Load cached images
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: |
+          for f in ~/.docker-image-cache/*.tar; do docker load -i "$f"; done
+      - name: Pull and save images
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.docker-image-cache
+          docker compose -f docker-compose.test.yml pull postgres-test backend-integration-test
+          docker save postgres:16-alpine -o ~/.docker-image-cache/postgres.tar
+          docker save mcr.microsoft.com/dotnet/sdk:8.0 -o ~/.docker-image-cache/dotnet-sdk.tar
       - name: Run
         run: docker compose -f docker-compose.test.yml run --rm backend-integration-test
       - name: Cleanup

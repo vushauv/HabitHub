@@ -47,7 +47,7 @@ export default function TeamsCreator() {
       setLoading(true);
       setPageError(null);
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         clearStoredAuth();
 
         if (isMounted) {

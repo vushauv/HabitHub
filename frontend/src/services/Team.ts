@@ -1,5 +1,9 @@
 import z from "zod";
-import { API_BASE_URL, type AccountType } from "./User";
+import { API_BASE_URL } from "./User";
+import {
+  getAuthHeaders,
+  type StoredAuth,
+} from "./Auth";
 import type {
   CreateTeamRequestDto,
   CreateTeamResponseDto,
@@ -13,13 +17,7 @@ import type {
 } from "./dtos";
 
 export type { InviteCodeDto, TeamDetailsDto, TeamSummaryDto } from "./dtos";
-
-export type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+export { clearStoredAuth, getAuthHeaders, getStoredAuth, type StoredAuth } from "./Auth";
 
 export type TeamMemberStatus = "Active" | "Kicked" | "Left";
 
@@ -64,32 +62,6 @@ type RawErrorResponse = {
   Error?: string | null;
   Message?: string | null;
 };
-
-export function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-export function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-export function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
 
 export const teamNameSchema = z
   .string()

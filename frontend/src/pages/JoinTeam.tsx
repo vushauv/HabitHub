@@ -62,7 +62,7 @@ export default function JoinTeam() {
     setServerError("");
     setSuccessMessage("");
 
-    if (!auth?.isLoggedIn || !auth.sessionId) {
+    if (!auth) {
       clearStoredAuth();
       setServerError("Your session is no longer valid. Please log in again.");
 

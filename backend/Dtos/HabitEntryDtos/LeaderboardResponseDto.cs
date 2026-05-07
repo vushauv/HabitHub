@@ -6,9 +6,8 @@ namespace backend.Dtos.HabitEntryDtos
     public record LeaderboardResponseDto(
         Guid MemberId,
         string MemberName,
-        float? TotalValue,
+        double? TotalValue,
         int LoggedCount,
-        int SkippedCount,
         int Rank
     );
 }

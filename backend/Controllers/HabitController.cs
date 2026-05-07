@@ -176,7 +176,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete("habits/{habitId}/entries/{entryId}")]
-        public async Task<IActionResult> UndoLog(Guid habitId, Guid entryId)
+        public async Task<IActionResult> UndoLog(Guid habitId, Guid entryId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
         {
             try
             {

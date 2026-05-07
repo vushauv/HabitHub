@@ -1,16 +1,16 @@
 import type { Lens } from '@hookform/lenses';
 import { useController } from 'react-hook-form';
 
-export type SelectInputProps = {
+export type SelectInputProps<T extends string = string> = {
   label: string,
-  lens: Lens<string>,
-} & Pick<React.SelectHTMLAttributes<HTMLSelectElement>, "required" | "children">
+  lens: Lens<T>,
+} & Pick<React.SelectHTMLAttributes<HTMLSelectElement>, "required" | "children" | "className">
 
-export default function SelectInput({ label, lens, children, ...inputProps }: SelectInputProps) {
-  const { field, fieldState } = useController(lens.interop())
+export default function SelectInput<T extends string>({ label, lens, children, className, ...inputProps }: SelectInputProps<T>) {
+  const { field, fieldState } = useController((lens as unknown as Lens<string>).interop())
   const name = field.name;
   return (
-    <div className="form-field">
+    <div className={`form-field ${className ?? ""}`}>
       <label className="form-label" htmlFor={name}>
         {label}
       </label>

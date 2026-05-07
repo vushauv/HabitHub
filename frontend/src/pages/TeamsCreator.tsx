@@ -288,13 +288,14 @@ export default function TeamsCreator() {
                         {team.name}
                       </span>
 
-                      <button
-                        type="button"
+                      <Link
+                        to={`/habits-creator?teamId=${encodeURIComponent(
+                          team.teamId,
+                        )}`}
                         className="button button-secondary table-row-button"
-                        disabled
                       >
                         Show Habits
-                      </button>
+                      </Link>
 
                       <button
                         type="button"

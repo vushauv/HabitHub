@@ -13,8 +13,7 @@ namespace backend.Service
         ITeamMemberRepository members,
         IMembershipRepository memberships,
         ITeamCreatorRepository creators,
-        IInviteCodeRepository inviteCodes,
-        IHabitRepository habits
+        IInviteCodeRepository inviteCodes
         ): ITeamService
     {
         public async Task<CreateTeamResponseDto> CreateTeam(Guid userId, CreateTeamRequestDto request)
@@ -68,7 +67,6 @@ namespace backend.Service
                 createdInviteCode.ExpiryDate
             );
         }
-
         public async Task InvalidateInviteCode(Guid userId, Guid teamId, Guid codeId)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
@@ -169,11 +167,15 @@ namespace backend.Service
             if (team == null)
                 throw new NotFoundException();
 
-            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, userId);
+            TeamMember? member = await members.GetMemberByIdAsync(userId);
+            if (member == null)
+                throw new ForbiddenException();
+
+            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
             if (!isActiveMembership)
                 throw new NotFoundException();
 
-            await memberships.UpdateMembershipStatusAsync(team.TeamId, userId, MembershipStatus.Left);
+            await memberships.UpdateMembershipStatusAsync(team.TeamId, member.MemberId, MembershipStatus.Left);
         }
         public async Task DeleteTeam(Guid userId, Guid teamId)
         {
@@ -220,7 +222,11 @@ namespace backend.Service
 
             if(userType == UserType.Member)
             {
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, userId);
+                TeamMember? member = await members.GetMemberByIdAsync(userId);
+                if (member == null)
+                    throw new ForbiddenException();
+
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
@@ -245,7 +251,11 @@ namespace backend.Service
 
             if (userType == UserType.Member)
             {
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, userId);
+                TeamMember? member = await members.GetMemberByIdAsync(userId);
+                if (member == null)
+                    throw new ForbiddenException();
+
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, member.MemberId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }

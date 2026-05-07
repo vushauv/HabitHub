@@ -197,7 +197,7 @@ namespace backend.Controllers
                 if (currentUser == null)
                     throw new AuthRequiredException();
 
-                TeamDetailsDto response = await teamService.GetTeam(currentUser.UserId, currentUser.UserType, teamId);
+                TeamSummaryDto response = await teamService.GetTeam(currentUser.UserId, currentUser.UserType, teamId);
                 return StatusCode(StatusCodes.Status200OK, response);
             }
             catch (AppException ex)
@@ -256,7 +256,6 @@ namespace backend.Controllers
                     new { error = "internal-server-error", message = "Internal Server Error occured." });
             }
         }
-
     }
 }
 

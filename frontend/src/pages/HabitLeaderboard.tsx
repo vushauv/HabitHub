@@ -1,25 +1,30 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
 import "../App.css";
 import {
   clearStoredAuth,
-  formatHabitExpiryDate,
-  formatHabitState,
   formatHabitType,
   formatHabitUnit,
+  formatLeaderboardValue,
   getHabit,
   getHabitErrorMessage,
+  getHabitLeaderboard,
   getStoredAuth,
   HabitRequestError,
   type HabitSummaryDto,
+  type LeaderboardResponseDto,
 } from "../services/Habit";
+import {
+  getAccountTypeForUser,
+} from "../services/Auth";
 import {
   getTeam,
   getTeamErrorMessage,
   TeamRequestError,
   type TeamDetailsDto,
 } from "../services/Team";
+import type { UserDto } from "../services/dtos";
 
 function resolveErrorMessage(error: unknown): string {
   if (error instanceof HabitRequestError) {
@@ -30,24 +35,31 @@ function resolveErrorMessage(error: unknown): string {
     return error.message || getTeamErrorMessage(error.code);
   }
 
-  return "Something went wrong while loading habit details. Please try again.";
+  return "Something went wrong while loading the leaderboard. Please try again.";
 }
 
-export default function HabitDetails() {
+export default function HabitLeaderboard() {
   const navigate = useNavigate();
+  const currentUser = useOutletContext<UserDto>();
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get("teamId") ?? "";
   const habitId = searchParams.get("habitId") ?? "";
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
+  const accountType = getAccountTypeForUser(currentUser);
+  const habitsPath =
+    accountType === "Creator"
+      ? `/habits-creator?teamId=${encodeURIComponent(teamId)}`
+      : `/habits-member?teamId=${encodeURIComponent(teamId)}`;
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadDetails = async () => {
+    const loadLeaderboard = async () => {
       setLoading(true);
       setPageError(null);
 
@@ -76,9 +88,10 @@ export default function HabitDetails() {
       }
 
       try {
-        const [loadedTeam, loadedHabit] = await Promise.all([
+        const [loadedTeam, loadedHabit, loadedLeaderboard] = await Promise.all([
           getTeam(auth, teamId),
           getHabit(auth, habitId),
+          getHabitLeaderboard(auth, habitId),
         ]);
 
         if (!isMounted) {
@@ -87,6 +100,7 @@ export default function HabitDetails() {
 
         setTeam(loadedTeam);
         setHabit(loadedHabit);
+        setLeaderboard(loadedLeaderboard);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -113,14 +127,12 @@ export default function HabitDetails() {
       }
     };
 
-    void loadDetails();
+    void loadLeaderboard();
 
     return () => {
       isMounted = false;
     };
   }, [auth, habitId, navigate, teamId]);
-
-  const canEdit = habit?.habitState === 0;
 
   return (
     <main className="page">
@@ -139,7 +151,7 @@ export default function HabitDetails() {
               </Link>
 
               <Link
-                to={`/habits-creator?teamId=${encodeURIComponent(teamId)}`}
+                to={habitsPath}
                 className="button button-secondary page-nav-button"
               >
                 Habits
@@ -148,11 +160,13 @@ export default function HabitDetails() {
 
             <div className="content-centered habit-details-header">
               <h1 className="title page-title-md habit-details-title pill-title">
-                Habit Details
+                Leaderboard
               </h1>
 
-              {team ? (
-                <p className="text habit-details-team-name">{team.name}</p>
+              {team && habit ? (
+                <p className="text habit-details-team-name">
+                  {team.name} · {habit.name}
+                </p>
               ) : null}
             </div>
 
@@ -164,24 +178,17 @@ export default function HabitDetails() {
 
             {loading ? (
               <div className="state-card">
-                <p className="state-title">Loading habit...</p>
+                <p className="state-title">Loading leaderboard...</p>
                 <p className="state-text">
-                  We are retrieving habit details.
+                  We are retrieving member rankings for this habit.
                 </p>
               </div>
             ) : habit ? (
               <>
-                <section className="habit-details-grid" aria-label="Habit details">
+                <section className="habit-details-grid" aria-label="Habit leaderboard summary">
                   <div className="habit-details-item">
-                    <p className="habit-details-label">Name</p>
+                    <p className="habit-details-label">Habit</p>
                     <p className="habit-details-value">{habit.name}</p>
-                  </div>
-
-                  <div className="habit-details-item">
-                    <p className="habit-details-label">State</p>
-                    <p className="habit-details-value">
-                      {formatHabitState(habit.habitState)}
-                    </p>
                   </div>
 
                   <div className="habit-details-item">
@@ -199,51 +206,45 @@ export default function HabitDetails() {
                   </div>
 
                   <div className="habit-details-item">
-                    <p className="habit-details-label">Expiry</p>
-                    <p className="habit-details-value">
-                      {formatHabitExpiryDate(habit.expiryDate)}
-                    </p>
-                  </div>
-
-                  <div className="habit-details-item habit-details-goal">
-                    <p className="habit-details-label">Goal</p>
-                    <p className="habit-details-value">
-                      {habit.goal ?? "No goal"}
-                    </p>
+                    <p className="habit-details-label">Entries</p>
+                    <p className="habit-details-value">{leaderboard.length}</p>
                   </div>
                 </section>
 
-                {canEdit ? (
-                  <div className="habit-details-actions">
-                    <Link
-                      to={`/edit-habit?teamId=${encodeURIComponent(
-                        teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
-                      className="button button-primary"
-                    >
-                      Edit Habit
-                    </Link>
-
-                    <Link
-                      to={`/habit-leaderboard?teamId=${encodeURIComponent(
-                        teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
-                      className="button button-secondary"
-                    >
-                      Leaderboard
-                    </Link>
+                {leaderboard.length === 0 ? (
+                  <div className="state-card">
+                    <p className="state-title">No leaderboard entries</p>
+                    <p className="state-text">
+                      Members have not logged progress for this habit yet.
+                    </p>
                   </div>
                 ) : (
-                  <div className="habit-details-actions">
-                    <Link
-                      to={`/habit-leaderboard?teamId=${encodeURIComponent(
-                        teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
-                      className="button button-primary"
-                    >
-                      Leaderboard
-                    </Link>
-                  </div>
+                  <section className="table-list" aria-label="Habit leaderboard">
+                    <div className="data-table-row habit-details-table-row data-table-head habit-details-table-head">
+                      <span>Rank</span>
+                      <span>Member</span>
+                      <span>Total</span>
+                      <span>Logs</span>
+                    </div>
+
+                    {leaderboard.map((row) => (
+                      <article
+                        className="data-table-row habit-details-table-row"
+                        key={row.memberId}
+                      >
+                        <span className="habit-details-rank">#{row.rank}</span>
+                        <span className="habit-details-member">
+                          {row.memberName}
+                        </span>
+                        <span className="habit-details-meta">
+                          {formatLeaderboardValue(row, habit)}
+                        </span>
+                        <span className="habit-details-meta">
+                          {row.loggedCount}
+                        </span>
+                      </article>
+                    ))}
+                  </section>
                 )}
               </>
             ) : null}

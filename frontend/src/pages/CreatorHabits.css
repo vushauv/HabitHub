@@ -1,5 +1,5 @@
 .creator-habits-content {
-  max-width: 66rem;
+  max-width: 76rem;
   gap: 1.75rem;
 }
 
@@ -49,8 +49,8 @@
 
 .creator-habits-table-row {
   grid-template-columns:
-    minmax(8rem, 1fr) minmax(8rem, 0.9fr) minmax(8rem, 0.9fr)
-    minmax(9rem, 0.9fr) minmax(9rem, 0.9fr) minmax(12rem, 1.1fr);
+    minmax(8rem, 1fr) minmax(6.5rem, 0.7fr) minmax(6.5rem, 0.7fr)
+    minmax(9rem, 0.9fr) minmax(8rem, 0.8fr) minmax(22rem, 2fr);
 }
 
 .creator-habits-name,
@@ -72,8 +72,9 @@
 
 .creator-habits-row-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
   gap: 0.5rem;
+  align-items: center;
 }
 
 .creator-habits-danger-button {

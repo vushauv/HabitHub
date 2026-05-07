@@ -1,35 +1,10 @@
-.settings-card-shell {
-  align-items: stretch;
-}
-
 .settings-content {
   max-width: 58rem;
   gap: 2rem;
 }
 
-.settings-topbar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.settings-back-button {
-  min-width: auto;
-  padding-inline: 1.1rem;
-}
-
-.settings-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.settings-title {
-  font-size: clamp(2.7rem, 6vw, 4.4rem);
-}
-
 .settings-text {
   max-width: 40rem;
-  text-align: center;
 }
 
 .settings-grid {
@@ -113,10 +88,6 @@
 @media (max-width: 768px) {
   .settings-content {
     gap: 1.5rem;
-  }
-
-  .settings-title {
-    font-size: clamp(2.2rem, 10vw, 3rem);
   }
 
   .settings-option {

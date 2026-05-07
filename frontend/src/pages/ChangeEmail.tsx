@@ -210,19 +210,19 @@ export default function ChangeEmail() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card change-email-card-shell">
+        <div className="card page-card-shell">
           <div className="content change-email-content">
-            <div className="change-email-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary change-email-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>
             </div>
 
-            <div className="content-centered change-email-header">
-              <h1 className="title change-email-title">Change email</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Change email</h1>
               <p className="text change-email-text">
                 Update the email connected to your account. The new email must be
                 unique and your password is required to confirm identity.
@@ -251,7 +251,7 @@ export default function ChangeEmail() {
               {formError ? <p className="form-error" role="alert">{formError}</p> : null}
 
               {successMessage ? (
-                <p className="change-email-success" role="alert">{successMessage}</p>
+                <p className="alert-success">{successMessage}</p>
               ) : null}
 
               <SubmitButton

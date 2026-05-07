@@ -18,6 +18,10 @@ import CreatorHabits from "./pages/CreatorHabits";
 import CreateHabit from "./pages/CreateHabit";
 import HabitDetails from "./pages/HabitDetails";
 import EditHabit from "./pages/EditHabit";
+import MemberHabits from "./pages/MemberHabits";
+import MemberHabitDetails from "./pages/MemberHabitDetails";
+import HabitLeaderboard from "./pages/HabitLeaderboard";
+import MemberLogHabit from "./pages/MemberLogHabit";
 
 export default function App() {
   return (
@@ -42,10 +46,14 @@ export default function App() {
           <Route path="/main-member" element={<MainMember />} />
           <Route path="/teams-member" element={<TeamsMember />} />
           <Route path="/join-team" element={<JoinTeam />} />
+          <Route path="/habits-member" element={<MemberHabits />} />
+          <Route path="/member-habit-details" element={<MemberHabitDetails />} />
+          <Route path="/member-log-habit" element={<MemberLogHabit />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/settings" element={<Settings />} />
+          <Route path="/habit-leaderboard" element={<HabitLeaderboard />} />
         </Route>
 
         <Route element={<ProtectedRoute/>}> 

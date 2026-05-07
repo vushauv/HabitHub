@@ -342,6 +342,15 @@ export default function CreatorHabits() {
                           Details
                         </Link>
 
+                        <Link
+                          to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                            teamId,
+                          )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                          className="button button-secondary table-row-button"
+                        >
+                          Leaderboard
+                        </Link>
+
                         {selectedState === "Active" ? (
                           <Link
                             to={`/edit-habit?teamId=${encodeURIComponent(

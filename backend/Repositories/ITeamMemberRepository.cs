@@ -11,4 +11,5 @@ public interface ITeamMemberRepository
     Task UpdatePasswordAsync(Guid memberId, string newPasswordHash);
     Task ChangeEmailAsync(Guid memberId, string newEmail);
     Task<bool> EmailAlreadyExistsAsync(string email);
+    Task<List<TeamMember>> GetMembersByHabitEntriesAsync(Guid habitId);
 }

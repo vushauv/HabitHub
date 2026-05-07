@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import "./MainDashboard.css";
 import "../App.css";
-
-const auth = JSON.parse(localStorage.getItem("habithubAuth") ?? "{}");
-const name = auth.name ?? "John";
+import type { UserDto } from "../services/dtos";
 
 export default function MainCreator() {
+  const currentUser = useOutletContext<UserDto>();
+
   return (
     <main className="page container dashboard-page">
       <div className="background-glow background-glow-left"></div>
@@ -26,7 +26,7 @@ export default function MainCreator() {
           </div>
 
           <div className="dashboard-hero">
-            <h1 className="title dashboard-title">Hello {name}!</h1>
+            <h1 className="title dashboard-title">Hello {currentUser.name}!</h1>
           </div>
 
           <div className="buttons dashboard-actions">

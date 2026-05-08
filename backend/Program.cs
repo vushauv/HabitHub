@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
 
+builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
 builder.Configuration.AddEnvironmentVariables(prefix: "BACKEND__");
 builder.Services
     .AddOptions<AppSettings>()

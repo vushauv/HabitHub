@@ -53,6 +53,13 @@
   flex-wrap: wrap;
 }
 
+.habit-details-section-title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
 .habit-details-table-row {
   grid-template-columns: minmax(5rem, 0.45fr) minmax(10rem, 1fr) minmax(8rem, 0.8fr) minmax(8rem, 0.8fr);
 }

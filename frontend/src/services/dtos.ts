@@ -10,6 +10,8 @@ export type HabitTypeDto = 0 | 1;
 
 export type UnitDto = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+export type EntryStatusDto = 0 | 1 | 2;
+
 export type UserDto = {
   id: string;
   name: string;
@@ -132,4 +134,26 @@ export type LeaderboardResponseDto = {
   totalValue: number | null;
   loggedCount: number;
   rank: number;
+};
+
+export type HabitEntryResponseDto = {
+  entryId: string;
+  habitId: string;
+  memberId: string;
+  loggedAt: string;
+  logDate: string;
+  status: EntryStatusDto;
+  value: number | null;
+  notes: string | null;
+};
+
+export type LogProgressRequestDto = {
+  value: number | null;
+  notes: string | null;
+  status: EntryStatusDto;
+};
+
+export type TodayHabitEntryStatusDto = {
+  status: EntryStatusDto;
+  entry: HabitEntryResponseDto | null;
 };

@@ -1,4 +1,5 @@
 ﻿using backend.Dtos.AuthDtos;
+using backend.Logging;
 using backend.Repositories;
 using Microsoft.AspNetCore.Identity;
 using backend.Models;
@@ -8,7 +9,7 @@ using backend.Utils;
 
 namespace backend.Service
 {
-    public class AuthService(ITeamCreatorRepository creators, ITeamMemberRepository members, ISessionRepository sessions) : IAuthService
+    public class AuthService(ITeamCreatorRepository creators, ITeamMemberRepository members, ISessionRepository sessions, ILogger<AuthService> logger) : IAuthService
     {
         private PasswordHasher<object> hasher = new PasswordHasher<object>();
         public async Task<AuthResponseDto> Register(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
@@ -38,7 +39,10 @@ namespace backend.Service
             string email = NormalizeEmail(request.Email);
 
             if (await creators.EmailAlreadyExistsAsync(email))
+            {
+                logger.LogWarning("Registration rejected: email already exists for {UserType}", UserType.Creator);
                 throw new EmailAlreadyExistsException();
+            }
 
             TeamCreator creator = new TeamCreator
             {
@@ -50,6 +54,7 @@ namespace backend.Service
 
             TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
             Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+            logger.LogInformation("Registered creator {CreatorId}", createdCreator.CreatorId);
 
             return new AuthResponseDto(
                 createdSession.SessionId,
@@ -64,7 +69,10 @@ namespace backend.Service
             string timezone = NormalizeTimezone(request.Timezone);
 
             if (await members.EmailAlreadyExistsAsync(email))
+            {
+                logger.LogWarning("Registration rejected: email already exists for {UserType}", UserType.Member);
                 throw new EmailAlreadyExistsException();
+            }
 
             TeamMember member = new TeamMember
             {
@@ -77,6 +85,7 @@ namespace backend.Service
 
             TeamMember createdMember = await members.CreateMemberAsync(member);
             Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress,deviceInfo);
+            logger.LogInformation("Registered member {MemberId}", createdMember.MemberId);
 
             return new AuthResponseDto(
                 createdSession.SessionId,
@@ -89,12 +98,21 @@ namespace backend.Service
             string email = NormalizeEmail(request.Email);
 
             TeamCreator? creator = await creators.GetCreatorByEmailAsync(email);
-            if (creator == null) throw new InvalidCredentialsException();
-           
+            if (creator == null)
+            {
+                logger.LogWarning("Login failed: creator not found");
+                throw new InvalidCredentialsException();
+            }
+
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
-            if(passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
+            if(passwordResult == PasswordVerificationResult.Failed)
+            {
+                logger.LogWarning("Login failed: invalid password for creator {CreatorId}", creator.CreatorId);
+                throw new InvalidCredentialsException();
+            }
 
             Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+            logger.LogInformation("Creator {CreatorId} logged in", creator.CreatorId);
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
@@ -106,12 +124,21 @@ namespace backend.Service
             string email = NormalizeEmail(request.Email);
 
             TeamMember? member = await members.GetMemberByEmailAsync(email);
-            if (member == null) throw new InvalidCredentialsException();
-            
+            if (member == null)
+            {
+                logger.LogWarning("Login failed: member not found");
+                throw new InvalidCredentialsException();
+            }
+
             PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
-            if (passwordResult == PasswordVerificationResult.Failed) throw new InvalidCredentialsException();
-       
+            if (passwordResult == PasswordVerificationResult.Failed)
+            {
+                logger.LogWarning("Login failed: invalid password for member {MemberId}", member.MemberId);
+                throw new InvalidCredentialsException();
+            }
+
             Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
+            logger.LogInformation("Member {MemberId} logged in", member.MemberId);
             return new AuthResponseDto(
                 createdSession.SessionId,
                 new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
@@ -155,14 +182,18 @@ namespace backend.Service
         public async Task InvalidateSpecificSession(Guid userId, UserType userType, string sessionId)
         {
             Session? session = await sessions.GetByIdAsync(sessionId);
-            if(session == null 
-                || session.UserType != userType 
-                || session.UserId != userId 
+            if(session == null
+                || session.UserType != userType
+                || session.UserId != userId
                 || session.SessionState != SessionState.Active)
             {
+                logger.LogWarning("Invalidate session rejected: session {SessionFingerprint} not found or unauthorized for user {UserId}",
+                    LogRedaction.Fingerprint(sessionId), userId);
                 throw new AppException( StatusCodes.Status404NotFound, "not-found", "Session not found");
             }
             await sessions.InvalidateAsync(session.SessionId);
+            logger.LogInformation("Invalidated session {SessionFingerprint} for user {UserId} ({UserType})",
+                LogRedaction.Fingerprint(sessionId), userId, userType);
         }
         public async Task ChangePassword(Guid userId, UserType userType, string currentSessionId, ChangePasswordRequestDto request)
         {
@@ -180,25 +211,31 @@ namespace backend.Service
                 
                 var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.CurrentPassword);
                 if(verifyResult == PasswordVerificationResult.Failed)
+                {
+                    logger.LogWarning("Change password rejected: invalid current password for creator {CreatorId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+                }
 
                 string newHash = hasher.HashPassword(null!, request.NewPassword);
-                
                 await creators.UpdatePasswordAsync(userId, newHash);
+                logger.LogInformation("Changed password for creator {CreatorId}", userId);
 
             } else if(userType == UserType.Member)
             {
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
                 if(member == null)
                     throw new AppException(StatusCodes.Status404NotFound, "not-found", "User not found.");
-                
+
                 var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.CurrentPassword);
                 if(verifyResult == PasswordVerificationResult.Failed)
+                {
+                    logger.LogWarning("Change password rejected: invalid current password for member {MemberId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+                }
 
                 string newHash = hasher.HashPassword(null!, request.NewPassword);
-                
                 await members.UpdatePasswordAsync(userId, newHash);
+                logger.LogInformation("Changed password for member {MemberId}", userId);
             } else
             {
                 throw new AuthRequiredException(); 
@@ -215,7 +252,10 @@ namespace backend.Service
             if(userType == UserType.Creator)
             {
                 if(await creators.EmailAlreadyExistsAsync(email))
+                {
+                    logger.LogWarning("Change email rejected: email already exists for creator {CreatorId}", userId);
                     throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
+                }
 
                 TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
                 if(creator == null)
@@ -223,24 +263,35 @@ namespace backend.Service
 
                 var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
                 if(verifyResult == PasswordVerificationResult.Failed)
+                {
+                    logger.LogWarning("Change email rejected: invalid password for creator {CreatorId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+                }
 
                 await creators.ChangeEmailAsync(userId, email);
+                logger.LogInformation("Changed email for creator {CreatorId}", userId);
 
             } else if(userType == UserType.Member)
             {
                 if(await members.EmailAlreadyExistsAsync(email))
+                {
+                    logger.LogWarning("Change email rejected: email already exists for member {MemberId}", userId);
                     throw new AppException(StatusCodes.Status409Conflict, "email-already-exists", "Email already exists.");
+                }
 
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
                 if(member == null)
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "User not found."); //good error here?
-                
+
                 var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
                 if(verifyResult == PasswordVerificationResult.Failed)
+                {
+                    logger.LogWarning("Change email rejected: invalid password for member {MemberId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
+                }
 
                 await members.ChangeEmailAsync(userId, email);
+                logger.LogInformation("Changed email for member {MemberId}", userId);
             }
             else
             {

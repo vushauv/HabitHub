@@ -7,7 +7,7 @@ namespace backend.Data;
 
 public static class SeedData
 {
-    public static async Task SeedUsersAsync(AppDbContext db)
+    public static async Task SeedUsersAsync(AppDbContext db, ILogger logger)
     {
         PasswordHasher<object> hasher = new();
         string passwordHash = hasher.HashPassword(null!, "12345678");
@@ -30,6 +30,7 @@ public static class SeedData
             ("Eve", "eve@g.com")
         ];
 
+        int creatorCount = 0;
         foreach (var (name, email) in creators)
         {
             if (await db.TeamCreators.AnyAsync(c => c.Email == email)) continue;
@@ -40,8 +41,10 @@ public static class SeedData
                 Email = email,
                 PasswordHash = passwordHash,
             });
+            creatorCount++;
         }
 
+        int memberCount = 0;
         foreach (var (name, email) in members)
         {
             if (await db.TeamMembers.AnyAsync(m => m.Email == email)) continue;
@@ -53,12 +56,14 @@ public static class SeedData
                 PasswordHash = passwordHash,
                 Timezone = "Europe/Warsaw",
             });
+            memberCount++;
         }
 
         await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {CreatorCount} creators and {MemberCount} members", creatorCount, memberCount);
     }
 
-    public static async Task SeedTeamsAsync(AppDbContext db)
+    public static async Task SeedTeamsAsync(AppDbContext db, ILogger logger)
     {
         (string TeamName, string CreatorEmail, string[] MemberEmails)[] teams =
         [
@@ -82,8 +87,10 @@ public static class SeedData
                 };
                 db.HabitTeams.Add(team);
                 await db.SaveChangesAsync();
+                logger.LogInformation("Seeded team {TeamId}", team.TeamId);
             }
 
+            int membershipCount = 0;
             foreach (string memberEmail in memberEmails)
             {
                 TeamMember? member = await db.TeamMembers.FirstOrDefaultAsync(m => m.Email == memberEmail);
@@ -99,9 +106,12 @@ public static class SeedData
                     MemberId = member.MemberId,
                     Status = MembershipStatus.Active,
                 });
+                membershipCount++;
             }
 
             await db.SaveChangesAsync();
+            if (membershipCount > 0)
+                logger.LogInformation("Seeded {MembershipCount} memberships for team {TeamId}", membershipCount, team.TeamId);
         }
     }
 }

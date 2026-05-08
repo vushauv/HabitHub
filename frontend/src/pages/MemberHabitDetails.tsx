@@ -1,17 +1,24 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
+import "./MemberHabitDetails.css";
 import "../App.css";
 import {
   clearStoredAuth,
+  formatEntryStatus,
+  formatHabitEntryDate,
+  formatHabitEntryDateTime,
+  formatHabitEntryValue,
   formatHabitExpiryDate,
   formatHabitState,
   formatHabitType,
   formatHabitUnit,
   getHabit,
+  getHabitEntries,
   getHabitErrorMessage,
   getStoredAuth,
   HabitRequestError,
+  type HabitEntryResponseDto,
   type HabitSummaryDto,
 } from "../services/Habit";
 import {
@@ -33,7 +40,7 @@ function resolveErrorMessage(error: unknown): string {
   return "Something went wrong while loading habit details. Please try again.";
 }
 
-export default function HabitDetails() {
+export default function MemberHabitDetails() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const teamId = searchParams.get("teamId") ?? "";
@@ -41,6 +48,7 @@ export default function HabitDetails() {
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
+  const [entries, setEntries] = useState<HabitEntryResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
 
@@ -76,9 +84,10 @@ export default function HabitDetails() {
       }
 
       try {
-        const [loadedTeam, loadedHabit] = await Promise.all([
+        const [loadedTeam, loadedHabit, loadedEntries] = await Promise.all([
           getTeam(auth, teamId),
           getHabit(auth, habitId),
+          getHabitEntries(auth, habitId),
         ]);
 
         if (!isMounted) {
@@ -87,6 +96,7 @@ export default function HabitDetails() {
 
         setTeam(loadedTeam);
         setHabit(loadedHabit);
+        setEntries(loadedEntries);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -120,8 +130,6 @@ export default function HabitDetails() {
     };
   }, [auth, habitId, navigate, teamId]);
 
-  const canEdit = habit?.habitState === 0;
-
   return (
     <main className="page">
       <section className="container">
@@ -139,7 +147,7 @@ export default function HabitDetails() {
               </Link>
 
               <Link
-                to={`/habits-creator?teamId=${encodeURIComponent(teamId)}`}
+                to={`/habits-member?teamId=${encodeURIComponent(teamId)}`}
                 className="button button-secondary page-nav-button"
               >
                 Habits
@@ -166,7 +174,7 @@ export default function HabitDetails() {
               <div className="state-card">
                 <p className="state-title">Loading habit...</p>
                 <p className="state-text">
-                  We are retrieving habit details.
+                  We are retrieving your progress data.
                 </p>
               </div>
             ) : habit ? (
@@ -213,37 +221,70 @@ export default function HabitDetails() {
                   </div>
                 </section>
 
-                {canEdit ? (
-                  <div className="habit-details-actions">
+                <div className="habit-details-actions">
+                  {habit.habitState === 0 ? (
                     <Link
-                      to={`/edit-habit?teamId=${encodeURIComponent(
+                      to={`/member-log-habit?teamId=${encodeURIComponent(
                         teamId,
                       )}&habitId=${encodeURIComponent(habit.habitId)}`}
                       className="button button-primary"
                     >
-                      Edit Habit
+                      Log Habit
                     </Link>
+                  ) : null}
 
-                    <Link
-                      to={`/habit-leaderboard?teamId=${encodeURIComponent(
-                        teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
-                      className="button button-secondary"
-                    >
-                      Leaderboard
-                    </Link>
+                  <Link
+                    to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                      teamId,
+                    )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                    className="button button-secondary"
+                  >
+                    Leaderboard
+                  </Link>
+                </div>
+
+                <p className="habit-details-section-title">Your Progress</p>
+
+                {entries.length === 0 ? (
+                  <div className="state-card">
+                    <p className="state-title">No progress entries</p>
+                    <p className="state-text">
+                      Your habit progress will appear here after you log it.
+                    </p>
                   </div>
                 ) : (
-                  <div className="habit-details-actions">
-                    <Link
-                      to={`/habit-leaderboard?teamId=${encodeURIComponent(
-                        teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
-                      className="button button-primary"
-                    >
-                      Leaderboard
-                    </Link>
-                  </div>
+                  <section className="table-list" aria-label="Your habit progress">
+                    <div className="data-table-row member-habit-progress-row data-table-head member-habit-progress-head">
+                      <span>Date</span>
+                      <span>Status</span>
+                      <span>Value</span>
+                      <span>Notes</span>
+                      <span>Logged at</span>
+                    </div>
+
+                    {entries.map((entry) => (
+                      <article
+                        className="data-table-row member-habit-progress-row"
+                        key={entry.entryId}
+                      >
+                        <span className="member-habit-progress-meta">
+                          {formatHabitEntryDate(entry.logDate)}
+                        </span>
+                        <span className="member-habit-progress-meta">
+                          {formatEntryStatus(entry.status)}
+                        </span>
+                        <span className="member-habit-progress-meta">
+                          {formatHabitEntryValue(entry, habit)}
+                        </span>
+                        <span className="member-habit-progress-notes">
+                          {entry.notes ?? "No notes"}
+                        </span>
+                        <span className="member-habit-progress-meta">
+                          {formatHabitEntryDateTime(entry.loggedAt)}
+                        </span>
+                      </article>
+                    ))}
+                  </section>
                 )}
               </>
             ) : null}

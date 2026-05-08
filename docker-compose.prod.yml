@@ -11,7 +11,6 @@ services:
     image: habithub-backend:latest
     build:
       target: final
-    env_file: !reset []
     volumes: []
     working_dir: /app
     command: []

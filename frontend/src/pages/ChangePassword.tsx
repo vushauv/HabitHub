@@ -6,7 +6,6 @@ import type { ChangePasswordRequestDto } from "../services/dtos";
 import {
   API_BASE_URL,
   passwordSchema,
-  type AccountType,
 } from "../services/User";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,45 +13,17 @@ import z from "zod";
 import { useLens } from "@hookform/lenses";
 import TextInput from "../components/form/TextInput";
 import SubmitButton from "../components/form/SubmitButton";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+import {
+  clearStoredAuth,
+  getAuthHeaders,
+  getStoredAuth,
+} from "../services/Auth";
 
 type ChangePasswordErrorCode =
   | "auth-required"
   | "validation-error"
   | "invalid-credentials"
   | "unknown";
-
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
 
 const currentPasswordSchema = z
   .string()
@@ -135,7 +106,7 @@ export default function ChangePassword() {
     setFormError(null);
     setSuccessMessage(null);
 
-    if (!auth?.isLoggedIn || !auth.sessionId) {
+    if (!auth) {
       setFormError("Your session is no longer valid. Please log in again.");
       clearStoredAuth();
 

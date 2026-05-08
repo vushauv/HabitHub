@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import "../App.css";
-import type { AuthResponseDto, LoginRequestDto } from "../services/dtos";
+import type { LoginRequestDto } from "../services/dtos";
 import { loginFormSchema, type LoginForm } from "../services/Login";
 import {
   API_BASE_URL,
-  mapUserTypeFromEnum,
   mapUserTypeToEnum,
 } from "../services/User";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +14,10 @@ import TextInput from "../components/form/TextInput";
 import { useLens } from "@hookform/lenses";
 import AccountTypeInput from "../components/form/AccountTypeInput";
 import SubmitButton from "../components/form/SubmitButton";
+import {
+  getDashboardPathForUser,
+  storeSessionAndLoadCurrentUser,
+} from "../services/Auth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -82,7 +85,7 @@ export default function Login() {
         throw new Error(responseText || `Login failed (${response.status}).`);
       }
 
-      const data = (await response.json()) as AuthResponseDto;
+      const data = (await response.json()) as { sessionId?: string | null };
       const sessionId = data.sessionId;
 
       if (!sessionId) {
@@ -91,28 +94,10 @@ export default function Login() {
         );
       }
 
-      const authenticatedUserType = mapUserTypeFromEnum(data.user.userType);
-      const userId = data.user.id;
-      const name = data.user.name;
+      const currentUser = await storeSessionAndLoadCurrentUser(sessionId);
 
-      localStorage.setItem(
-        "habithubAuth",
-        JSON.stringify({
-          isLoggedIn: true,
-          userType: authenticatedUserType,
-          sessionId,
-          userId,
-          name,
-        }),
-      );
-
-      navigate(
-        authenticatedUserType === "Creator" ? "/main-creator" : "/main-member",
-        { replace: true },
-      );
+      navigate(getDashboardPathForUser(currentUser), { replace: true });
     } catch (error) {
-      localStorage.removeItem("habithubAuth");
-
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
       );

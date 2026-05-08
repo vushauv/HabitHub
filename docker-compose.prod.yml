@@ -1,26 +1,41 @@
 services:
   postgres:
-    ports: []
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: ""
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
 
   backend:
+    image: habithub-backend:latest
     build:
       target: final
     volumes: []
     working_dir: /app
     command: []
     ports: !reset []
+    depends_on: !reset []
     networks:
       - habithub-network
       - web
+    secrets:
+      - source: postgres_password
+        target: POSTGRESPASSWORD
 
   frontend:
+    image: habithub-frontend:latest
     build:
       context: ./frontend
       target: final
-    depends_on:
-      - backend
+    ports: !reset []
+    depends_on: !reset []
     networks:
       - web
+
+secrets:
+  postgres_password:
+    external: true
 
 networks:
   web:

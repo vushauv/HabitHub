@@ -4,6 +4,12 @@ export type SessionStateDto = 0 | 1 | 2;
 
 export type MembershipStatusDto = 0 | 1 | 2;
 
+export type HabitStateDto = 0 | 1 | 2;
+
+export type HabitTypeDto = 0 | 1;
+
+export type UnitDto = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 export type UserDto = {
   id: string;
   name: string;
@@ -87,4 +93,43 @@ export type JoinTeamRequestDto = {
 export type JoinTeamResponseDto = {
   teamId: string;
   memberId: string;
+};
+
+export type HabitSummaryDto = {
+  habitId: string;
+  name: string;
+  goal: string | null;
+  habitState: HabitStateDto;
+  habitType: HabitTypeDto;
+  unit: UnitDto | null;
+  expiryDate: string | null;
+};
+
+export type CreateHabitRequestDto = {
+  name: string;
+  goal: string | null;
+  habitType: HabitTypeDto;
+  unit: UnitDto | null;
+  expiryDate: string | null;
+};
+
+export type CreateHabitResponseDto = HabitSummaryDto & {
+  teamId: string;
+  creatorId: string;
+};
+
+export type EditHabitRequestDto = {
+  name?: string;
+  goal?: string | null;
+  expiryDate?: string | null;
+  clearGoal?: boolean;
+  clearExpiryDate?: boolean;
+};
+
+export type LeaderboardResponseDto = {
+  memberId: string;
+  memberName: string;
+  totalValue: number | null;
+  loggedCount: number;
+  rank: number;
 };

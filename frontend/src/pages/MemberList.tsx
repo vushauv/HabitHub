@@ -50,7 +50,7 @@ export default function MemberList() {
         return;
       }
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         clearStoredAuth();
 
         if (isMounted) {

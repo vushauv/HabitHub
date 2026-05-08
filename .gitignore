@@ -3,6 +3,8 @@
 .vscode/
 .vs/
 
+.claude/
+secrets/
 
 backend/.vs/
 backend/bin/

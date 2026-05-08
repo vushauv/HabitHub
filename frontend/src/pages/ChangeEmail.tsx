@@ -1,25 +1,23 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./ChangeEmail.css";
 import "../App.css";
 import type { ChangeEmailRequestDto } from "../services/dtos";
 import {
   API_BASE_URL,
-  validateEmail,
-  type AccountType,
+  emailSchema,
 } from "../services/User";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
-
-type ChangeEmailErrors = {
-  newEmail?: string;
-  password?: string;
-};
+import z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useLens } from "@hookform/lenses";
+import TextInput from "../components/form/TextInput";
+import SubmitButton from "../components/form/SubmitButton";
+import {
+  clearStoredAuth,
+  getAuthHeaders,
+  getStoredAuth,
+} from "../services/Auth";
 
 type ChangeEmailErrorCode =
   | "auth-required"
@@ -28,50 +26,16 @@ type ChangeEmailErrorCode =
   | "email-already-exists"
   | "unknown";
 
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
+const currentPasswordSchema = z
+  .string()
+  .nonempty({ error: "Current password is required." });
 
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
-
-function validateCurrentPassword(password: string): string | undefined {
-  if (!password) {
-    return "Password is required.";
-  }
-
-  return undefined;
-}
-
-function validateChangeEmailForm(form: ChangeEmailRequestDto): ChangeEmailErrors {
-  return {
-    newEmail: validateEmail(form.newEmail),
-    password: validateCurrentPassword(form.password),
-  };
-}
-
-function hasErrors(errors: ChangeEmailErrors): boolean {
-  return Object.values(errors).some(Boolean);
-}
+const changeEmailFormSchema = z
+  .object({
+    newEmail: emailSchema,
+    password: currentPasswordSchema
+  })
+  .required();
 
 function getFriendlyErrorMessage(errorCode: ChangeEmailErrorCode): string {
   switch (errorCode) {
@@ -112,48 +76,42 @@ function resolveChangeEmailErrorCode(
 export default function ChangeEmail() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [form, setForm] = useState<ChangeEmailRequestDto>({
-    newEmail: "",
-    password: "",
-  });
-  const [errors, setErrors] = useState<ChangeEmailErrors>({});
+  const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
+  const { handleSubmit, control, formState, subscribe, setValues } = useForm<ChangeEmailRequestDto>({
+    defaultValues: {
+      newEmail: "",
+      password: ""
+    },
+    disabled: loading,
+    resolver: zodResolver(changeEmailFormSchema),
+    mode: "all"
+  });
 
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value,
-    }));
+  const lens = useLens({ control });
+  
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setFormError(null);
+        setSuccessMessage(null);
+      },
+    })
 
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      [name]:
-        name === "newEmail"
-          ? validateEmail(value)
-          : validateCurrentPassword(value),
-    }));
+    return () => callback()
+  }, [subscribe]);
 
+  const onSubmit = async (form: ChangeEmailRequestDto) => {
     setFormError(null);
     setSuccessMessage(null);
-  };
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
-    const validationErrors = validateChangeEmailForm(form);
-    setErrors(validationErrors);
-    setFormError(null);
-    setSuccessMessage(null);
-
-    if (hasErrors(validationErrors)) {
-      return;
-    }
-
-    if (!auth?.isLoggedIn || !auth.sessionId) {
+    if (!auth) {
       setFormError("Your session is no longer valid. Please log in again.");
       clearStoredAuth();
 
@@ -168,7 +126,7 @@ export default function ChangeEmail() {
 
     try {
       const payload: ChangeEmailRequestDto = {
-        newEmail: form.newEmail.trim(),
+        newEmail: form.newEmail,
         password: form.password,
       };
 
@@ -199,16 +157,14 @@ export default function ChangeEmail() {
         throw new Error(getFriendlyErrorMessage(errorCode));
       }
 
-      setSuccessMessage(
-        "Email changed successfully. Your current session may no longer be valid, so please log in again if needed.",
-      );
-
-      setForm({
+      setValues({
         newEmail: "",
         password: "",
       });
 
-      setErrors({});
+      setSuccessMessage(
+        "Email changed successfully. Your current session may no longer be valid, so please log in again if needed.",
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to change email.";
@@ -225,79 +181,56 @@ export default function ChangeEmail() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card change-email-card-shell">
+        <div className="card page-card-shell">
           <div className="content change-email-content">
-            <div className="change-email-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary change-email-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>
             </div>
 
-            <div className="content-centered change-email-header">
-              <h1 className="title change-email-title">Change email</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Change email</h1>
               <p className="text change-email-text">
                 Update the email connected to your account. The new email must be
                 unique and your password is required to confirm identity.
               </p>
             </div>
 
-            <form className="change-email-form" onSubmit={handleSubmit} noValidate>
-              <div className="form-field">
-                <label className="form-label" htmlFor="newEmail">
-                  New email
-                </label>
-                <input
-                  id="newEmail"
-                  name="newEmail"
-                  type="email"
-                  className="form-input"
-                  value={form.newEmail}
-                  onChange={handleChange}
-                  placeholder="Enter your new email"
-                  aria-invalid={errors.newEmail ? "true" : "false"}
-                  autoComplete="email"
-                />
-                {errors.newEmail ? (
-                  <p className="field-error">{errors.newEmail}</p>
-                ) : null}
-              </div>
+            <form className="change-email-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <TextInput
+                label="New email"
+                lens={lens.focus("newEmail")}
+                required
+                type="email"
+                placeholder="Enter your new email"
+                autoComplete="email"
+              />
 
-              <div className="form-field">
-                <label className="form-label" htmlFor="password">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  className="form-input"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Enter your current password"
-                  aria-invalid={errors.password ? "true" : "false"}
-                  autoComplete="current-password"
-                />
-                {errors.password ? (
-                  <p className="field-error">{errors.password}</p>
-                ) : null}
-              </div>
+              <TextInput
+                label="Password"
+                lens={lens.focus("password")}
+                required
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your current password"
+              />
 
-              {formError ? <p className="form-error">{formError}</p> : null}
+              {formError ? <p className="form-error" role="alert">{formError}</p> : null}
 
               {successMessage ? (
-                <p className="change-email-success">{successMessage}</p>
+                <p className="alert-success">{successMessage}</p>
               ) : null}
 
-              <button
-                type="submit"
-                className="button button-primary form-submit change-email-submit"
+              <SubmitButton
+                formState={formState}
                 disabled={loading}
               >
                 {loading ? "Updating..." : "Update email"}
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

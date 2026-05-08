@@ -3,7 +3,6 @@ using backend.Logging;
 using backend.Repositories;
 using backend.Enums;
 using System.Linq;
-using System.Data.Common;
 
 public class SessionAuthenticationMiddleware
 {

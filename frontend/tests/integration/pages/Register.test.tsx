@@ -13,7 +13,27 @@ const handlers = [
     if (data == null || !("email" in data) || data.email.includes("400")) {
       return new HttpResponse(null, {status: 400});
     }
-    return new HttpResponse(null, {status: 201})
+    if (data.email.includes("creator")) {
+      return HttpResponse.json({
+        user: {
+          userType: 0,
+          id: "abc-123",
+          name: "Test Creator",
+        },
+        sessionId: "session-1",
+      })
+    }
+    if (data.email.includes("member")) {
+      return HttpResponse.json({
+        user: {
+          userType: 1,
+          id: "xyz-456",
+          name: "Test Member",
+        },
+        sessionId: "session-2",
+      })
+    }
+    return new HttpResponse(null, {status: 500}) // Case shouldn't be used in tests
   })
 ]
 const server = setupServer(...handlers);
@@ -31,6 +51,7 @@ const App = () => (
 )
 
 beforeEach(() => {
+  localStorage.clear();
   vi.restoreAllMocks();
 });
 
@@ -60,17 +81,17 @@ it("shows validation errors on blur with empty fields", async () => {
 
   await waitFor(() => {
     expect(screen.getByText("Name is required.")).toBeInTheDocument();
-    expect(screen.getByText("Email is required.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
     expect(screen.getByText("Password is required.")).toBeInTheDocument();
   });
 });
 
-// TODO: Behaviour it checks for does not match spec, replace test with different one
-it.skip("navigates to /login on successful register", async () => {
+// TODO: Fix
+it.skip("navigates to /main-creator and stores auth on successful Creator register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
-    target: { value: "Creator" },
+    target: { value: "Test Creator" },
   });
   fireEvent.change(screen.getByLabelText("Email"), {
     target: { value: "creator@example.com" },
@@ -79,11 +100,42 @@ it.skip("navigates to /login on successful register", async () => {
     target: { value: "password123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Creator" }));
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /login!")).toBeInTheDocument();
+    expect(screen.getByText("This is /main-creator!")).toBeInTheDocument();
   });
+
+  const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
+  expect(stored.isLoggedIn).toBe(true);
+  expect(stored.userType).toBe("Creator");
+  expect(stored.name).toBe("Test Creator");
+});
+
+// TODO: Fix
+it.skip("navigates to /main-member and stores auth on successful Member register", async () => {
+  render(App());
+
+  fireEvent.change(screen.getByLabelText("Name"), {
+    target: { value: "Test Member" },
+  });
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: "member@example.com" },
+  });
+  fireEvent.change(screen.getByLabelText("Password"), {
+    target: { value: "password123" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Member" }));
+  fireEvent.submit(screen.getByLabelText("Email"));
+
+  await waitFor(() => {
+    expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
+  });
+
+  const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
+  expect(stored.isLoggedIn).toBe(true);
+  expect(stored.userType).toBe("Member");
+  expect(stored.name).toBe("Test Member");
 });
 
 it("shows error message on 400 response", async () => {
@@ -99,7 +151,7 @@ it("shows error message on 400 response", async () => {
     target: { value: "password123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Creator" }));
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.submit(screen.getByLabelText("Name"))
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(

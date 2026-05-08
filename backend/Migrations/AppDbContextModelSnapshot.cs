@@ -22,6 +22,86 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("backend.Models.Habit", b =>
+                {
+                    b.Property<Guid>("HabitId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Goal")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("HabitState")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HabitType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Unit")
+                        .HasColumnType("integer");
+
+                    b.HasKey("HabitId");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Habits");
+                });
+
+            modelBuilder.Entity("backend.Models.HabitEntry", b =>
+                {
+                    b.Property<Guid>("EntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("HabitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("LogDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("LoggedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<float?>("Value")
+                        .HasColumnType("real");
+
+                    b.HasKey("EntryId");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("HabitId", "MemberId", "LogDate")
+                        .IsUnique();
+
+                    b.ToTable("HabitEntries");
+                });
+
             modelBuilder.Entity("backend.Models.HabitTeam", b =>
                 {
                     b.Property<Guid>("TeamId")
@@ -194,6 +274,44 @@ namespace backend.Migrations
                     b.ToTable("TeamMembers");
                 });
 
+            modelBuilder.Entity("backend.Models.Habit", b =>
+                {
+                    b.HasOne("backend.Models.TeamCreator", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.HabitTeam", "Team")
+                        .WithMany("Habits")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("backend.Models.HabitEntry", b =>
+                {
+                    b.HasOne("backend.Models.Habit", "Habit")
+                        .WithMany("Entries")
+                        .HasForeignKey("HabitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.TeamMember", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Habit");
+
+                    b.Navigation("Member");
+                });
+
             modelBuilder.Entity("backend.Models.HabitTeam", b =>
                 {
                     b.HasOne("backend.Models.TeamCreator", "Creator")
@@ -235,8 +353,15 @@ namespace backend.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("backend.Models.Habit", b =>
+                {
+                    b.Navigation("Entries");
+                });
+
             modelBuilder.Entity("backend.Models.HabitTeam", b =>
                 {
+                    b.Navigation("Habits");
+
                     b.Navigation("InviteCodes");
 
                     b.Navigation("Memberships");

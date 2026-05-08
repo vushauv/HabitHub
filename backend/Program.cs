@@ -8,6 +8,7 @@ using backend.Auth;
 using backend.BackgroundServices;
 using Serilog;
 using Serilog.Events;
+using backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,7 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
         rollOnFileSizeLimit: true));
 
 builder.Configuration.AddEnvironmentVariables(prefix: "BACKEND__");
+builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
 builder.Services
     .AddOptions<AppSettings>()
     .Bind(builder.Configuration)
@@ -45,6 +47,9 @@ builder.Services.AddScoped<IMembershipRepository, MembershipRepository>();
 builder.Services.AddScoped<IInviteCodeRepository, InviteCodeRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IHabitRepository, HabitRepository>();
+builder.Services.AddScoped<IHabitEntryRepository, HabitEntryRepository>();
+builder.Services.AddScoped<IHabitService, HabitService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
 

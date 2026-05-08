@@ -17,6 +17,7 @@ jobs:
           cd $STAGING_DEPLOY_PATH
           git pull
           docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+          docker exec nginx nginx -s reload
 
   deploy-production:
     name: Deploy to Production
@@ -28,3 +29,4 @@ jobs:
           cd $PROD_DEPLOY_PATH
           git pull
           docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+          docker exec nginx nginx -s reload

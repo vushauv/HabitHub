@@ -17,14 +17,14 @@ public class AuthMeEndpointTests
         _client = factory.CreateClient();
     }
 
-    [Fact(Skip = "TODO: Enable test and implement endpoint")]
+    [Fact]
     public async Task GetMe_WithoutSession_Returns401()
     {
         var response = await _client.GetAsync("/auth/me", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Theory(Skip = "TODO: Enable test and implement endpoint")]
+    [Theory]
     [InlineData(0)]
     [InlineData(1)]
     public async Task GetMe_Returns200_AndCorrectData(int userType)
@@ -55,11 +55,18 @@ public class AuthMeEndpointTests
         Assert.DoesNotContain("Test1234!", body);
 
         // Verify that all user fields are correct
-        var user = JsonSerializer.Deserialize<UserDto>(body);
+        var user = JsonSerializer.Deserialize<UserDto>(body, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.NotNull(user);
         Assert.Equal(name, user.Name);
         Assert.Equal(email, user.Email);
-        Assert.Equal(timezone, user.Timezone);
+        if(userType == 0)
+        {
+            Assert.Null(user.Timezone);
+        }
+        else
+        {
+            Assert.Equal(timezone, user.Timezone);
+        }
         Assert.Equal(userType, (int)user.UserType);
     }
 }

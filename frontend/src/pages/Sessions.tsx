@@ -3,42 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import "./Sessions.css";
 import "../App.css";
 import type { SessionDto } from "../services/dtos";
-import { API_BASE_URL, type AccountType } from "../services/User";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+import { API_BASE_URL } from "../services/User";
+import {
+  clearStoredAuth,
+  getAuthHeaders,
+  getStoredAuth,
+} from "../services/Auth";
 
 type SessionsErrorCode = "auth-required" | "not-found" | "unknown";
-
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
 
 function getErrorCode(status: number): SessionsErrorCode {
   if (status === 401) {
@@ -91,7 +63,7 @@ export default function Sessions() {
       setLoading(true);
       setPageError(null);
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         if (!isMounted) {
           return;
         }
@@ -225,19 +197,19 @@ export default function Sessions() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card sessions-card-shell">
+        <div className="card page-card-shell">
           <div className="content sessions-content">
-            <div className="sessions-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary sessions-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>
             </div>
 
-            <div className="content-centered sessions-header">
-              <h1 className="title sessions-title">Active sessions</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Active sessions</h1>
               <p className="text sessions-text">
                 Review devices currently signed in to your account and invalidate
                 any session you do not recognize.
@@ -245,21 +217,21 @@ export default function Sessions() {
             </div>
 
             {loading ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">Loading sessions...</p>
-                <p className="sessions-state-text">
+              <div className="state-card">
+                <p className="state-title">Loading sessions...</p>
+                <p className="state-text">
                   We are retrieving your currently active sessions.
                 </p>
               </div>
             ) : pageError ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">Could not load sessions</p>
-                <p className="sessions-state-text">{pageError}</p>
+              <div className="state-card">
+                <p className="state-title">Could not load sessions</p>
+                <p className="state-text">{pageError}</p>
               </div>
             ) : sessions.length === 0 ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">No active sessions found</p>
-                <p className="sessions-state-text">
+              <div className="state-card">
+                <p className="state-title">No active sessions found</p>
+                <p className="state-text">
                   There are no active sessions available to display right now.
                 </p>
               </div>

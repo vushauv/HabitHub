@@ -51,4 +51,18 @@ public class TeamMemberRepository(AppDbContext db, ILogger<TeamMemberRepository>
 
     public async Task<bool> EmailAlreadyExistsAsync(string email) =>
         await db.TeamMembers.AnyAsync(c => c.Email == email);
+
+    public async Task<List<TeamMember>> GetMembersByHabitEntriesAsync(Guid habitId)
+    {
+        List<Guid> memberIds = await db.HabitEntries
+            .Where(e => e.HabitId == habitId)
+            .Select(e => e.MemberId)
+            .Distinct()
+            .ToListAsync();
+
+        if (memberIds.Count == 0)
+            return new List<TeamMember>();
+
+        return await GetMembersByIdsAsync(memberIds);
+    }
 }

@@ -1,4 +1,9 @@
-import { API_BASE_URL, type AccountType } from "./User";
+import z from "zod";
+import { API_BASE_URL } from "./User";
+import {
+  getAuthHeaders,
+  type StoredAuth,
+} from "./Auth";
 import type {
   CreateTeamRequestDto,
   CreateTeamResponseDto,
@@ -12,13 +17,7 @@ import type {
 } from "./dtos";
 
 export type { InviteCodeDto, TeamDetailsDto, TeamSummaryDto } from "./dtos";
-
-export type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+export { clearStoredAuth, getAuthHeaders, getStoredAuth, type StoredAuth } from "./Auth";
 
 export type TeamMemberStatus = "Active" | "Kicked" | "Left";
 
@@ -29,14 +28,6 @@ export type TeamMemberDto = Omit<TeamMemberResponseDto, "status"> & {
 export type CreateTeamForm = CreateTeamRequestDto;
 
 export type JoinTeamForm = JoinTeamRequestDto;
-
-export type CreateTeamErrors = {
-  name?: string;
-};
-
-export type JoinTeamErrors = {
-  code?: string;
-};
 
 export type TeamErrorCode =
   | "auth-required"
@@ -72,83 +63,30 @@ type RawErrorResponse = {
   Message?: string | null;
 };
 
-export function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
+export const teamNameSchema = z
+  .string()
+  .trim()
+  .nonempty({ error: "Team name is required." })
+  .min(3, { error: "Team name must be at least 3 characters long." })
+  .max(100, { error: "Team name must be 100 characters or shorter." });
 
-  if (!rawAuth) {
-    return null;
-  }
+export const inviteCodeSchema = z
+  .string()
+  .trim()
+  .nonempty({ error: "Invite code is required." })
+  .length(8, { error: "Invite code must be exactly 8 characters long." });
 
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
+export const createTeamFormSchema = z
+  .object({
+    name: teamNameSchema
+  })
+  .required();
 
-export function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-export function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
-
-export function validateTeamName(name: string): string | undefined {
-  const trimmedName = name.trim();
-
-  if (!trimmedName) {
-    return "Team name is required.";
-  }
-
-  if (trimmedName.length < 3) {
-    return "Team name must be at least 3 characters long.";
-  }
-
-  if (trimmedName.length > 100) {
-    return "Team name must be 100 characters or shorter.";
-  }
-
-  return undefined;
-}
-
-export function validateInviteCode(code: string): string | undefined {
-  if (!code.trim()) {
-    return "Invite code is required.";
-  }
-
-  if (code.trim().length !== 8) {
-    return "Invite code must be exactly 8 characters long.";
-  }
-
-  return undefined;
-}
-
-export function validateCreateTeamForm(
-  form: CreateTeamForm,
-): CreateTeamErrors {
-  return {
-    name: validateTeamName(form.name),
-  };
-}
-
-export function validateJoinTeamForm(form: JoinTeamForm): JoinTeamErrors {
-  return {
-    code: validateInviteCode(form.code),
-  };
-}
-
-export function hasCreateTeamErrors(errors: CreateTeamErrors): boolean {
-  return Boolean(errors.name);
-}
-
-export function hasJoinTeamErrors(errors: JoinTeamErrors): boolean {
-  return Boolean(errors.code);
-}
+export const joinTeamFormSchema = z
+  .object({
+    code: inviteCodeSchema
+  })
+  .required();
 
 export function getTeamErrorMessage(errorCode: TeamErrorCode): string {
   switch (errorCode) {

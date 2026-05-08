@@ -1,58 +1,10 @@
-.sessions-card-shell {
-  align-items: stretch;
-}
-
 .sessions-content {
   max-width: 62rem;
   gap: 2rem;
 }
 
-.sessions-topbar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.sessions-back-button {
-  min-width: auto;
-  padding-inline: 1.1rem;
-}
-
-.sessions-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.sessions-title {
-  font-size: clamp(2.7rem, 6vw, 4.4rem);
-}
-
 .sessions-text {
   max-width: 42rem;
-  text-align: center;
-}
-
-.sessions-state-card {
-  padding: 1.5rem;
-  border-radius: var(--radius-medium);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  background: rgba(255, 255, 255, 0.56);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  text-align: center;
-}
-
-.sessions-state-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.sessions-state-text {
-  margin: 0.75rem 0 0;
-  color: var(--text-color-soft);
-  line-height: 1.65;
 }
 
 .sessions-list {
@@ -135,10 +87,6 @@
 @media (max-width: 768px) {
   .sessions-content {
     gap: 1.5rem;
-  }
-
-  .sessions-title {
-    font-size: clamp(2.2rem, 10vw, 3rem);
   }
 
   .session-item {

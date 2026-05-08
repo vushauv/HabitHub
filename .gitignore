@@ -2,7 +2,7 @@
 *.log
 .vscode/
 .vs/
-
+secrets/
 
 backend/.vs/
 backend/bin/

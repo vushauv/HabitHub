@@ -1,16 +1,19 @@
 using backend.Data;
+using backend.Logging;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using backend.Enums;
 
 namespace backend.Repositories;
 
-public class SessionRepository(AppDbContext db) : ISessionRepository
+public class SessionRepository(AppDbContext db, ILogger<SessionRepository> logger) : ISessionRepository
 {
     public async Task<Session> CreateAsync(Session session)
     {
         db.Sessions.Add(session);
         await db.SaveChangesAsync();
+        logger.LogInformation("Created session {SessionFingerprint} for user {UserId} ({UserType})",
+            LogRedaction.Fingerprint(session.SessionId), session.UserId, session.UserType);
         return session;
     }
     public async Task<List<Session>> GetActiveSessionsForUserAsync(Guid userId, UserType userType) =>
@@ -33,6 +36,8 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
         {
             session.SessionState = SessionState.Invalidated;
             await db.SaveChangesAsync();
+            logger.LogInformation("Invalidated session {SessionFingerprint} for user {UserId} ({UserType})",
+                LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
         }
     }
 
@@ -50,6 +55,8 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
         }
 
         await db.SaveChangesAsync();
+        logger.LogInformation("Invalidated {Count} other active sessions for user {UserId} ({UserType}), keeping {SessionFingerprint}",
+            sessions.Count, userId, userType, LogRedaction.Fingerprint(currentSessionId));
     }
 
     public async Task ExpirePastDueSessionsAsync()
@@ -62,6 +69,7 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
             session.SessionState = SessionState.Expired;
         }
         await db.SaveChangesAsync();
+        logger.LogInformation("Expired {Count} past-due sessions", sessions.Count);
     }
 
     public async Task RefreshSpecificSession(string sessionId)
@@ -73,6 +81,8 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
         if(session.ExpiresAt <= now)
         {
             session.SessionState = SessionState.Expired;
+            logger.LogInformation("Marked session {SessionFingerprint} expired on refresh for user {UserId} ({UserType})",
+                LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
         }
         else
         {
@@ -91,6 +101,8 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
         {
             session.SessionState = SessionState.Expired;
             await db.SaveChangesAsync();
+            logger.LogInformation("Expired session {SessionFingerprint} for user {UserId} ({UserType})",
+                LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
         }
     }
 }

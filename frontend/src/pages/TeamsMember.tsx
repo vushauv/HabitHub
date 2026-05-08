@@ -198,13 +198,14 @@ export default function TeamsMember() {
                     <article className="data-table-row teams-member-table-row" key={team.teamId}>
                       <span className="teams-member-team-name">{team.name}</span>
 
-                      <button
-                        type="button"
+                      <Link
+                        to={`/habits-member?teamId=${encodeURIComponent(
+                          team.teamId,
+                        )}`}
                         className="button button-secondary table-row-button"
-                        disabled
                       >
                         Show Habits
-                      </button>
+                      </Link>
 
                       <button
                         type="button"

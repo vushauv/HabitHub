@@ -8,10 +8,14 @@ import type {
   CreateHabitRequestDto,
   CreateHabitResponseDto,
   EditHabitRequestDto,
+  EntryStatusDto,
+  HabitEntryResponseDto,
   HabitStateDto,
   HabitSummaryDto,
   HabitTypeDto,
   LeaderboardResponseDto,
+  LogProgressRequestDto,
+  TodayHabitEntryStatusDto,
   UnitDto,
 } from "./dtos";
 
@@ -19,8 +23,10 @@ export type {
   CreateHabitRequestDto,
   CreateHabitResponseDto,
   EditHabitRequestDto,
+  HabitEntryResponseDto,
   HabitSummaryDto,
   LeaderboardResponseDto,
+  TodayHabitEntryStatusDto,
 } from "./dtos";
 export { clearStoredAuth, getStoredAuth } from "./Auth";
 
@@ -36,6 +42,13 @@ export type UnitName =
   | "Cups"
   | "Steps"
   | "Pages";
+
+export type EntryStatusName = "Logged" | "Pending" | "Skipped";
+
+export type LogProgressForm = {
+  value: string;
+  notes: string;
+};
 
 export type CreateHabitForm = {
   name: string;
@@ -59,6 +72,8 @@ export type HabitErrorCode =
   | "forbidden"
   | "not-found"
   | "habit-archived"
+  | "log-already-exists"
+  | "log-not-found"
   | "internal-server-error"
   | "unknown";
 
@@ -156,6 +171,15 @@ export const editHabitFormSchema = z
     }
   });
 
+export const logProgressFormSchema = z
+  .object({
+    value: z.string(),
+    notes: z
+      .string()
+      .max(512, { error: "Notes must be 512 characters or shorter." }),
+  })
+  .required();
+
 export function getHabitErrorMessage(errorCode: HabitErrorCode): string {
   switch (errorCode) {
     case "auth-required":
@@ -167,7 +191,11 @@ export function getHabitErrorMessage(errorCode: HabitErrorCode): string {
     case "not-found":
       return "The selected habit could not be found.";
     case "habit-archived":
-      return "Archived habits cannot be edited.";
+      return "Archived habits cannot be changed.";
+    case "log-already-exists":
+      return "Progress was already logged for today.";
+    case "log-not-found":
+      return "Today's progress log could not be found.";
     case "internal-server-error":
       return "The server could not finish this habit action right now.";
     default:
@@ -188,6 +216,17 @@ export function formatHabitState(habitState: HabitStateDto): string {
 
 export function formatHabitType(habitType: HabitTypeDto): HabitTypeName {
   return habitType === 1 ? "Quantitative" : "Binary";
+}
+
+export function formatEntryStatus(status: EntryStatusDto): EntryStatusName {
+  switch (status) {
+    case 1:
+      return "Pending";
+    case 2:
+      return "Skipped";
+    default:
+      return "Logged";
+  }
 }
 
 export function formatHabitUnit(unit: UnitDto | null): string {
@@ -213,6 +252,67 @@ export function formatHabitExpiryDate(dateString: string | null): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(parsedDate);
+}
+
+export function formatHabitEntryDate(dateString: string): string {
+  const parsedDate = new Date(`${dateString}T00:00:00`);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+  }).format(parsedDate);
+}
+
+export function formatHabitEntryDateTime(dateString: string): string {
+  const parsedDate = new Date(dateString);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(parsedDate);
+}
+
+export function formatHabitEntryValue(
+  entry: HabitEntryResponseDto,
+  habit: HabitSummaryDto,
+): string {
+  if (entry.status === 2) {
+    return "Skipped";
+  }
+
+  if (habit.habitType === 0) {
+    return "Completed";
+  }
+
+  if (entry.value === null) {
+    return "No value";
+  }
+
+  const unit = habit.unit === null ? "" : ` ${formatHabitUnit(habit.unit)}`;
+
+  return `${entry.value}${unit}`;
+}
+
+export function formatLeaderboardValue(
+  row: LeaderboardResponseDto,
+  habit: HabitSummaryDto,
+): string {
+  if (row.totalValue === null) {
+    return "No value";
+  }
+
+  const unit = formatHabitUnit(habit.unit);
+
+  return habit.habitType === 1 && habit.unit !== null
+    ? `${row.totalValue} ${unit}`
+    : `${row.totalValue}`;
 }
 
 export function formatDateTimeInputValue(dateString: string | null): string {
@@ -322,6 +422,61 @@ export async function getHabitLeaderboard(
   });
 }
 
+export async function getHabitEntries(
+  auth: StoredAuth | null,
+  habitId: string,
+  memberId?: string,
+): Promise<HabitEntryResponseDto[]> {
+  const query = memberId ? `?memberId=${encodeURIComponent(memberId)}` : "";
+
+  const entries = await requestJson<HabitEntryResponseDto[]>(
+    `/habits/${habitId}/entries${query}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(auth),
+    },
+  );
+
+  return entries.toSorted(compareHabitEntriesDescending);
+}
+
+export async function getMyTodayEntryStatus(
+  auth: StoredAuth | null,
+  habitId: string,
+): Promise<TodayHabitEntryStatusDto> {
+  return requestJson<TodayHabitEntryStatusDto>(
+    `/habits/${habitId}/entries/today`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(auth),
+    },
+  );
+}
+
+export async function logHabitProgress(
+  auth: StoredAuth | null,
+  habit: HabitSummaryDto,
+  form: LogProgressForm,
+  status: Exclude<EntryStatusName, "Pending">,
+): Promise<HabitEntryResponseDto> {
+  return requestJson<HabitEntryResponseDto>(`/habits/${habit.habitId}/entries`, {
+    method: "POST",
+    headers: getAuthHeaders(auth),
+    body: JSON.stringify(toLogProgressRequest(form, habit, status)),
+  });
+}
+
+export async function undoHabitLog(
+  auth: StoredAuth | null,
+  habitId: string,
+  entryId: string,
+): Promise<void> {
+  await requestEmpty(`/habits/${habitId}/entries/${entryId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(auth),
+  });
+}
+
 function toCreateHabitRequest(form: CreateHabitForm): CreateHabitRequestDto {
   return {
     name: form.name.trim(),
@@ -366,6 +521,21 @@ function toEditHabitRequest(
   return request;
 }
 
+function toLogProgressRequest(
+  form: LogProgressForm,
+  habit: HabitSummaryDto,
+  status: Exclude<EntryStatusName, "Pending">,
+): LogProgressRequestDto {
+  return {
+    value:
+      status === "Logged" && habit.habitType === 1
+        ? Number(form.value)
+        : null,
+    notes: normalizeNullableString(form.notes),
+    status: mapEntryStatusToDto(status),
+  };
+}
+
 function mapHabitTypeToDto(habitType: HabitTypeName): HabitTypeDto {
   return habitType === "Quantitative" ? 1 : 0;
 }
@@ -378,6 +548,28 @@ function mapUnitToDto(unit: "" | UnitName): UnitDto | null {
   const unitIndex = unitOptions.indexOf(unit);
 
   return unitIndex === -1 ? null : (unitIndex as UnitDto);
+}
+
+function mapEntryStatusToDto(status: Exclude<EntryStatusName, "Pending">): EntryStatusDto {
+  return status === "Skipped" ? 2 : 0;
+}
+
+function compareHabitEntriesDescending(
+  firstEntry: HabitEntryResponseDto,
+  secondEntry: HabitEntryResponseDto,
+): number {
+  const dateDifference =
+    new Date(secondEntry.logDate).getTime() -
+    new Date(firstEntry.logDate).getTime();
+
+  if (dateDifference !== 0) {
+    return dateDifference;
+  }
+
+  return (
+    new Date(secondEntry.loggedAt).getTime() -
+    new Date(firstEntry.loggedAt).getTime()
+  );
 }
 
 function normalizeNullableString(value: string): string | null {
@@ -448,6 +640,8 @@ function normalizeErrorCode(rawCode: string | null | undefined): HabitErrorCode 
     "forbidden",
     "not-found",
     "habit-archived",
+    "log-already-exists",
+    "log-not-found",
     "internal-server-error",
   ];
 

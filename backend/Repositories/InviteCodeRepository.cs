@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Repositories;
 
-public class InviteCodeRepository(AppDbContext db) : IInviteCodeRepository
+public class InviteCodeRepository(AppDbContext db, ILogger<InviteCodeRepository> logger) : IInviteCodeRepository
 {
     public async Task<InviteCode> CreateInviteCodeAsync(InviteCode inviteCode)
     {
         db.Add(inviteCode);
         await db.SaveChangesAsync();
+        logger.LogInformation("Created invite code {CodeId} for team {TeamId}", inviteCode.CodeId, inviteCode.TeamId);
         return inviteCode;
     }
 
@@ -35,6 +36,7 @@ public class InviteCodeRepository(AppDbContext db) : IInviteCodeRepository
         {
             inviteCode.Status = CodeStatus.Expired;
             await db.SaveChangesAsync();
+            logger.LogInformation("Marked invite code {CodeId} as expired on access", inviteCode.CodeId);
         }
         return inviteCode.Status == CodeStatus.Active;
     }
@@ -43,10 +45,14 @@ public class InviteCodeRepository(AppDbContext db) : IInviteCodeRepository
     {
         InviteCode? code = await GetInviteCodeByIdAsync(codeId);
         if(code == null)
+        {
+            logger.LogWarning("Update invite code status skipped, code {CodeId} not found", codeId);
             return;
-        
+        }
+
         code.Status = status;
         await db.SaveChangesAsync();
+        logger.LogInformation("Updated invite code {CodeId} status to {Status}", codeId, status);
     }
 
     public async Task InvalidateActiveInviteCodesByTeamIdAsync(Guid teamId)
@@ -56,6 +62,7 @@ public class InviteCodeRepository(AppDbContext db) : IInviteCodeRepository
             code.Status = CodeStatus.Invalid;
 
         await db.SaveChangesAsync();
+        logger.LogInformation("Invalidated {Count} active invite codes for team {TeamId}", activeCodes.Count, teamId);
     }
 
     public async Task ExpirePastDueInviteCodesAsync()
@@ -65,5 +72,6 @@ public class InviteCodeRepository(AppDbContext db) : IInviteCodeRepository
             code.Status = CodeStatus.Expired;
 
         await db.SaveChangesAsync();
+        logger.LogInformation("Expired {Count} past-due invite codes", inviteCodes.Count);
     }
 }

@@ -2,6 +2,8 @@
 *.log
 .vscode/
 .vs/
+
+.claude/
 secrets/
 
 backend/.vs/

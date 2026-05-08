@@ -6,12 +6,24 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using backend.Auth;
 using backend.BackgroundServices;
+using Serilog;
+using Serilog.Events;
 using backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.SetMinimumLevel(LogLevel.Information);
-builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+builder.Host.UseSerilog((ctx, cfg) => cfg
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/backend-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        fileSizeLimitBytes: 50_000_000,
+        rollOnFileSizeLimit: true));
 
 builder.Configuration.AddEnvironmentVariables(prefix: "BACKEND__");
 builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
@@ -51,16 +63,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    app.Logger.LogInformation("Applying database migrations");
     db.Database.Migrate();
+    app.Logger.LogInformation("Database migrations applied");
+
     var sessionRepository = scope.ServiceProvider.GetRequiredService<ISessionRepository>();
+    app.Logger.LogInformation("Expiring past-due sessions");
     await sessionRepository.ExpirePastDueSessionsAsync();
+
     var inviteCodeRepository = scope.ServiceProvider.GetRequiredService<IInviteCodeRepository>();
+    app.Logger.LogInformation("Expiring past-due invite codes");
     await inviteCodeRepository.ExpirePastDueInviteCodesAsync();
 
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
-        await SeedData.SeedUsersAsync(db);
-        await SeedData.SeedTeamsAsync(db);
+        app.Logger.LogInformation("Seeding {Environment} data", app.Environment.EnvironmentName);
+        await SeedData.SeedUsersAsync(db, app.Logger);
+        await SeedData.SeedTeamsAsync(db, app.Logger);
     }
 }
 
@@ -76,10 +96,13 @@ app.UseCors(policy => policy
     .AllowAnyHeader()
     .AllowAnyMethod());
 
+app.UseSerilogRequestLogging();
+
 app.UseHttpsRedirection();
 app.UseMiddleware<SessionAuthenticationMiddleware>();
 app.MapControllers();
 
+app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);
 app.Run();
 
 public partial class Program {}

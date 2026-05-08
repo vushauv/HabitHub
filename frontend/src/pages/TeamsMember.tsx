@@ -36,7 +36,7 @@ export default function TeamsMember() {
       setLoading(true);
       setPageError(null);
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         clearStoredAuth();
 
         if (isMounted) {

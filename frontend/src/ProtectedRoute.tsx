@@ -1,50 +1,78 @@
+import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-
-type AccountType = "Creator" | "Member";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
+import { useCurrentUser } from "./hooks/useCurrentUser";
+import {
+  clearStoredAuth,
+  getAccountTypeForUser,
+  getDashboardPathForUser,
+  getStoredAuth,
+} from "./services/Auth";
+import type { AccountType } from "./services/User";
 
 type ProtectedRouteProps = {
   allowedUserType?: AccountType;
 };
 
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
 export default function ProtectedRoute({
   allowedUserType,
 }: ProtectedRouteProps) {
   const auth = getStoredAuth();
+  const { currentUser, isLoading, error } = useCurrentUser(auth);
 
-  if (!auth?.isLoggedIn) {
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    if (error.code === "auth-required" || error.code === "not-found") {
+      clearStoredAuth();
+    }
+  }, [error]);
+
+  if (!auth) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedUserType && auth.userType !== allowedUserType) {
+  if (isLoading) {
     return (
-      <Navigate
-        to={auth.userType === "Creator" ? "/main-creator" : "/main-member"}
-        replace
-      />
+      <main className="page container">
+        <section className="card">
+          <div className="content content-centered">
+            <p className="text">Loading your account...</p>
+          </div>
+        </section>
+      </main>
     );
   }
 
-  return <Outlet />;
+  if (error) {
+    if (error.code === "auth-required" || error.code === "not-found") {
+      return <Navigate to="/login" replace />;
+    }
+
+    return (
+      <main className="page container">
+        <section className="card">
+          <div className="content content-centered">
+            <p className="form-error" role="alert">
+              {error.message}
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (
+    allowedUserType &&
+    getAccountTypeForUser(currentUser) !== allowedUserType
+  ) {
+    return <Navigate to={getDashboardPathForUser(currentUser)} replace />;
+  }
+
+  return <Outlet context={currentUser} />;
 }

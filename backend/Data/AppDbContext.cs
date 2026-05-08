@@ -11,6 +11,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<HabitTeam> HabitTeams => Set<HabitTeam>();
     public DbSet<Membership> Memberships => Set<Membership>();
     public DbSet<InviteCode> InviteCodes => Set<InviteCode>();
+    public DbSet<Habit> Habits => Set<Habit>();
+    public DbSet<HabitEntry> HabitEntries => Set<HabitEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -91,6 +93,53 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
            e.HasIndex(i => i.Code).IsUnique();
            e.HasIndex(i => i.TeamId);
+        });
+        modelBuilder.Entity<Habit>(e =>
+        {
+           e.HasKey(h => h.HabitId);
+           e.Property(h => h.TeamId).IsRequired();
+           e.Property(h => h.Name).HasMaxLength(256).IsRequired();
+           e.Property(h => h.Goal).HasMaxLength(512);
+           e.Property(h => h.CreatorId).IsRequired();
+           e.Property(h => h.HabitState).IsRequired();
+           e.Property(h => h.HabitType).IsRequired();
+           e.Property(h => h.Unit).IsRequired(false);
+           e.Property(h => h.ExpiryDate).IsRequired(false);
+
+           e.HasOne(h => h.Team)
+           .WithMany(t => t.Habits)
+           .HasForeignKey(h => h.TeamId)
+           .OnDelete(DeleteBehavior.Cascade);
+
+           e.HasOne(h => h.Creator)
+           .WithMany()
+           .HasForeignKey(h => h.CreatorId)
+           .OnDelete(DeleteBehavior.Restrict);
+           
+           e.HasIndex(h => h.TeamId);
+        });
+        modelBuilder.Entity<HabitEntry>(e =>
+        {
+            e.HasKey(he => he.EntryId);
+            e.Property(he => he.HabitId).IsRequired();
+            e.Property(he => he.MemberId).IsRequired();
+            e.Property(he => he.Status).IsRequired();
+            e.Property(he => he.Notes).HasMaxLength(1000);
+            e.Property(he => he.LoggedAt).IsRequired();
+            e.Property(he => he.LogDate).IsRequired();
+
+            e.HasOne(he => he.Habit)
+            .WithMany(h => h.Entries)
+            .HasForeignKey(he => he.HabitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(he => he.Member)
+            .WithMany()
+            .HasForeignKey(he => he.MemberId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+            e.HasIndex(he => new { he.HabitId, he.MemberId, he.LogDate })
+            .IsUnique();
         });
     }
 }

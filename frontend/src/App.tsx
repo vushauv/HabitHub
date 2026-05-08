@@ -14,6 +14,10 @@ import TeamsMember from "./pages/TeamsMember";
 import CreateTeam from "./pages/CreateTeam";
 import JoinTeam from "./pages/JoinTeam";
 import MemberList from "./pages/MemberList";
+import CreatorHabits from "./pages/CreatorHabits";
+import CreateHabit from "./pages/CreateHabit";
+import HabitDetails from "./pages/HabitDetails";
+import EditHabit from "./pages/EditHabit";
 
 export default function App() {
   return (
@@ -28,6 +32,10 @@ export default function App() {
           <Route path="/teams-creator" element={<TeamsCreator />} />
           <Route path="/create-team" element={<CreateTeam />} />
           <Route path="/member-list" element={<MemberList />} />
+          <Route path="/habits-creator" element={<CreatorHabits />} />
+          <Route path="/create-habit" element={<CreateHabit />} />
+          <Route path="/habit-details" element={<HabitDetails />} />
+          <Route path="/edit-habit" element={<EditHabit />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedUserType="Member" />}>

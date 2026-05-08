@@ -2,72 +2,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./Sessions.css";
 import "../App.css";
-import { API_BASE_URL, type AccountType } from "../services/User";
-
-type StoredAuth = {
-  isLoggedIn?: boolean;
-  userType?: AccountType;
-  sessionId?: string | null;
-  userId?: string | null;
-};
-
-type SessionState = "Active" | "Invalidated" | "Expired";
-
-type RawSessionDto = {
-  sessionId?: string | null;
-  sessionID?: string | null;
-  SessionId?: string | null;
-  SessionID?: string | null;
-  deviceType?: string | null;
-  deviceInfo?: string | null;
-  DeviceType?: string | null;
-  DeviceInfo?: string | null;
-  ipAddress?: string | null;
-  IpAddress?: string | null;
-  IPAddress?: string | null;
-  createdAt?: string | null;
-  CreatedAt?: string | null;
-  state?: SessionState | string | null;
-  sessionState?: SessionState | string | null;
-  State?: SessionState | string | null;
-  SessionState?: SessionState | string | null;
-};
-
-type ActiveSessionDto = {
-  sessionID: string;
-  deviceType: string;
-  ipAddress: string;
-  createdAt: string;
-  state: SessionState;
-};
+import type { SessionDto } from "../services/dtos";
+import { API_BASE_URL } from "../services/User";
+import {
+  clearStoredAuth,
+  getAuthHeaders,
+  getStoredAuth,
+} from "../services/Auth";
 
 type SessionsErrorCode = "auth-required" | "not-found" | "unknown";
-
-function getStoredAuth(): StoredAuth | null {
-  const rawAuth = localStorage.getItem("habithubAuth");
-
-  if (!rawAuth) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawAuth) as StoredAuth;
-  } catch {
-    localStorage.removeItem("habithubAuth");
-    return null;
-  }
-}
-
-function clearStoredAuth(): void {
-  localStorage.removeItem("habithubAuth");
-}
-
-function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    ...(auth?.sessionId ? { "X-Session-Id": auth.sessionId } : {}),
-  };
-}
 
 function getErrorCode(status: number): SessionsErrorCode {
   if (status === 401) {
@@ -105,38 +48,10 @@ function getFriendlyErrorMessage(errorCode: SessionsErrorCode): string {
   }
 }
 
-function normalizeSession(raw: RawSessionDto): ActiveSessionDto {
-  const rawState =
-    raw.state ?? raw.sessionState ?? raw.State ?? raw.SessionState ?? "Active";
-
-  const normalizedState =
-    rawState === "Invalidated" || rawState === "Expired" || rawState === "Active"
-      ? rawState
-      : "Active";
-
-  return {
-    sessionID:
-      raw.sessionId ??
-      raw.sessionID ??
-      raw.SessionId ??
-      raw.SessionID ??
-      "",
-    deviceType:
-      raw.deviceType ??
-      raw.deviceInfo ??
-      raw.DeviceType ??
-      raw.DeviceInfo ??
-      "Unknown device",
-    ipAddress: raw.ipAddress ?? raw.IpAddress ?? raw.IPAddress ?? "Unknown IP",
-    createdAt: raw.createdAt ?? raw.CreatedAt ?? "",
-    state: normalizedState,
-  };
-}
-
 export default function Sessions() {
   const navigate = useNavigate();
   const auth = useMemo(() => getStoredAuth(), []);
-  const [sessions, setSessions] = useState<ActiveSessionDto[]>([]);
+  const [sessions, setSessions] = useState<SessionDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [pendingSessionID, setPendingSessionID] = useState<string | null>(null);
@@ -148,7 +63,7 @@ export default function Sessions() {
       setLoading(true);
       setPageError(null);
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         if (!isMounted) {
           return;
         }
@@ -186,18 +101,14 @@ export default function Sessions() {
           throw new Error(getFriendlyErrorMessage(errorCode));
         }
 
-        const rawData = (await response.json()) as RawSessionDto[];
+        const rawData = (await response.json()) as SessionDto[];
 
         if (!isMounted) {
           return;
         }
 
-        const normalizedSessions = rawData
-          .map(normalizeSession)
-          .filter((session) => session.sessionID);
-
-        const activeSessions = normalizedSessions.filter(
-          (session) => session.state === "Active",
+        const activeSessions = rawData.filter(
+          (session) => session.sessionState === 0,
         );
 
         setSessions(activeSessions);
@@ -266,7 +177,7 @@ export default function Sessions() {
       window.location.reload();
 
       setSessions((currentSessions) =>
-        currentSessions.filter((session) => session.sessionID !== sessionID),
+        currentSessions.filter((session) => session.sessionId !== sessionID),
       );
     } catch (error) {
       const message =
@@ -286,19 +197,19 @@ export default function Sessions() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card sessions-card-shell">
+        <div className="card page-card-shell">
           <div className="content sessions-content">
-            <div className="sessions-topbar">
+            <div className="page-topbar">
               <Link
                 to="/settings"
-                className="button button-secondary sessions-back-button"
+                className="button button-secondary page-nav-button"
               >
                 Back to settings
               </Link>
             </div>
 
-            <div className="content-centered sessions-header">
-              <h1 className="title sessions-title">Active sessions</h1>
+            <div className="content-centered">
+              <h1 className="title page-title">Active sessions</h1>
               <p className="text sessions-text">
                 Review devices currently signed in to your account and invalidate
                 any session you do not recognize.
@@ -306,42 +217,46 @@ export default function Sessions() {
             </div>
 
             {loading ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">Loading sessions...</p>
-                <p className="sessions-state-text">
+              <div className="state-card">
+                <p className="state-title">Loading sessions...</p>
+                <p className="state-text">
                   We are retrieving your currently active sessions.
                 </p>
               </div>
             ) : pageError ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">Could not load sessions</p>
-                <p className="sessions-state-text">{pageError}</p>
+              <div className="state-card">
+                <p className="state-title">Could not load sessions</p>
+                <p className="state-text">{pageError}</p>
               </div>
             ) : sessions.length === 0 ? (
-              <div className="sessions-state-card">
-                <p className="sessions-state-title">No active sessions found</p>
-                <p className="sessions-state-text">
+              <div className="state-card">
+                <p className="state-title">No active sessions found</p>
+                <p className="state-text">
                   There are no active sessions available to display right now.
                 </p>
               </div>
             ) : (
               <section className="sessions-list" aria-label="Active sessions list">
                 {sessions.map((session) => (
-                  <article key={session.sessionID} className="session-item">
+                  <article key={session.sessionId} className="session-item">
                     <div className="session-item-main">
                       <div className="session-item-row">
                         <span className="session-label">Session ID</span>
-                        <span className="session-value">{session.sessionID}</span>
+                        <span className="session-value">{session.sessionId}</span>
                       </div>
 
                       <div className="session-item-row">
                         <span className="session-label">Device type</span>
-                        <span className="session-value">{session.deviceType}</span>
+                        <span className="session-value">
+                          {session.deviceInfo ?? "Unknown device"}
+                        </span>
                       </div>
 
                       <div className="session-item-row">
                         <span className="session-label">IP address</span>
-                        <span className="session-value">{session.ipAddress}</span>
+                        <span className="session-value">
+                          {session.ipAddress ?? "Unknown IP"}
+                        </span>
                       </div>
 
                       <div className="session-item-row">
@@ -356,10 +271,10 @@ export default function Sessions() {
                       <button
                         type="button"
                         className="button button-primary session-invalidate-button"
-                        onClick={() => void handleInvalidateSession(session.sessionID)}
-                        disabled={pendingSessionID === session.sessionID}
+                        onClick={() => void handleInvalidateSession(session.sessionId)}
+                        disabled={pendingSessionID === session.sessionId}
                       >
-                        {pendingSessionID === session.sessionID
+                        {pendingSessionID === session.sessionId
                           ? "Invalidating..."
                           : "Invalidate"}
                       </button>

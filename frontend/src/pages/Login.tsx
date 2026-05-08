@@ -1,178 +1,65 @@
-import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import "../App.css";
-import { type LoginForm } from "../services/Login";
-import { validateForm, hasValidationErrors } from "../services/Login";
+import type { LoginRequestDto } from "../services/dtos";
+import { loginFormSchema, type LoginForm } from "../services/Login";
 import {
   API_BASE_URL,
-  type AccountType,
   mapUserTypeToEnum,
 } from "../services/User";
-
-type LoginResponse = {
-  sessionId?: string | null;
-  sessionID?: string | null;
-  SessionId?: string | null;
-  SessionID?: string | null;
-  userId?: string | null;
-  userID?: string | null;
-  UserId?: string | null;
-  UserID?: string | null;
-  memberId?: string | null;
-  memberID?: string | null;
-  MemberId?: string | null;
-  MemberID?: string | null;
-  creatorId?: string | null;
-  creatorID?: string | null;
-  CreatorId?: string | null;
-  CreatorID?: string | null;
-  userType?: string | number | null;
-  UserType?: string | number | null;
-  name?: string | null;
-  Name?: string | null;
-};
-
-function resolveAuthenticatedUserType(
-  data: LoginResponse,
-  fallback: AccountType,
-): AccountType {
-  const rawUserType = data.userType ?? data.UserType;
-
-  if (
-    rawUserType === "creator" ||
-    rawUserType === "Creator" ||
-    rawUserType === 0
-  ) {
-    return "Creator";
-  }
-
-  if (
-    rawUserType === "member" ||
-    rawUserType === "Member" ||
-    rawUserType === 1
-  ) {
-    return "Member";
-  }
-
-  return fallback;
-}
-
-function resolveSessionId(data: LoginResponse): string | null {
-  return (
-    data.sessionId ??
-    data.sessionID ??
-    data.SessionId ??
-    data.SessionID ??
-    null
-  );
-}
-
-function resolveUserId(data: LoginResponse): string | null {
-  return (
-    data.userId ??
-    data.userID ??
-    data.UserId ??
-    data.UserID ??
-    data.memberId ??
-    data.memberID ??
-    data.MemberId ??
-    data.MemberID ??
-    data.creatorId ??
-    data.creatorID ??
-    data.CreatorId ??
-    data.CreatorID ??
-    null
-  );
-}
-
-function resolveName(data: LoginResponse): string {
-  return data.name ?? data.Name ?? "John";
-}
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import TextInput from "../components/form/TextInput";
+import { useLens } from "@hookform/lenses";
+import AccountTypeInput from "../components/form/AccountTypeInput";
+import SubmitButton from "../components/form/SubmitButton";
+import {
+  getDashboardPathForUser,
+  storeSessionAndLoadCurrentUser,
+} from "../services/Auth";
 
 export default function Login() {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState<LoginForm>({
-    email: "",
-    password: "",
-    userType: "Member",
-  });
-
-  const [touched, setTouched] = useState<Record<keyof LoginForm, boolean>>({
-    email: false,
-    password: false,
-    userType: false,
-  });
-
+  
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const errors = useMemo(() => validateForm(form), [form]);
-  const formIsValid = !hasValidationErrors(errors);
+  const { handleSubmit, control, formState, subscribe } = useForm<LoginForm>({
+    defaultValues: {
+      email: "",
+      password: "",
+      userType: "Member",
+    },
+    disabled: loading,
+    resolver: zodResolver(loginFormSchema),
+    mode: "all"
+  });
 
-  function handleChange(
-    field: keyof LoginForm,
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
-    const value = event.target.value;
+  const lens = useLens({ control });
+  
+  // To clear the server error on any field change
+  useEffect(() => {
+    const callback = subscribe({
+      formState: {
+        values: true,
+      },
+      callback: () => {
+        setServerError("");
+      },
+    })
 
-    setForm((previousForm) => ({
-      ...previousForm,
-      [field]: value,
-    }));
+    return () => callback()
+  }, [subscribe])
 
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      [field]: true,
-    }));
-
+  async function onSubmit(form: LoginForm) {
     setServerError("");
-  }
-
-  function handleBlur(field: keyof LoginForm) {
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      [field]: true,
-    }));
-  }
-
-  function handleUserTypeChange(userType: AccountType) {
-    setForm((previousForm) => ({
-      ...previousForm,
-      userType,
-    }));
-
-    setTouched((previousTouched) => ({
-      ...previousTouched,
-      userType: true,
-    }));
-
-    setServerError("");
-  }
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setTouched({
-      email: true,
-      password: true,
-      userType: true,
-    });
-
-    setServerError("");
-
-    const currentErrors = validateForm(form);
-
-    if (hasValidationErrors(currentErrors)) {
-      return;
-    }
 
     setLoading(true);
 
     try {
-      const payload = {
-        email: form.email.trim(),
+      const payload: LoginRequestDto = {
+        email: form.email,
         password: form.password,
         userType: mapUserTypeToEnum(form.userType),
       };
@@ -198,16 +85,8 @@ export default function Login() {
         throw new Error(responseText || `Login failed (${response.status}).`);
       }
 
-      const data = (await response.json()) as LoginResponse;
-
-      const authenticatedUserType = resolveAuthenticatedUserType(
-        data,
-        form.userType,
-      );
-
-      const sessionId = resolveSessionId(data);
-      const userId = resolveUserId(data);
-      const name = resolveName(data);
+      const data = (await response.json()) as { sessionId?: string | null };
+      const sessionId = data.sessionId;
 
       if (!sessionId) {
         throw new Error(
@@ -215,24 +94,10 @@ export default function Login() {
         );
       }
 
-      localStorage.setItem(
-        "habithubAuth",
-        JSON.stringify({
-          isLoggedIn: true,
-          userType: authenticatedUserType,
-          sessionId,
-          userId,
-          name,
-        }),
-      );
+      const currentUser = await storeSessionAndLoadCurrentUser(sessionId);
 
-      navigate(
-        authenticatedUserType === "Creator" ? "/main-creator" : "/main-member",
-        { replace: true },
-      );
+      navigate(getDashboardPathForUser(currentUser), { replace: true });
     } catch (error) {
-      localStorage.removeItem("habithubAuth");
-
       setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
       );
@@ -268,110 +133,35 @@ export default function Login() {
             </p>
           )}
 
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <div className="form-field">
-              <label className="form-label" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                className="form-input"
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={(event) => handleChange("email", event)}
-                onBlur={() => handleBlur("email")}
-                placeholder="example@gmail.com"
-                autoComplete="email"
-                aria-invalid={Boolean(touched.email && errors.email)}
-                aria-describedby={
-                  touched.email && errors.email ? "login-email-error" : undefined
-                }
-                required
-              />
-              {touched.email && errors.email && (
-                <p id="login-email-error" className="field-error">
-                  {errors.email}
-                </p>
-              )}
-            </div>
+          <form className="login-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+            <TextInput
+              label="Email"
+              lens={lens.focus("email")}
+              required
+              type="email"
+              placeholder="john@example.com"
+              autoComplete="email"
+            />
+            <TextInput
+              label="Password"
+              lens={lens.focus("password")}
+              required
+              type="password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
 
-            <div className="form-field">
-              <label className="form-label" htmlFor="password">
-                Password
-              </label>
-              <input
-                id="password"
-                className="form-input"
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={(event) => handleChange("password", event)}
-                onBlur={() => handleBlur("password")}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                aria-invalid={Boolean(touched.password && errors.password)}
-                aria-describedby={
-                  touched.password && errors.password
-                    ? "login-password-error"
-                    : undefined
-                }
-                required
-              />
-              {touched.password && errors.password && (
-                <p id="login-password-error" className="field-error">
-                  {errors.password}
-                </p>
-              )}
-            </div>
+            <AccountTypeInput
+              label="Account type"
+              lens={lens.focus("userType")}
+            />
 
-            <div className="form-field">
-              <span className="form-label">Account type</span>
-
-              <div
-                className="role-group"
-                role="radiogroup"
-                aria-label="Account type"
-              >
-                <button
-                  type="button"
-                  className={
-                    form.userType === "Creator"
-                      ? "role-button role-button-active"
-                      : "role-button"
-                  }
-                  onClick={() => handleUserTypeChange("Creator")}
-                  aria-pressed={form.userType === "Creator"}
-                >
-                  Creator
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    form.userType === "Member"
-                      ? "role-button role-button-active"
-                      : "role-button"
-                  }
-                  onClick={() => handleUserTypeChange("Member")}
-                  aria-pressed={form.userType === "Member"}
-                >
-                  Member
-                </button>
-              </div>
-
-              {touched.userType && errors.userType && (
-                <p className="field-error">{errors.userType}</p>
-              )}
-            </div>
-
-            <button
-              className="button button-primary form-submit"
-              type="submit"
-              disabled={loading || !formIsValid}
+            <SubmitButton
+              formState={formState}
+              disabled={loading}
             >
               {loading ? "Logging in..." : "Log in"}
-            </button>
+            </SubmitButton>
 
             <p className="form-footer-text">
               Don&apos;t have an account?{" "}

@@ -1,3 +1,6 @@
+import type { UserTypeDto } from "./dtos";
+import * as z from "zod";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export type AccountType = "Creator" | "Member";
@@ -24,65 +27,33 @@ export const DEFAULT_TIMEZONE =
   Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Warsaw";
 
 
-export function validateEmail(email: string): string | undefined {
-  if (!email.trim()) {
-    return "Email is required.";
-  }
+export const emailSchema = z
+  .email({error: "Enter a valid email address."})
+  .trim()
+  .nonempty({error: "Email is required."});
 
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const nameSchema = z
+  .string()
+  .trim()
+  .nonempty({error: "Name is required."})
+  .min(2, { error: "Name must be at least 2 characters long." });
 
-  if (!emailPattern.test(email)) {
-    return "Enter a valid email address.";
-  }
+export const passwordSchema = z
+  .string()
+  .nonempty({ error: "Password is required." })
+  .min(8, { error: "Password must be at least 8 characters long." });
 
-  return undefined;
-}
+export const userTypeSchema = z
+  .enum(["Creator", "Member"])
+  .nonoptional({ error: "Choose an account type." });
 
-export function validateName(name: string): string | undefined {
-  if (!name.trim()) {
-    return "Name is required.";
-  }
-
-  if (name.trim().length < 2) {
-    return "Name must be at least 2 characters long.";
-  }
-
-  return undefined;
-}
-
-export function validatePassword(password: string): string | undefined {
-  if (!password) {
-    return "Password is required.";
-  }
-
-  if (password.length < 8) {
-    return "Password must be at least 8 characters long.";
-  }
-
-  return undefined;
-}
-
-export function validateUserType(userType: AccountType): string | undefined {
-  if (userType !== "Creator" && userType !== "Member") {
-    return "Choose an account type.";
-  }
-
-  return undefined;
-}
-
-
-export function mapUserTypeToEnum(userType: AccountType): number {
+export function mapUserTypeToEnum(userType: AccountType): UserTypeDto {
   return userType === "Creator" ? 0 : 1;
 }
 
-export function validateTimezone(timezone: string): string | undefined {
-  if (!timezone.trim()) {
-    return "Timezone is required.";
-  }
-
-  if (!TIMEZONE_OPTIONS.includes(timezone)) {
-    return "Choose a valid timezone.";
-  }
-
-  return undefined;
+export function mapUserTypeFromEnum(userType: UserTypeDto): AccountType {
+  return userType === 0 ? "Creator" : "Member";
 }
+
+export const timezoneSchema = z
+  .enum(TIMEZONE_OPTIONS, { error: "Choose a valid timezone." });

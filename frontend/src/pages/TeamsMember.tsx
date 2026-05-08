@@ -36,7 +36,7 @@ export default function TeamsMember() {
       setLoading(true);
       setPageError(null);
 
-      if (!auth?.isLoggedIn || !auth.sessionId) {
+      if (!auth) {
         clearStoredAuth();
 
         if (isMounted) {
@@ -129,65 +129,65 @@ export default function TeamsMember() {
         <div className="background-glow background-glow-left" />
         <div className="background-glow background-glow-right" />
 
-        <div className="card teams-member-card-shell">
+        <div className="card page-card-shell">
           <div className="content teams-member-content">
-            <div className="teams-member-topbar">
+            <div className="page-topbar">
               <Link
                 to="/"
-                className="button button-secondary teams-member-nav-button"
+                className="button button-secondary page-nav-button"
               >
-                home
+                Home
               </Link>
             </div>
 
             <div className="content-centered teams-member-header">
-              <h1 className="title teams-member-title">your memberships</h1>
+              <h1 className="title page-title teams-member-title pill-title">Your Memberships</h1>
 
               <Link
                 to="/join-team"
                 className="button button-primary teams-member-join-button"
               >
-                join a new team
+                Join a New Team
               </Link>
             </div>
 
             {pageError ? (
-              <p className="form-error teams-member-message" role="alert">
+              <p className="form-error page-message" role="alert">
                 {pageError}
               </p>
             ) : null}
 
             {successMessage ? (
-              <p className="teams-member-success">{successMessage}</p>
+              <p className="alert-success">{successMessage}</p>
             ) : null}
 
             {loading ? (
-              <div className="teams-member-state-card">
-                <p className="teams-member-state-title">
+              <div className="state-card">
+                <p className="state-title">
                   Loading memberships...
                 </p>
-                <p className="teams-member-state-text">
+                <p className="state-text">
                   We are retrieving the teams you belong to.
                 </p>
               </div>
             ) : teams.length === 0 ? (
-              <div className="teams-member-state-card">
-                <p className="teams-member-state-title">
+              <div className="state-card">
+                <p className="state-title">
                   No memberships found
                 </p>
-                <p className="teams-member-state-text">
+                <p className="state-text">
                   Join a team with an invite code to start tracking habits.
                 </p>
               </div>
             ) : (
               <section
-                className="teams-member-table"
-                aria-label="your memberships"
+                className="table-list teams-member-table"
+                aria-label="Your memberships"
               >
-                <div className="teams-member-table-row teams-member-table-head">
-                  <span>name</span>
-                  <span>habits</span>
-                  <span>chat</span>
+                <div className="data-table-row teams-member-table-row data-table-head teams-member-table-head">
+                  <span>Name</span>
+                  <span>Habits</span>
+                  <span>Chat</span>
                   <span></span>
                 </div>
 
@@ -195,32 +195,32 @@ export default function TeamsMember() {
                   const isLeaving = pendingTeamId === team.teamId;
 
                   return (
-                    <article className="teams-member-table-row" key={team.teamId}>
+                    <article className="data-table-row teams-member-table-row" key={team.teamId}>
                       <span className="teams-member-team-name">{team.name}</span>
 
                       <button
                         type="button"
-                        className="button button-secondary teams-member-row-button"
+                        className="button button-secondary table-row-button"
                         disabled
                       >
-                        show habits
+                        Show Habits
                       </button>
 
                       <button
                         type="button"
-                        className="button button-secondary teams-member-row-button"
+                        className="button button-secondary table-row-button"
                         disabled
                       >
-                        show chat
+                        Show Chat
                       </button>
 
                       <button
                         type="button"
-                        className="button button-secondary teams-member-row-button teams-member-danger-button"
+                        className="button button-secondary table-row-button teams-member-danger-button"
                         onClick={() => void handleLeaveTeam(team)}
                         disabled={isLeaving}
                       >
-                        {isLeaving ? "leaving..." : "leave the team"}
+                        {isLeaving ? "Leaving..." : "Leave the team"}
                       </button>
                     </article>
                   );

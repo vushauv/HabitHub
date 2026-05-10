@@ -2,6 +2,7 @@
 using backend.Dtos.AuthDtos;
 using backend.Exceptions;
 using backend.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
@@ -50,13 +51,12 @@ namespace backend.Controllers
             }
         }
         [HttpGet("sessions")]
-        public async Task<IActionResult> ViewActiveSessions([FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        [Authorize]
+        public async Task<IActionResult> ViewActiveSessions()
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 List<SessionDto> activeSessions = await authService.ViewActiveSessions(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
                 return StatusCode(StatusCodes.Status200OK, activeSessions);
@@ -72,13 +72,12 @@ namespace backend.Controllers
         }
         
         [HttpDelete("sessions/{sessionId}")]
-        public async Task<IActionResult> InvalidateSpecificSession(string sessionId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        [Authorize]
+        public async Task<IActionResult> InvalidateSpecificSession(string sessionId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionId);
                 return StatusCode(StatusCodes.Status204NoContent);
@@ -94,15 +93,14 @@ namespace backend.Controllers
         }
         
         [HttpDelete("logout")]
-        public async Task<IActionResult> LogoutFromCurrentSession([FromHeader(Name = "X-Session-Id")] string sessionIdHeader)
+        [Authorize]
+        public async Task<IActionResult> LogoutFromCurrentSession()
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null) 
-                    return StatusCode(StatusCodes.Status401Unauthorized, new {error = "auth-required", message = "Authentication required."});
+                var currentUser = HttpContext.RequireCurrentUser();
                 
-                await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionIdHeader);
+                await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
                 return StatusCode(StatusCodes.Status204NoContent);
             }
             catch(AppException ex)
@@ -116,13 +114,12 @@ namespace backend.Controllers
         }
 
         [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 await authService.ChangePassword(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
                 return StatusCode(StatusCodes.Status200OK);
@@ -138,14 +135,12 @@ namespace backend.Controllers
         }
 
         [HttpPost("change-email")]
-        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        [Authorize]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if(currentUser == null)
-                    throw new AuthRequiredException();
-
+                var currentUser = HttpContext.RequireCurrentUser();
                 await authService.ChangeEmail(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
                 return StatusCode(StatusCodes.Status200OK);
             }
@@ -160,14 +155,12 @@ namespace backend.Controllers
         }
 
         [HttpGet("me")]
+        [Authorize]
         public async Task<IActionResult> GetMe()
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
-
+                var currentUser = HttpContext.RequireCurrentUser();
                 UserDto userInfo = await authService.GetMe(currentUser.UserId, currentUser.UserType);
                 return StatusCode(StatusCodes.Status200OK, userInfo);
             }

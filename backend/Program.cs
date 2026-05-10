@@ -8,7 +8,8 @@ using backend.Auth;
 using backend.BackgroundServices;
 using Serilog;
 using Serilog.Events;
-using backend.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,10 +54,24 @@ builder.Services.AddScoped<IHabitService, HabitService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
 
+builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });
+
 builder.Services.AddCors();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Session", new OpenApiSecurityScheme
+    {
+        Name = "X-Session-Id",
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Description = "Session auth via X-Session-Id header"
+    });
+    
+    c.OperationFilter<AuthorizeOperationFilter>();
+});
 
 var app = builder.Build();
 
@@ -99,8 +114,10 @@ app.UseCors(policy => policy
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
-app.UseMiddleware<SessionAuthenticationMiddleware>();
 app.MapControllers();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);
 app.Run();

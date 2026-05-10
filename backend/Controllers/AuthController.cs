@@ -14,164 +14,78 @@ namespace backend.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
-            try
-            {
-                string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-                string? deviceInfo = Request.Headers.UserAgent.ToString();
-                AuthResponseDto response = await authService.Register(request, ipAddress, deviceInfo);
-                return StatusCode(StatusCodes.Status201Created, response);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string? deviceInfo = Request.Headers.UserAgent.ToString();
+            AuthResponseDto response = await authService.Register(request, ipAddress, deviceInfo);
+            return StatusCode(StatusCodes.Status201Created, response);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            try
-            {
-                string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-                string? deviceInfo = Request.Headers.UserAgent.ToString();
-                AuthResponseDto response =  await authService.Login(request, ipAddress, deviceInfo);
-                return StatusCode(StatusCodes.Status200OK, response);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string? deviceInfo = Request.Headers.UserAgent.ToString();
+            AuthResponseDto response =  await authService.Login(request, ipAddress, deviceInfo);
+            return StatusCode(StatusCodes.Status200OK, response);
         }
         [HttpGet("sessions")]
         [Authorize]
         public async Task<IActionResult> ViewActiveSessions()
         {
-            try
-            {
-                var currentUser = HttpContext.RequireCurrentUser();
+            var currentUser = HttpContext.RequireCurrentUser();
 
-                List<SessionDto> activeSessions = await authService.ViewActiveSessions(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
-                return StatusCode(StatusCodes.Status200OK, activeSessions);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            List<SessionDto> activeSessions = await authService.ViewActiveSessions(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
+            return StatusCode(StatusCodes.Status200OK, activeSessions);
         }
         
         [HttpDelete("sessions/{sessionId}")]
         [Authorize]
         public async Task<IActionResult> InvalidateSpecificSession(string sessionId)
         {
-            try
-            {
-                var currentUser = HttpContext.RequireCurrentUser();
+            var currentUser = HttpContext.RequireCurrentUser();
 
-                await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionId);
-                return StatusCode(StatusCodes.Status204NoContent);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionId);
+            return StatusCode(StatusCodes.Status204NoContent);
         }
         
         [HttpDelete("logout")]
         [Authorize]
         public async Task<IActionResult> LogoutFromCurrentSession()
         {
-            try
-            {
-                var currentUser = HttpContext.RequireCurrentUser();
-                
-                await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
-                return StatusCode(StatusCodes.Status204NoContent);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            var currentUser = HttpContext.RequireCurrentUser();
+
+            await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
+            return StatusCode(StatusCodes.Status204NoContent);
         }
 
         [HttpPost("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
         {
-            try
-            {
-                var currentUser = HttpContext.RequireCurrentUser();
+            var currentUser = HttpContext.RequireCurrentUser();
 
-                await authService.ChangePassword(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
-                return StatusCode(StatusCodes.Status200OK);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            await authService.ChangePassword(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
+            return StatusCode(StatusCodes.Status200OK);
         }
 
         [HttpPost("change-email")]
         [Authorize]
         public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto request)
         {
-            try
-            {
-                var currentUser = HttpContext.RequireCurrentUser();
-                await authService.ChangeEmail(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
-                return StatusCode(StatusCodes.Status200OK);
-            }
-            catch(AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message= ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            var currentUser = HttpContext.RequireCurrentUser(); 
+
+            await authService.ChangeEmail(currentUser.UserId, currentUser.UserType, currentUser.SessionId, request);
+            return StatusCode(StatusCodes.Status200OK);
         }
 
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> GetMe()
         {
-            try
-            {
-                var currentUser = HttpContext.RequireCurrentUser();
-                UserDto userInfo = await authService.GetMe(currentUser.UserId, currentUser.UserType);
-                return StatusCode(StatusCodes.Status200OK, userInfo);
-            }
-            catch (AppException ex)
-            {
-                return StatusCode(ex.StatusCode, new { error = ex.ErrorCode, message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "internal-server-error", message = "Internal Server Error occured." });
-            }
+            var currentUser = HttpContext.RequireCurrentUser();
+
+            UserDto userInfo = await authService.GetMe(currentUser.UserId, currentUser.UserType);
+            return StatusCode(StatusCodes.Status200OK, userInfo);
         }
     }
 }

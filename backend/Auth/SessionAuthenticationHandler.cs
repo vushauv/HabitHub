@@ -24,8 +24,6 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
     
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        Logger.LogInformation("Reached this part!");
-        
         string? sessionId = Request.Headers["X-Session-Id"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(sessionId))
         {

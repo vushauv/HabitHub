@@ -1,15 +1,16 @@
-using backend.Configuration;
-using backend.Data;
-using backend.Repositories;
-using backend.Service;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using backend.Auth;
 using backend.BackgroundServices;
+using backend.Configuration;
+using backend.Data;
+using backend.Exceptions;
+using backend.Repositories;
+using backend.Service;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +74,9 @@ builder.Services.AddSwaggerGen(c =>
     c.OperationFilter<AuthorizeOperationFilter>();
 });
 
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -112,12 +116,14 @@ app.UseCors(policy => policy
     .AllowAnyMethod());
 
 app.UseSerilogRequestLogging();
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
-app.MapControllers();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
 
 app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);
 app.Run();

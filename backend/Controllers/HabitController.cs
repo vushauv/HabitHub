@@ -1,27 +1,24 @@
 ﻿using backend.Auth;
 using backend.Dtos.HabitDtos;
 using backend.Dtos.HabitEntryDtos;
-using backend.Dtos.TeamDtos;
 using backend.Enums;
 using backend.Exceptions;
-using backend.Models;
 using backend.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics.Contracts;
 
 namespace backend.Controllers
 {
     [ApiController]
+    [Authorize]
     public class HabitController(IHabitService habitService) :ControllerBase
     {
         [HttpPost("teams/{teamId}/habits")]
-        public async Task<IActionResult> CreateHabit(Guid teamId, [FromBody] CreateHabitRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader) 
+        public async Task<IActionResult> CreateHabit(Guid teamId, [FromBody] CreateHabitRequestDto request) 
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 CreateHabitResponseDto response = await habitService.CreateHabit(currentUser.UserId, teamId, request);
                 return StatusCode(StatusCodes.Status201Created, response);
@@ -38,13 +35,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("teams/{teamId}/habits")]
-        public async Task<IActionResult> GetTeamHabits(Guid teamId, [FromQuery] HabitState state, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> GetTeamHabits(Guid teamId, [FromQuery] HabitState state)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 List<HabitSummaryDto> response = await habitService.GetTeamHabits(currentUser.UserId, currentUser.UserType, teamId, state);
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -61,13 +56,11 @@ namespace backend.Controllers
         }
 
         [HttpPatch("habits/{habitId}")]
-        public async Task<IActionResult> EditHabit(Guid habitId, [FromBody] EditHabitRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> EditHabit(Guid habitId, [FromBody] EditHabitRequestDto request)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 HabitSummaryDto response = await habitService.EditHabit(currentUser.UserId, habitId, request);
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -84,13 +77,11 @@ namespace backend.Controllers
         }
 
         [HttpPost("habits/{habitId}/archive")]
-        public async Task<IActionResult> ArchiveHabit(Guid habitId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> ArchiveHabit(Guid habitId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 await habitService.ArchiveHabit(currentUser.UserId, habitId);
                 return StatusCode(StatusCodes.Status200OK);
@@ -107,13 +98,11 @@ namespace backend.Controllers
         }
 
         [HttpDelete("habits/{habitId}")]
-        public async Task<IActionResult> DeleteHabit(Guid habitId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> DeleteHabit(Guid habitId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 await habitService.DeleteHabit(currentUser.UserId, habitId);
                 return StatusCode(StatusCodes.Status204NoContent);
@@ -130,13 +119,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("habits/{habitId}")] 
-        public async Task<IActionResult> GetHabit(Guid habitId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> GetHabit(Guid habitId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 HabitSummaryDto response = await habitService.GetHabit(currentUser.UserId, currentUser.UserType, habitId);
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -153,13 +140,11 @@ namespace backend.Controllers
         }
 
         [HttpPost("habits/{habitId}/entries")]
-        public async Task<IActionResult> LogProgress(Guid habitId, [FromBody] LogProgressRequestDto request, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> LogProgress(Guid habitId, [FromBody] LogProgressRequestDto request)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 HabitEntryResponseDto response = await habitService.LogProgress(currentUser.UserId, currentUser.UserType, habitId, request);
                 return StatusCode(StatusCodes.Status201Created, response);
@@ -176,13 +161,11 @@ namespace backend.Controllers
         }
 
         [HttpDelete("habits/{habitId}/entries/{entryId}")]
-        public async Task<IActionResult> UndoLog(Guid habitId, Guid entryId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> UndoLog(Guid habitId, Guid entryId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 await habitService.UndoLog(currentUser.UserId, currentUser.UserType, habitId, entryId);
                 return StatusCode(StatusCodes.Status204NoContent);
@@ -199,13 +182,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("habits/{habitId}/entries")]
-        public async Task<IActionResult> ViewProgress(Guid habitId, [FromQuery] Guid? memberId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> ViewProgress(Guid habitId, [FromQuery] Guid? memberId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 List<HabitEntryResponseDto> response = await habitService.ViewProgress(currentUser.UserId, currentUser.UserType, habitId, memberId);
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -222,13 +203,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("habits/{habitId}/entries/today")]
-        public async Task<IActionResult> GetMyTodayEntryStatus(Guid habitId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> GetMyTodayEntryStatus(Guid habitId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 TodayHabitEntryStatusDto response = await habitService.GetMyTodayEntryStatus(currentUser.UserId, currentUser.UserType, habitId);
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -245,13 +224,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("habits/{habitId}/leaderboard")]
-        public async Task<IActionResult> ViewLeaderboard(Guid habitId, [FromHeader(Name = "X-Session-Id")] string? sessionIdHeader)
+        public async Task<IActionResult> ViewLeaderboard(Guid habitId)
         {
             try
             {
-                CurrentUserContext? currentUser = HttpContext.GetCurrentUser();
-                if (currentUser == null)
-                    throw new AuthRequiredException();
+                var currentUser = HttpContext.RequireCurrentUser();
 
                 List<LeaderboardResponseDto> response = await habitService.ViewLeaderboard(currentUser.UserId, currentUser.UserType, habitId);
                 return StatusCode(StatusCodes.Status200OK, response);

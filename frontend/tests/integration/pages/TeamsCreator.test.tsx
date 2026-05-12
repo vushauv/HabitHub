@@ -5,7 +5,7 @@ import PathDisplay from "../PathDisplay";
 import { http, HttpResponse } from "msw"
 import { setupServer } from "msw/node";
 import { API_URL } from "../../const";
-import TeamsMember from "../../../src/pages/TeamsMember";
+import TeamsCreator from "../../../src/pages/TeamsCreator";
 
 const handlers = [
   http.get(`${API_URL}/teams`, async () => {
@@ -20,10 +20,26 @@ const handlers = [
       }
     ], {status: 200})
   }),
-  http.post(`${API_URL}/teams/:teamId/leave`, async ({ params }) => {
+  http.get(`${API_URL}/teams/:teamId/invite-codes`, async ({ params }) => {
+    if (params.teamId == "A113") {
+      return HttpResponse.json([
+        {
+          codeId: "yes",
+          code: "ThisIsA113Code",
+          teamId: params.teamId,
+          expiryDate: "2004-05-22T18:06:52.714506Z"
+        }
+      ], {status: 200})
+    }
+    return HttpResponse.json([], {status: 200})
+  }),
+  http.delete(`${API_URL}/teams/:teamId`, async ({ params }) => {
     if(params.teamId == "A113") {
       return new HttpResponse(null, { status: 500 })
     }
+    return new HttpResponse(null, { status: 200 });
+  }),
+  http.delete(`${API_URL}/teams/:teamId/invite-codes/:inviteCodeId`, async () => {
     return new HttpResponse(null, { status: 200 });
   })
 ]
@@ -35,7 +51,7 @@ afterAll(() => server.close())
 const App = () => (
   <MemoryRouter initialEntries={["/tested-page"]}>
     <Routes>
-      <Route path="tested-page" element={<TeamsMember/>}/>
+      <Route path="tested-page" element={<TeamsCreator/>}/>
       <Route path="/*" element={<PathDisplay/>}/>
     </Routes>
   </MemoryRouter>
@@ -58,13 +74,39 @@ it("renders teams correctly", () => {
   });
 });
 
-it("on leave with confirmation removes team from list", async () => {
+it("renders team invite codes correctly", () => {
+  render(App());
+
+  waitFor(() => {
+    expect(screen.getByText("Team 1")).toBeInTheDocument();
+    expect(screen.getByText("ThisIsA113Code")).toBeInTheDocument();
+    expect(screen.getByText("Mel's Team")).toBeInTheDocument();
+    expect(screen.getByText("No Active Code")).toBeInTheDocument();
+  });
+});
+
+it("on invalidate code invalidates code", async () => {
+  render(App());
+
+  await waitFor(() => {
+    fireEvent.click(screen.getByRole("button", { name: "Invalidate" }));
+  });
+
+  await waitFor(() => {
+    expect(screen.getByText("Team 1")).toBeInTheDocument();
+    expect(screen.queryByText("ThisIsA113Code")).not.toBeInTheDocument();
+    expect(screen.getByText("Mel's Team")).toBeInTheDocument();
+    expect(screen.getAllByText("No Active Code")).toHaveLength(2);
+  });
+});
+
+it("on delete with confirmation removes team from list", async () => {
   render(App());
   const confirm = vi.fn(() => true);
   vi.stubGlobal('confirm', confirm);
 
   await waitFor(() => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Leave the team" })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete team" })[1]);
   });
 
   await waitFor(() => {
@@ -74,13 +116,13 @@ it("on leave with confirmation removes team from list", async () => {
   });
 });
 
-it("on leave with reject doesn't remove team from list", async () => {
+it("on delete with reject doesn't remove team from list", async () => {
   render(App());
   const confirm = vi.fn(() => false);
   vi.stubGlobal('confirm', confirm);
 
   await waitFor(() => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Leave the team" })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete team" })[1]);
   });
 
   await waitFor(() => {
@@ -90,13 +132,13 @@ it("on leave with reject doesn't remove team from list", async () => {
   });
 });
 
-it("on leave with error doesn't remove team from list", async () => {
+it("on delete with error doesn't remove team from list", async () => {
   render(App());
   const confirm = vi.fn(() => true);
   vi.stubGlobal('confirm', confirm);
 
   await waitFor(() => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Leave the team" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete team" })[0]);
   });
 
   await waitFor(() => {

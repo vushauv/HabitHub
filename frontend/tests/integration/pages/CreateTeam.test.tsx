@@ -5,20 +5,20 @@ import PathDisplay from "../PathDisplay";
 import { http, HttpResponse } from "msw"
 import { setupServer } from "msw/node";
 import { API_URL } from "../../const";
-import JoinTeam from "../../../src/pages/JoinTeam";
+import CreateTeam from "../../../src/pages/CreateTeam";
 
 const handlers = [
-  http.post(`${API_URL}/teams/join`, async ({ request }) => {
-    const data = await request.json() as {code: string} | undefined;
-    if (data == null || !("code" in data)) {
+  http.post(`${API_URL}/teams`, async ({ request }) => {
+    const data = await request.json() as {name: string} | undefined;
+    if (data == null || !("name" in data)) {
       return new HttpResponse(null, {status: 400});
     }
-    if (data.code.includes("wrong")) {
-      return HttpResponse.json({ error: "code-not-found", message: "Invite code not found!!!!!" }, {status: 404})
+    if (data.name.includes("wrong")) {
+      return HttpResponse.json({ error: "", message: "Invalid name!!!!!" }, {status: 400})
     }
     return HttpResponse.json({
       teamId: "A113",
-      memberId: "no"
+      name: data.name
     }, {status: 200})
   })
 ]
@@ -30,7 +30,7 @@ afterAll(() => server.close())
 const App = () => (
   <MemoryRouter initialEntries={["/tested-page"]}>
     <Routes>
-      <Route path="tested-page" element={<JoinTeam/>}/>
+      <Route path="tested-page" element={<CreateTeam/>}/>
       <Route path="/*" element={<PathDisplay/>}/>
     </Routes>
   </MemoryRouter>
@@ -44,10 +44,10 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
-it("renders invite code field correctly", () => {
+it("renders name field correctly", () => {
   render(App());
 
-  expect(screen.getByLabelText("Invite Code")).toBeInTheDocument();
+  expect(screen.getByLabelText("Name")).toBeInTheDocument();
 });
 
 it("submit button is disabled when form is empty", () => {
@@ -59,37 +59,37 @@ it("submit button is disabled when form is empty", () => {
 it("shows validation errors on blur with empty fields", async () => {
   render(App());
 
-  fireEvent.blur(screen.getByLabelText("Invite Code"));
+  fireEvent.blur(screen.getByLabelText("Name"));
 
   await waitFor(() => {
-    expect(screen.getByText("Invite code is required.")).toBeInTheDocument();
+    expect(screen.getByText("Team name is required.")).toBeInTheDocument();
   });
 });
 
-it("redirects to /teams-member on 200 response", async () => {
+it("redirects to /teams-creator on 200 response", async () => {
   render(App());
 
-  fireEvent.change(screen.getByLabelText("Invite Code"), {
+  fireEvent.change(screen.getByLabelText("Name"), {
     target: { value: "12345678" },
   });
-  fireEvent.submit(screen.getByLabelText("Invite Code"));
+  fireEvent.submit(screen.getByLabelText("Name"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /teams-member!")).toBeInTheDocument();
+    expect(screen.getByText("This is /teams-creator!")).toBeInTheDocument();
   });
 });
 
-it("shows error message on 404 response", async () => {
+it("shows error message on 400 response", async () => {
   render(App());
 
-  fireEvent.change(screen.getByLabelText("Invite Code"), {
+  fireEvent.change(screen.getByLabelText("Name"), {
     target: { value: "wrong123" },
   });
-  fireEvent.submit(screen.getByLabelText("Invite Code"));
+  fireEvent.submit(screen.getByLabelText("Name"));
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Invite code not found!!!!!",
+      "Invalid name!!!!!",
     );
   });
 });

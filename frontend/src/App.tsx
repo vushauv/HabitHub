@@ -47,7 +47,7 @@ export default function App() {
           <Route path="/teams-member" element={<TeamsMember />} />
           <Route path="/join-team" element={<JoinTeam />} />
           <Route path="/habits-member" element={<MemberHabits />} />
-          <Route path="/member-habit-details" element={<MemberHabitDetails />} />
+          <Route path="/member/teams/:teamId/habits/:habitId/details" element={<MemberHabitDetails />} />
           <Route path="/member-log-habit" element={<MemberLogHabit />} />
         </Route>
 

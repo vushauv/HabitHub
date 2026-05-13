@@ -232,9 +232,9 @@ export default function MemberHabits() {
 
                     <div className="member-habits-row-actions">
                       <Link
-                        to={`/member-habit-details?teamId=${encodeURIComponent(
+                        to={`/member/teams/${encodeURIComponent(
                           teamId,
-                        )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                        )}/habits/${encodeURIComponent(habit.habitId)}/details`}
                         className="button button-secondary table-row-button"
                       >
                         Details

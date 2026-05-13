@@ -7,6 +7,25 @@ on:
       - staging
   pull_request:
   workflow_dispatch:
+    inputs:
+      runBackendTests:
+        description: 'Run Backend Tests?'
+        required: true
+        default: 'Only if files changed'
+        type: choice
+        options:
+          - 'Only if files changed'
+          - 'Yes'
+          #- 'Yes + Coverage Report'
+      runFrontendTests:
+        description: 'Run Backend Tests?'
+        required: true
+        default: 'Only if files changed'
+        type: choice
+        options:
+          - 'Only if files changed'
+          - 'Yes'
+          - 'Yes + Coverage Report'
 
 jobs:
   check-for-changes:
@@ -42,7 +61,7 @@ jobs:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.backend-unit == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.check-for-changes.outputs.backend-unit == 'true' || inputs.runBackendTests != 'Only if files changed'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -60,7 +79,7 @@ jobs:
     name: Backend Integration Tests
     runs-on: ubuntu-latest
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.backend-integration == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.check-for-changes.outputs.backend-integration == 'true' || inputs.runBackendTests != 'Only if files changed'
     steps:
       - uses: actions/checkout@v4
       - name: Cache Docker images
@@ -91,7 +110,7 @@ jobs:
     name: Frontend Unit Tests
     runs-on: ubuntu-latest
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.frontend-unit == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.check-for-changes.outputs.frontend-unit == 'true' || inputs.runFrontendTests != 'Only if files changed'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -110,7 +129,7 @@ jobs:
     name: Frontend Integration Tests
     runs-on: ubuntu-latest
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.frontend-integration == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.check-for-changes.outputs.frontend-integration == 'true' || inputs.runFrontendTests != 'Only if files changed'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -124,3 +143,32 @@ jobs:
       - name: Run
         run: npx vitest run tests/integration
         working-directory: frontend
+  
+  frontend-coverage:
+    name: Generate coverage report
+    runs-on: ubuntu-latest
+    needs:
+      - frontend-unit
+      - frontend-integration
+    if: |-
+      needs.frontend-unit.result == 'success' &&
+      needs.frontend-integration.result == 'success' &&
+      inputs.runFrontendTests == 'Yes + Coverage Report'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: frontend
+      - name: Run
+        run: npx vitest run tests --coverage
+        working-directory: frontend
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage

@@ -4,9 +4,12 @@ import TextInput from "../../../../src/components/form/TextInput";
 import { useForm } from "react-hook-form";
 import { useLens } from "@hookform/lenses";
 
-it("renders label, value and placeholder correctly", () => {
+it("renders label, value, placeholder and error correctly", () => {
   const { result } = renderHook(() => useForm({
-    defaultValues: { textInputTest: "John" }
+    defaultValues: { textInputTest: "John" },
+    errors: {
+      textInputTest: { type: "yes", message: "This is an error" }
+    }
   }));
   const { result: resultLens } = renderHook(() => useLens(result.current));
 
@@ -22,6 +25,9 @@ it("renders label, value and placeholder correctly", () => {
   expect(element).toBeInTheDocument();
   expect(element).toHaveValue("John");
   expect(element).toHaveAttribute("placeholder", "hi :3");
+  const errorElement = screen.getByText("This is an error");
+  expect(errorElement).toBeInTheDocument();
+  expect(element).toBeInvalid()
 });
 
 it("handles value changes correctly", async () => {

@@ -1,8 +1,8 @@
 namespace backend.Auth;
 using backend.Logging;
-using backend.Repositories;
 using backend.Enums;
 using System.Linq;
+using backend.Repositories.Interfaces;
 
 public class SessionAuthenticationMiddleware
 {

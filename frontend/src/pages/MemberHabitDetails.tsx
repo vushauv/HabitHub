@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
 import "./MemberHabitDetails.css";
@@ -42,9 +42,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function MemberHabitDetails() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);

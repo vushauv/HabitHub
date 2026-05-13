@@ -5,7 +5,7 @@ using backend.Dtos.TeamDtos;
 using backend.Enums;
 using backend.Exceptions;
 using backend.Models;
-using backend.Service;
+using backend.Service.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.Contracts;
 

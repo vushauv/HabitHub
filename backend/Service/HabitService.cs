@@ -3,7 +3,8 @@ using backend.Dtos.HabitEntryDtos;
 using backend.Enums;
 using backend.Exceptions;
 using backend.Models;
-using backend.Repositories;
+using backend.Repositories.Interfaces;
+using backend.Service.Interfaces;
 
 namespace backend.Service
 {

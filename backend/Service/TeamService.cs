@@ -3,7 +3,8 @@ using backend.Dtos.TeamDtos;
 using backend.Enums;
 using backend.Exceptions;
 using backend.Models;
-using backend.Repositories;
+using backend.Repositories.Interfaces;
+using backend.Service.Interfaces;
 using backend.Utils;
 
 namespace backend.Service

@@ -9,6 +9,8 @@ using backend.BackgroundServices;
 using Serilog;
 using Serilog.Events;
 using backend.Models;
+using backend.Service.Interfaces;
+using backend.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -2,8 +2,8 @@
 using backend.Auth;
 using backend.Dtos.TeamDtos;
 using backend.Exceptions;
-using backend.Service;
 using backend.Models;
+using backend.Service.Interfaces;
 
 namespace backend.Controllers
 {

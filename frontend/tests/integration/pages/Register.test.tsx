@@ -15,25 +15,37 @@ const handlers = [
     }
     if (data.email.includes("creator")) {
       return HttpResponse.json({
-        user: {
-          userType: 0,
-          id: "abc-123",
-          name: "Test Creator",
-        },
-        sessionId: "session-1",
+        sessionId: "creator",
       })
     }
     if (data.email.includes("member")) {
       return HttpResponse.json({
-        user: {
-          userType: 1,
-          id: "xyz-456",
-          name: "Test Member",
-        },
-        sessionId: "session-2",
+        sessionId: "member",
       })
     }
     return new HttpResponse(null, {status: 500}) // Case shouldn't be used in tests
+  }),
+  http.get(`${API_URL}/auth/me`, async ({ request }) => {
+    const sessionId = request.headers.get("X-Session-Id");
+    if(sessionId == "creator") {
+      return HttpResponse.json({
+        id: "1234",
+        name: "John Creator",
+        email: "john@example.com",
+        userType: 0,
+        timezone: "UTC"
+      })
+    } else if(sessionId == "member") {
+      return HttpResponse.json({
+        id: "1235",
+        name: "John Member",
+        email: "john@example.com",
+        userType: 1,
+        timezone: "UTC"
+      })
+    } else {
+      return HttpResponse.json({ error: "auth-required", message: "Authentication is required." }, {status: 401})
+    }
   })
 ]
 const server = setupServer(...handlers);
@@ -86,8 +98,7 @@ it("shows validation errors on blur with empty fields", async () => {
   });
 });
 
-// TODO: Fix
-it.skip("navigates to /main-creator and stores auth on successful Creator register", async () => {
+it("navigates to /main-creator and stores auth on successful Creator register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -107,13 +118,10 @@ it.skip("navigates to /main-creator and stores auth on successful Creator regist
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
-  expect(stored.isLoggedIn).toBe(true);
-  expect(stored.userType).toBe("Creator");
-  expect(stored.name).toBe("Test Creator");
+  expect(stored.sessionId).toBe("creator");
 });
 
-// TODO: Fix
-it.skip("navigates to /main-member and stores auth on successful Member register", async () => {
+it("navigates to /main-member and stores auth on successful Member register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -133,9 +141,7 @@ it.skip("navigates to /main-member and stores auth on successful Member register
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
-  expect(stored.isLoggedIn).toBe(true);
-  expect(stored.userType).toBe("Member");
-  expect(stored.name).toBe("Test Member");
+  expect(stored.sessionId).toBe("member");
 });
 
 it("shows error message on 400 response", async () => {

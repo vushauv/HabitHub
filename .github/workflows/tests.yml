@@ -29,7 +29,7 @@ on:
 
 jobs:
   check-for-changes:
-    name: Check for changes
+    name: Check For Changes
     runs-on: ubuntu-latest
     outputs:
       backend-unit: ${{ steps.changes.outputs.backend-unit }}
@@ -145,7 +145,7 @@ jobs:
         working-directory: frontend
   
   frontend-coverage:
-    name: Generate frontend coverage report
+    name: Generate Frontend Coverage Report
     runs-on: ubuntu-latest
     needs:
       - frontend-unit

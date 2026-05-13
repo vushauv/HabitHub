@@ -49,13 +49,13 @@ it("renders current password and new password fields", () => {
   expect(screen.getByLabelText("New password")).toBeInTheDocument();
 });
 
-it("submit button is disabled when form is empty", () => { // TODO: Fails, inconsistent behaviour
+it("submit button is disabled when form is empty", () => {
   render(App());
 
   expect(screen.getByRole("button", { name: "Update password" })).toBeDisabled();
 });
 
-it("shows validation errors on blur with empty fields", async () => { // TODO: Fails, inconsistent behaviour
+it("shows validation errors on blur with empty fields", async () => {
   render(App());
 
   fireEvent.blur(screen.getByLabelText("Current password"));
@@ -63,7 +63,7 @@ it("shows validation errors on blur with empty fields", async () => { // TODO: F
 
   await waitFor(() => {
     expect(screen.getByText("Current password is required.")).toBeInTheDocument();
-    expect(screen.getByText("Password is required.")).toBeInTheDocument(); // TODO: Fails
+    expect(screen.getByText("Password is required.")).toBeInTheDocument();
   });
 });
 
@@ -83,7 +83,7 @@ it("shows success message on 200 response", async () => {
   });
 });
 
-it("shows error message on 401 response", async () => { // TODO: Fails! The error is not considered to be an alert
+it("shows error message on 401 response", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Current password"), {

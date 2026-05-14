@@ -156,8 +156,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(n => n.UserId).IsRequired();
             e.Property(n => n.UserType).IsRequired();
             e.Property(n => n.Content).IsRequired().HasMaxLength(2000); //TODO tell Kamila
+            e.Property(n => n.CreatedAt).IsRequired();
+            e.Property(n => n.Status).IsRequired();
 
             e.HasIndex(n => new { n.UserId, n.UserType });
+            e.HasIndex(n => new { n.UserId, n.UserType, n.Status });
         });
         modelBuilder.Entity<Reminder>(e =>
         {

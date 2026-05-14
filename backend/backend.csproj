@@ -28,8 +28,4 @@
     <Content Remove="backend.Tests\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
 </Project>

@@ -100,6 +100,8 @@ using (var scope = app.Services.CreateScope())
         app.Logger.LogInformation("Seeding {Environment} data", app.Environment.EnvironmentName);
         await SeedData.SeedUsersAsync(db, app.Logger);
         await SeedData.SeedTeamsAsync(db, app.Logger);
+        await SeedData.SeedHabitsAsync(db, app.Logger);
+        await SeedData.SeedHabitEntriesAsync(db, app.Logger);
     }
 }
 

@@ -63,10 +63,10 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
         return AuthenticateResult.Success(ticket);
     }
     
-    protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+    protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
     {
         Response.StatusCode = 401;
-        Response.WriteAsJsonAsync(new { error = "auth-required", message = "Authentication is required." });
-        return Task.CompletedTask;
+        await Response.WriteAsJsonAsync(new { error = "auth-required", message = "Authentication is required." });
+        
     }
 }

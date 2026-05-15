@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -24,7 +25,7 @@ public class AuthRegisterEndpointTests
             email = "infra-test@example.com",
             password = "Test1234!",
             timezone = "UTC",
-            userType = 0  // UserType.Creator
+            userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -69,7 +70,7 @@ public class AuthRegisterEndpointTests
             email = field != "email" ? "infra-test-missing@example.com" : null,
             password = field != "password" ? "Test1234!" : null,
             timezone = field != "timezone" ? "UTC" : null,
-            userType = 0  // UserType.Creator
+            userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -84,7 +85,7 @@ public class AuthRegisterEndpointTests
             email = "infra-test-2types@example.com",
             password = "Test1234!",
             timezone = "UTC",
-            userType = 0  // UserType.Creator
+            userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
         var response2 = await _client.PostAsJsonAsync("/auth/register", new
         {
@@ -92,7 +93,7 @@ public class AuthRegisterEndpointTests
             email = "infra-test-2types@example.com",
             password = "Test1234!",
             timezone = "UTC",
-            userType = 1  // UserType.Member
+            userType = UserType.Member
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response1.StatusCode);
@@ -100,9 +101,9 @@ public class AuthRegisterEndpointTests
     }
 
     [Theory]
-	[InlineData(0)]
-	[InlineData(1)]
-    public async Task Register_TwiceSameUserTypeWithSameEmail_Returns409(int userType)
+	[InlineData(UserType.Creator)]
+	[InlineData(UserType.Member)]
+    public async Task Register_TwiceSameUserTypeWithSameEmail_Returns409(UserType userType)
     {
         var response1 = await _client.PostAsJsonAsync("/auth/register", new
         {

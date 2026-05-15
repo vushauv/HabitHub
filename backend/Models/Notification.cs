@@ -8,9 +8,9 @@ namespace backend.Models
         public Guid NotificationId { get; set; } 
         public Guid UserId { get; set; }
         public UserType UserType { get; set; }
-        public string Content { get; set; } = string.Empty; //TODO
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // TODO
-        public NotificationStatus Status { get; set; } = NotificationStatus.Unread; //TODO
-        public NotificationType Type { get; set; } //TODO
+        public string Content { get; set; } = string.Empty; 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
+        public NotificationStatus Status { get; set; } = NotificationStatus.Unread; 
+        public NotificationType Type { get; set; } 
     }
 }

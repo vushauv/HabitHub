@@ -5,16 +5,16 @@ Everything you need to start developing, testing, and debugging the project. To 
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
-- [.NET 10 SDK](https://dotnet.microsoft.com/download) — needed for running tests and EF migrations locally
+- [.NET 8 SDK](https://dotnet.microsoft.com/download) — needed for running tests and EF migrations locally
 - [Node.js 22+](https://nodejs.org/) — only needed if you want to run frontend tooling (lint, type-check) outside Docker
 
 ## Quick Start
 
 ```bash
-# 1. Clone the dev branch and enter the repo
-git clone -b dev git@github.com:vushauv/HabitHub.git && cd HabitHub
+# 1. Clone and enter the repo
+git clone git@github.com:vushauv/HabitHub.git && cd HabitHub
 # or via https
-git clone -b dev https://github.com/vushauv/HabitHub.git && cd HabitHub
+git clone https://github.com/vushauv/HabitHub.git && cd HabitHub
 
 # 2. Create your .env (defaults work out of the box)
 cp .env.example .env
@@ -85,13 +85,18 @@ npm run lint
 ```
 frontend/
 ├── src/
-│   ├── pages/          # Route pages (Home, Register, …)
-│   │   └── *.test.tsx  # Component tests (co-located)
-│   ├── test/
-│   │   └── setup.ts    # Test setup (jest-dom matchers)
+│   ├── components/     # Shared UI components
+│   ├── hooks/          # Custom React hooks
+│   ├── pages/          # Route pages (Home, Login, …)
+│   ├── services/       # API call helpers
 │   ├── App.tsx         # Router setup
 │   ├── main.tsx        # Entry point
-│   └── index.css
+│   ├── ProtectedRoute.tsx
+│   └── const.ts
+├── tests/
+│   ├── unit/           # Unit tests (components in isolation)
+│   ├── integration/    # Integration tests (fetch mocked, full pages)
+│   └── setup.ts        # Test setup (jest-dom matchers)
 ├── Dockerfile
 ├── vite.config.ts      # Dev server, proxy, HMR config
 └── package.json
@@ -107,7 +112,7 @@ Tests run locally (not in Docker), using xUnit:
 dotnet test
 ```
 
-This runs from the repo root using the solution file. The test project lives in `tests/backend/`.
+This runs from the repo root using the solution file. The test project lives in `backend/backend.Tests/`.
 
 #### SDK version mismatch
 
@@ -126,18 +131,28 @@ This is harmless — it just forces a clean restore with your local SDK.
 
 ```
 backend/
+├── Auth/              # Auth handlers and middleware
+├── BackgroundServices/ # Hosted background services
 ├── Configuration/     # Strongly-typed settings (AppSettings)
 ├── Controllers/       # API endpoints
 ├── Data/              # DbContext and design-time factory
 ├── Dtos/              # Request/response DTOs
+├── Enums/             # Shared enumerations
+├── Exceptions/        # Custom exception types and handler
+├── Logging/           # Log redaction helpers
 ├── Migrations/        # EF Core migrations (auto-generated)
 ├── Models/            # Entity classes
 ├── Repositories/      # Data access layer
+├── Service/           # Business logic services
+├── Utils/             # Internal utilities
+├── Validation/        # Request validation
 ├── Dockerfile
 └── Program.cs         # App entry point and DI setup
 
-tests/
-└── backend/           # xUnit test project
+backend/backend.Tests/ # xUnit test project
+├── Fixtures/          # TestWebAppFactory and shared setup
+├── Unit/              # Unit tests (no database)
+└── Integration/       # Integration tests (real PostgreSQL)
 ```
 
 ## Database

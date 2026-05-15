@@ -55,6 +55,14 @@ public class HabitRepository(AppDbContext db) : IHabitRepository
 
     public async Task<List<Habit>> GetActiveHabitsByTeamIdAsync(Guid teamId) => 
         await db.Habits.Where(h => h.TeamId == teamId && h.HabitState == HabitState.Active).ToListAsync();
+    public async Task<List<Guid>> GetActiveHabitIdsWithReminderTimeByTeamIdAsync(Guid teamId) =>
+        await db.Habits
+            .Where(h =>
+                h.TeamId == teamId &&
+                h.HabitState == HabitState.Active &&
+                h.ReminderTime != null)
+            .Select(h => h.HabitId)
+            .ToListAsync();
 
     public async Task<List<Habit>> GetArchivedHabitsByTeamIdAsync(Guid teamId) =>
         await db.Habits.Where(h => h.TeamId == teamId && h.HabitState == HabitState.Archived).ToListAsync();

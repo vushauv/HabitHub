@@ -11,5 +11,6 @@ namespace backend.Models
         public string Content { get; set; } = string.Empty; //TODO
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // TODO
         public NotificationStatus Status { get; set; } = NotificationStatus.Unread; //TODO
+        public NotificationType Type { get; set; } //TODO
     }
 }

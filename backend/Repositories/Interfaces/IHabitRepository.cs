@@ -10,6 +10,7 @@ public interface IHabitRepository
     public Task<Habit?> GetHabitWithEntriesByIdAsync(Guid habitId);
     public Task<List<Habit>> GetHabitsByTeamIdAsync(Guid teamId);
     public Task<List<Habit>> GetActiveHabitsByTeamIdAsync(Guid teamId);
+    public Task<List<Guid>> GetActiveHabitIdsWithReminderTimeByTeamIdAsync(Guid teamId);
     public Task<List<Habit>> GetArchivedHabitsByTeamIdAsync(Guid teamId);
     public Task<List<Habit>> GetHabitsByCreatorIdAsync(Guid creatorId);
     public Task UpdateHabitAsync(Habit habit);

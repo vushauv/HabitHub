@@ -112,7 +112,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
            e.Property(h => h.HabitType).IsRequired();
            e.Property(h => h.Unit).IsRequired(false);
            e.Property(h => h.ExpiryDate).IsRequired(false);
-          // e.Property(h => h.ReminderTime).IsRequired(false);
+           e.Property(h => h.ReminderTime).IsRequired(false);
 
            e.HasOne(h => h.Team)
            .WithMany(t => t.Habits)
@@ -155,12 +155,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             e.Property(n => n.UserId).IsRequired();
             e.Property(n => n.UserType).IsRequired();
-            e.Property(n => n.Content).IsRequired().HasMaxLength(2000); //TODO tell Kamila
+            e.Property(n => n.Content).IsRequired().HasMaxLength(2000);
             e.Property(n => n.CreatedAt).IsRequired();
             e.Property(n => n.Status).IsRequired();
+            e.Property(n => n.Type).IsRequired();
 
             e.HasIndex(n => new { n.UserId, n.UserType });
-            e.HasIndex(n => new { n.UserId, n.UserType, n.Status });
+            e.HasIndex(n => new { n.UserId, n.UserType, n.Status, n.Type });
         });
         modelBuilder.Entity<Reminder>(e =>
         {

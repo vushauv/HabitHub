@@ -32,7 +32,7 @@ const handlers = [
         id: "1234",
         name: "John Creator",
         email: "john@example.com",
-        userType: 0,
+        userType: "Creator",
         timezone: "UTC"
       })
     } else if(sessionId == "member") {
@@ -40,7 +40,7 @@ const handlers = [
         id: "1235",
         name: "John Member",
         email: "john@example.com",
-        userType: 1,
+        userType: "Member",
         timezone: "UTC"
       })
     } else {

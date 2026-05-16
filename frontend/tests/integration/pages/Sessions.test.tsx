@@ -12,22 +12,22 @@ const handlers = [
     return HttpResponse.json([
       {
         sessionId: "1234",
-        userType: 0,
+        userType: "Creator",
         createdAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString(),
         expiresAt: new Date().toISOString(),
-        sessionState: 0,
+        sessionState: "Active",
         isCurrent: true,
         deviceInfo: "Device1Info",
         ipAddress: "Ip1Address"
       },
       {
         sessionId: "1235",
-        userType: 0,
+        userType: "Creator",
         createdAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString(),
         expiresAt: new Date().toISOString(),
-        sessionState: 0,
+        sessionState: "Active",
         isCurrent: false,
         deviceInfo: "Device2Info",
         ipAddress: "Ip2Address"

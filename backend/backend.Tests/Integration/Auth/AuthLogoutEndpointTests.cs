@@ -16,10 +16,10 @@ public class AuthLogoutEndpointTests
     }
 
     [Fact]
-    public async Task Logout_WithoutSession_Returns400()
+    public async Task Logout_WithoutSession_Returns401()
     {
         var response = await _client.DeleteAsync("/auth/logout", TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]

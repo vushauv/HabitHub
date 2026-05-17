@@ -1,7 +1,39 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { it, expect, beforeEach, afterAll } from "vitest";
+import { it, expect, beforeEach, afterAll, beforeAll, afterEach } from "vitest";
 import ProtectedRoute from "../../src/ProtectedRoute";
+import { http, HttpResponse } from "msw"
+import { setupServer } from "msw/node";
+import { API_URL } from "../const";
+
+const handlers = [
+  http.get(`${API_URL}/auth/me`, async ({ request }) => {
+    const sessionId = request.headers.get("X-Session-Id");
+    if(sessionId == "creator") {
+      return HttpResponse.json({
+        id: "1234",
+        name: "John Creator",
+        email: "john@example.com",
+        userType: 0,
+        timezone: "UTC"
+      })
+    } else if(sessionId == "member") {
+      return HttpResponse.json({
+        id: "1235",
+        name: "John Member",
+        email: "john@example.com",
+        userType: 1,
+        timezone: "UTC"
+      })
+    } else {
+      return HttpResponse.json({ error: "auth-required", message: "Authentication is required." }, {status: 401})
+    }
+  })
+]
+const server = setupServer(...handlers);
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 function renderApp(initialPath: string) {
   render(
@@ -32,51 +64,56 @@ it("redirects to /login when not authenticated", () => {
   expect(screen.getByText("Login Page")).toBeInTheDocument();
 });
 
-it("redirects to /login when isLoggedIn is false", () => {
+it("redirects to /login when sessionId is invalid", async () => {
   localStorage.setItem(
     "habithubAuth",
-    JSON.stringify({ isLoggedIn: false, userType: "Creator" }),
+    JSON.stringify({ sessionId: "this-is-invalid-trust-me-im-a-dolphin" }),
   );
 
   renderApp("/main-creator");
 
-  expect(screen.getByText("Login Page")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByText("Login Page")).toBeInTheDocument();
+  });
 });
 
-// TODO: Fix
-it.skip("renders Creator Dashboard when authenticated as Creator", () => {
+it("renders Creator Dashboard when authenticated as Creator", async () => {
   localStorage.setItem(
     "habithubAuth",
-    JSON.stringify({ isLoggedIn: true, userType: "Creator" }),
+    JSON.stringify({ sessionId: "creator" }),
   );
 
   renderApp("/main-creator");
 
-  expect(screen.getByText("Creator Dashboard")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByText("Creator Dashboard")).toBeInTheDocument();
+  });
 });
 
-// TODO: Fix
-it.skip("renders Member Dashboard when authenticated as Member", () => {
+it("renders Member Dashboard when authenticated as Member", async () => {
   localStorage.setItem(
     "habithubAuth",
-    JSON.stringify({ isLoggedIn: true, userType: "Member" }),
+    JSON.stringify({ sessionId: "member" }),
   );
 
   renderApp("/main-member");
 
-  expect(screen.getByText("Member Dashboard")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByText("Member Dashboard")).toBeInTheDocument();
+  });
 });
 
-// TODO: Fix
-it.skip("redirects Creator to /main-creator when accessing Member route", () => {
+it("redirects Creator to /main-creator when accessing Member route", async () => {
   localStorage.setItem(
     "habithubAuth",
-    JSON.stringify({ isLoggedIn: true, userType: "Creator" }),
+    JSON.stringify({ sessionId: "creator" }),
   );
 
   renderApp("/main-member");
 
-  expect(screen.getByText("Creator Dashboard")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByText("Creator Dashboard")).toBeInTheDocument();
+  });
 });
 
 it("redirects to /login and clears storage when localStorage contains corrupted data", () => {

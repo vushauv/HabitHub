@@ -203,7 +203,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(m => m.ChatId).IsRequired();
             e.Property(m => m.UserId).IsRequired();
             e.Property(m => m.UserType).IsRequired();
-            e.Property(m => m.Content).IsRequired().HasMaxLength(2000); //TODO tell Kamila
+            e.Property(m => m.Content).IsRequired().HasMaxLength(2000); 
             e.Property(m => m.SendDate).IsRequired();
 
             e.HasOne(m => m.Chat)

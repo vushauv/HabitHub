@@ -40,6 +40,20 @@ services:
       --filter "Category=Integration"
       --logger "console;verbosity=normal"
 
+  backend-test-coverage:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    working_dir: /src
+    volumes:
+      - ./backend:/src/backend
+      - backend_nuget:/root/.nuget/packages
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    command: >
+      dotnet test backend/backend.Tests/backend.Tests.csproj
+      --logger "console;verbosity=normal"
+      --collect:"XPlat Code Coverage"
+
   frontend-unit-test:
     image: node:22-alpine
     working_dir: /app

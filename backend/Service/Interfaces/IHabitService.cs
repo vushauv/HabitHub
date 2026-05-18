@@ -3,7 +3,7 @@ using backend.Dtos.HabitEntryDtos;
 using backend.Enums;
 using backend.Models;
 
-namespace backend.Service
+namespace backend.Service.Interfaces
 {
     public interface IHabitService
     {

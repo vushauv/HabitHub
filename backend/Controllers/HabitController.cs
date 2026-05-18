@@ -3,7 +3,7 @@ using backend.Dtos.HabitDtos;
 using backend.Dtos.HabitEntryDtos;
 using backend.Enums;
 using backend.Exceptions;
-using backend.Service;
+using backend.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -13,6 +13,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<InviteCode> InviteCodes => Set<InviteCode>();
     public DbSet<Habit> Habits => Set<Habit>();
     public DbSet<HabitEntry> HabitEntries => Set<HabitEntry>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Reminder> Reminders => Set<Reminder>();
+    public DbSet<TeamChat> TeamChats => Set<TeamChat>();
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +41,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Session>(e => 
         {
             e.HasKey(s => s.SessionId);
+
             e.Property(s => s.SessionId).IsRequired().HasMaxLength(64);
             e.Property(s => s.UserId).IsRequired();
             e.Property(s => s.UserType).IsRequired();
@@ -44,6 +49,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.LastActiveAt).IsRequired();
             e.Property(s => s.ExpiresAt).IsRequired();
             e.Property(s => s.SessionState).IsRequired();
+
+            e.HasIndex(s => new { s.UserId, s.UserType });
         });
         modelBuilder.Entity<HabitTeam>(e =>
         {
@@ -105,6 +112,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
            e.Property(h => h.HabitType).IsRequired();
            e.Property(h => h.Unit).IsRequired(false);
            e.Property(h => h.ExpiryDate).IsRequired(false);
+           e.Property(h => h.ReminderTime).IsRequired(false);
 
            e.HasOne(h => h.Team)
            .WithMany(t => t.Habits)
@@ -134,12 +142,76 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .OnDelete(DeleteBehavior.Cascade);
 
             e.HasOne(he => he.Member)
-            .WithMany()
+            .WithMany(m => m.HabitEntries)
             .HasForeignKey(he => he.MemberId)
             .OnDelete(DeleteBehavior.Restrict);
             
             e.HasIndex(he => new { he.HabitId, he.MemberId, he.LogDate })
             .IsUnique();
+        });
+        modelBuilder.Entity<Notification>(e =>
+        {
+            e.HasKey(n => n.NotificationId);
+
+            e.Property(n => n.UserId).IsRequired();
+            e.Property(n => n.UserType).IsRequired();
+            e.Property(n => n.Content).IsRequired().HasMaxLength(2000);
+            e.Property(n => n.CreatedAt).IsRequired();
+            e.Property(n => n.Status).IsRequired();
+            e.Property(n => n.Type).IsRequired();
+
+            e.HasIndex(n => new { n.UserId, n.UserType });
+            e.HasIndex(n => new { n.UserId, n.UserType, n.Status, n.Type });
+        });
+        modelBuilder.Entity<Reminder>(e =>
+        {
+            e.HasKey(r => r.ReminderId);
+
+            e.Property(r => r.MemberId).IsRequired();
+            e.Property(r => r.HabitId).IsRequired();
+            e.Property(r => r.Enabled).IsRequired();
+            e.Property(r => r.LastSentAt).IsRequired(false);
+
+            e.HasOne(r => r.Member)
+            .WithMany(m => m.Reminders)
+            .HasForeignKey(r => r.MemberId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(r => r.Habit)
+            .WithMany(h => h.Reminders)
+            .HasForeignKey(r => r.HabitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(r => new { r.HabitId, r.MemberId }).IsUnique();
+        });
+        modelBuilder.Entity<TeamChat>(e =>
+        {
+            e.HasKey(tc => tc.ChatId);
+
+            e.Property(tc => tc.TeamId).IsRequired();
+
+            e.HasOne(tc => tc.Team)
+            .WithOne(t => t.Chat)
+            .HasForeignKey<TeamChat>(tc => tc.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Message>(e =>
+        {
+            e.HasKey(m => m.MessageId);
+
+            e.Property(m => m.ChatId).IsRequired();
+            e.Property(m => m.UserId).IsRequired();
+            e.Property(m => m.UserType).IsRequired();
+            e.Property(m => m.Content).IsRequired().HasMaxLength(2000); 
+            e.Property(m => m.SendDate).IsRequired();
+
+            e.HasOne(m => m.Chat)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ChatId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(m => m.ChatId);
         });
     }
 }

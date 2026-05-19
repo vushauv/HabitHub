@@ -20,6 +20,7 @@ namespace backend.Repositories
             await db.Messages
                 .Where(m => m.Chat.TeamId == teamId)
                 .OrderByDescending(m => m.SendDate)
+                .ThenByDescending(m => m.MessageId)
                 .Skip(offset)
                 .Take(count)
                 .ToListAsync();

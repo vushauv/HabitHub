@@ -5,7 +5,6 @@ import "../App.css";
 import {
   clearStoredAuth,
   formatHabitExpiryDate,
-  formatHabitType,
   formatHabitUnit,
   getHabitErrorMessage,
   getStoredAuth,
@@ -217,7 +216,7 @@ export default function MemberHabits() {
                   >
                     <span className="member-habits-name">{habit.name}</span>
                     <span className="member-habits-meta">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </span>
                     <span className="member-habits-meta">
                       {formatHabitUnit(habit.unit)}
@@ -239,7 +238,7 @@ export default function MemberHabits() {
                         Details
                       </Link>
 
-                      {habit.habitState === 0 ? (
+                      {habit.habitState === "Active" ? (
                         <Link
                           to={`/member/teams/${encodeURIComponent(
                             teamId,

@@ -1,4 +1,5 @@
 using System.Net;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Team;
@@ -68,7 +69,7 @@ public class TeamDeleteTeamEndpointTests
             $"{uuid}2@example.com",
             "Test1234!",
             "UTC",
-            1);
+            UserType.Member);
         
         // Set session header
         _client.DefaultRequestHeaders.Remove("X-Session-Id");

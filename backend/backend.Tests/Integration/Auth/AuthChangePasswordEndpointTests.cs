@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -17,9 +18,9 @@ public class AuthChangePasswordEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ChangePassword_ToValidPassword_Returns200_AndLoginWorks(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ChangePassword_ToValidPassword_Returns200_AndLoginWorks(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -58,9 +59,9 @@ public class AuthChangePasswordEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ChangePassword_WithWrongPassword_Returns401_AndPasswordDoesNotChange(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ChangePassword_WithWrongPassword_Returns401_AndPasswordDoesNotChange(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -91,9 +92,9 @@ public class AuthChangePasswordEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ChangePassword_WithWeakPassword_Returns400_AndPasswordDoesNotChange(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ChangePassword_WithWeakPassword_Returns400_AndPasswordDoesNotChange(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -135,7 +136,7 @@ public class AuthChangePasswordEndpointTests
             $"{uuid}@example.com",
             "Test1234",
             "UTC",
-            0);
+            UserType.Creator);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-password", new
@@ -152,7 +153,7 @@ public class AuthChangePasswordEndpointTests
         {
             email = $"{uuid}@example.com",
             password = "Test1234",
-            userType = 0
+            userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
     }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -16,10 +17,10 @@ public class AuthLogoutEndpointTests
     }
 
     [Fact]
-    public async Task Logout_WithoutSession_Returns400()
+    public async Task Logout_WithoutSession_Returns401()
     {
         var response = await _client.DeleteAsync("/auth/logout", TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -31,9 +32,9 @@ public class AuthLogoutEndpointTests
     }
     
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task Logout_WithValidSession_Returns204_And_InvalidatesSession(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task Logout_WithValidSession_Returns204_And_InvalidatesSession(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId1 = await TestUtils.AuthRegister(

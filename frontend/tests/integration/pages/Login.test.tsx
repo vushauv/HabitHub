@@ -1,54 +1,77 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
+import {
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterEach,
+  afterAll,
+} from "vitest";
 import Login from "../../../src/pages/Login";
 import PathDisplay from "../PathDisplay";
-import { http, HttpResponse } from "msw"
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { API_URL } from "../../const";
 
 const handlers = [
   http.post(`${API_URL}/auth/login`, async ({ request }) => {
-    const data = await request.json() as {email: string} | undefined;
+    const data = (await request.json()) as { email: string } | undefined;
     if (data == null || !("email" in data)) {
-      return new HttpResponse(null, {status: 400});
+      return new HttpResponse(null, { status: 400 });
     }
     if (data.email.includes("creator")) {
       return HttpResponse.json({
-        user: {
-          userType: 0,
-          id: "abc-123",
-          name: "Test Creator",
-        },
-        sessionId: "session-1",
-      })
+        sessionId: "creator",
+      });
     }
     if (data.email.includes("member")) {
       return HttpResponse.json({
-        user: {
-          userType: 1,
-          id: "xyz-456",
-          name: "Test Member",
-        },
-        sessionId: "session-2",
-      })
+        sessionId: "member",
+      });
     }
-    return new HttpResponse(null, {status: 401})
-  })
-]
+    return new HttpResponse(null, { status: 401 });
+  }),
+  http.get(`${API_URL}/auth/me`, async ({ request }) => {
+    const sessionId = request.headers.get("X-Session-Id");
+    if (sessionId == "creator") {
+      return HttpResponse.json({
+        id: "1234",
+        name: "John Creator",
+        email: "john@example.com",
+        userType: 0,
+        timezone: "UTC",
+      });
+    } else if (sessionId == "member") {
+      return HttpResponse.json({
+        id: "1235",
+        name: "John Member",
+        email: "john@example.com",
+        userType: 1,
+        timezone: "UTC",
+      });
+    } else {
+      return HttpResponse.json(
+        { error: "auth-required", message: "Authentication is required." },
+        { status: 401 },
+      );
+    }
+  }),
+];
 const server = setupServer(...handlers);
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 const App = () => (
   <MemoryRouter initialEntries={["/login"]}>
     <Routes>
-      <Route path="login" element={<Login/>}/>
-      <Route path="/*" element={<PathDisplay/>}/>
+      <Route path="login" element={<Login />} />
+      <Route path="/*" element={<PathDisplay />} />
     </Routes>
   </MemoryRouter>
-)
+);
 
 beforeEach(() => {
   localStorage.clear();
@@ -77,13 +100,14 @@ it("shows validation errors on blur with empty fields", async () => {
   fireEvent.blur(screen.getByLabelText("Password"));
 
   await waitFor(() => {
-    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Enter a valid email address."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Password is required.")).toBeInTheDocument();
   });
 });
 
-// TODO: Fix
-it.skip("navigates to /creator and stores auth on successful Creator login", async () => {
+it("navigates to /creator and stores auth on successful Creator login", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Email"), {
@@ -100,13 +124,10 @@ it.skip("navigates to /creator and stores auth on successful Creator login", asy
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
-  expect(stored.isLoggedIn).toBe(true);
-  expect(stored.userType).toBe("Creator");
-  expect(stored.name).toBe("Test Creator");
+  expect(stored.sessionId).toBe("creator");
 });
 
-// TODO: Fix
-it.skip("navigates to /member and stores auth on successful Member login", async () => {
+it("navigates to /member and stores auth on successful Member login", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Email"), {
@@ -123,9 +144,7 @@ it.skip("navigates to /member and stores auth on successful Member login", async
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
-  expect(stored.isLoggedIn).toBe(true);
-  expect(stored.userType).toBe("Member");
-  expect(stored.name).toBe("Test Member");
+  expect(stored.sessionId).toBe("member");
 });
 
 it("shows error message on 401 response", async () => {
@@ -145,6 +164,8 @@ it("shows error message on 401 response", async () => {
     );
   });
 
-  expect(screen.getByText("Welcome back. Log in to continue with HabitHub.")).toBeInTheDocument();
+  expect(
+    screen.getByText("Welcome back. Log in to continue with HabitHub."),
+  ).toBeInTheDocument();
   expect(localStorage.getItem("habithubAuth")).toBeNull();
 });

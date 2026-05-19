@@ -4,7 +4,6 @@ import "./HabitDetails.css";
 import "../App.css";
 import {
   clearStoredAuth,
-  formatHabitType,
   formatHabitUnit,
   formatLeaderboardValue,
   getHabit,
@@ -15,9 +14,6 @@ import {
   type HabitSummaryDto,
   type LeaderboardResponseDto,
 } from "../services/Habit";
-import {
-  getAccountTypeForUser,
-} from "../services/Auth";
 import {
   getTeam,
   getTeamErrorMessage,
@@ -48,7 +44,7 @@ export default function HabitLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
-  const accountType = getAccountTypeForUser(currentUser);
+  const accountType = currentUser.userType;
   const habitsPath =
     accountType === "Creator"
       ? `/creator/teams/${encodeURIComponent(teamId)}/habits`
@@ -192,7 +188,7 @@ export default function HabitLeaderboard() {
                   <div className="habit-details-item">
                     <p className="habit-details-label">Type</p>
                     <p className="habit-details-value">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </p>
                   </div>
 

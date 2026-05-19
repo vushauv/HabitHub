@@ -1,4 +1,3 @@
-import type { UserTypeDto } from "./dtos";
 import * as z from "zod";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -47,13 +46,6 @@ export const userTypeSchema = z
   .enum(["Creator", "Member"])
   .nonoptional({ error: "Choose an account type." });
 
-export function mapUserTypeToEnum(userType: AccountType): UserTypeDto {
-  return userType === "Creator" ? 0 : 1;
-}
-
-export function mapUserTypeFromEnum(userType: UserTypeDto): AccountType {
-  return userType === 0 ? "Creator" : "Member";
-}
 
 export const timezoneSchema = z
   .enum(TIMEZONE_OPTIONS, { error: "Choose a valid timezone." });

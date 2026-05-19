@@ -7,7 +7,6 @@ import {
   clearStoredAuth,
   deleteHabit,
   formatHabitExpiryDate,
-  formatHabitType,
   formatHabitUnit,
   getHabitErrorMessage,
   getStoredAuth,
@@ -321,7 +320,7 @@ export default function CreatorHabits() {
                     >
                       <span className="creator-habits-name">{habit.name}</span>
                       <span className="creator-habits-meta">
-                        {formatHabitType(habit.habitType)}
+                        {habit.habitType}
                       </span>
                       <span className="creator-habits-meta">
                         {formatHabitUnit(habit.unit)}

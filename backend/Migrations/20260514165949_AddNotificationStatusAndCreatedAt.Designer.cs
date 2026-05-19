@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514165949_AddNotificationStatusAndCreatedAt")]
+    partial class AddNotificationStatusAndCreatedAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,9 +51,6 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.Property<DateTime?>("ReminderTime")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -228,9 +228,6 @@ namespace backend.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -241,7 +238,7 @@ namespace backend.Migrations
 
                     b.HasIndex("UserId", "UserType");
 
-                    b.HasIndex("UserId", "UserType", "Status", "Type");
+                    b.HasIndex("UserId", "UserType", "Status");
 
                     b.ToTable("Notifications");
                 });

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -16,9 +17,9 @@ public class AuthInvalidateSpecificSessionEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task InvalidateSpecificSession_InvalidatesSession(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task InvalidateSpecificSession_InvalidatesSession(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -45,9 +46,9 @@ public class AuthInvalidateSpecificSessionEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task InvalidateSpecificSession_OfOtherUser_DoesNotInvalidateSession(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task InvalidateSpecificSession_OfOtherUser_DoesNotInvalidateSession(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionIdA = await TestUtils.AuthRegister(
@@ -83,9 +84,9 @@ public class AuthInvalidateSpecificSessionEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task InvalidateSpecificSession_WhichDoesNotExist_Returns404(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task InvalidateSpecificSession_WhichDoesNotExist_Returns404(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(

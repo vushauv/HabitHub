@@ -16,10 +16,12 @@ namespace backend.Repositories
 
             return chat;
         }
-        public async Task<List<Message>> GetMessagesByTeamIdAsync(Guid teamId) =>
+        public async Task<List<Message>> GetMessagesByTeamIdAsync(Guid teamId, int offset, int count) =>
             await db.Messages
                 .Where(m => m.Chat.TeamId == teamId)
-                .OrderBy(m => m.SendDate)
+                .OrderByDescending(m => m.SendDate)
+                .Skip(offset)
+                .Take(count)
                 .ToListAsync();
 
         public async Task<Message?> GetMessageByIdAsync(Guid messageId) =>

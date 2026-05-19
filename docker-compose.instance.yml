@@ -1,0 +1,9 @@
+services:
+  postgres:
+    container_name: habithub-postgres-${INSTANCE}
+  backend:
+    container_name: habithub-backend-${INSTANCE}
+    image: habithub-backend-${INSTANCE}:latest
+  frontend:
+    container_name: habithub-frontend-${INSTANCE}
+    image: habithub-frontend-${INSTANCE}:latest

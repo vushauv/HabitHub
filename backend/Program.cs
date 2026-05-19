@@ -1,14 +1,18 @@
-using backend.Configuration;
-using backend.Data;
-using backend.Repositories;
-using backend.Service;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using backend.Auth;
 using backend.BackgroundServices;
+using backend.Configuration;
+using backend.Data;
+using backend.Exceptions;
+using backend.Repositories;
+using backend.Service;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
-using backend.Models;
+using backend.Service.Interfaces;
+using backend.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +49,9 @@ builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IHabitTeamRepository, HabitTeamRepository>();
 builder.Services.AddScoped<IMembershipRepository, MembershipRepository>();
 builder.Services.AddScoped<IInviteCodeRepository, InviteCodeRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();
@@ -53,10 +60,27 @@ builder.Services.AddScoped<IHabitService, HabitService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
 
+builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });
+
 builder.Services.AddCors();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Session", new OpenApiSecurityScheme
+    {
+        Name = "X-Session-Id",
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Description = "Session auth via X-Session-Id header"
+    });
+    
+    c.OperationFilter<AuthorizeOperationFilter>();
+});
+
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -97,9 +121,13 @@ app.UseCors(policy => policy
     .AllowAnyMethod());
 
 app.UseSerilogRequestLogging();
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
-app.UseMiddleware<SessionAuthenticationMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 
 app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);

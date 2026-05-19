@@ -2,8 +2,10 @@
 using backend.Dtos.HabitEntryDtos;
 using backend.Enums;
 using backend.Exceptions;
+using backend.Migrations;
 using backend.Models;
-using backend.Repositories;
+using backend.Repositories.Interfaces;
+using backend.Service.Interfaces;
 
 namespace backend.Service
 {
@@ -12,7 +14,8 @@ namespace backend.Service
         IHabitTeamRepository habitTeams, 
         IMembershipRepository memberships,
         IHabitEntryRepository habitEntries,
-        ITeamMemberRepository members
+        ITeamMemberRepository members,
+        IReminderRepository reminders
     ):IHabitService
     {
         public async Task<CreateHabitResponseDto> CreateHabit(Guid userId, Guid teamId, CreateHabitRequestDto request)
@@ -184,6 +187,8 @@ namespace backend.Service
             bool archived = await habits.ArchiveHabitAsync(habit.HabitId);
             if (!archived)
                 throw new NotFoundException();
+
+            await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
         }
 
         public async Task DeleteHabit(Guid userId, Guid habitId)
@@ -199,6 +204,8 @@ namespace backend.Service
             bool deleted = await habits.DeleteHabitAsync(habit.HabitId);
             if (!deleted)
                 throw new NotFoundException();
+
+            await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
         }
 
         public async Task<HabitSummaryDto> GetHabit(Guid userId, UserType userType, Guid habitId) 

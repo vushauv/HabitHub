@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -16,9 +17,9 @@ public class AuthViewActiveSessionsEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ViewActiveSessions_ReturnsOneSession(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ViewActiveSessions_ReturnsOneSession(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -39,9 +40,9 @@ public class AuthViewActiveSessionsEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ViewActiveSessions_AfterLoggingInTwice_ReturnsTwoSessions(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ViewActiveSessions_AfterLoggingInTwice_ReturnsTwoSessions(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         await TestUtils.AuthRegister(

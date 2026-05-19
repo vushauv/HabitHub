@@ -5,8 +5,6 @@ import "../App.css";
 import {
   clearStoredAuth,
   formatHabitExpiryDate,
-  formatHabitState,
-  formatHabitType,
   formatHabitUnit,
   getHabit,
   getHabitErrorMessage,
@@ -118,7 +116,7 @@ export default function HabitDetails() {
     };
   }, [auth, habitId, navigate, teamId]);
 
-  const canEdit = habit?.habitState === 0;
+  const canEdit = habit?.habitState === "Active";
 
   return (
     <main className="page">
@@ -178,14 +176,14 @@ export default function HabitDetails() {
                   <div className="habit-details-item">
                     <p className="habit-details-label">State</p>
                     <p className="habit-details-value">
-                      {formatHabitState(habit.habitState)}
+                      {habit.habitState}
                     </p>
                   </div>
 
                   <div className="habit-details-item">
                     <p className="habit-details-label">Type</p>
                     <p className="habit-details-value">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </p>
                   </div>
 

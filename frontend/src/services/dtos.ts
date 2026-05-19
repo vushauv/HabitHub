@@ -1,32 +1,28 @@
-export type UserTypeDto = 0 | 1;
-
-export type SessionStateDto = 0 | 1 | 2;
-
-export type MembershipStatusDto = 0 | 1 | 2;
-
-export type HabitStateDto = 0 | 1 | 2;
-
-export type HabitTypeDto = 0 | 1;
-
-export type UnitDto = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
-export type EntryStatusDto = 0 | 1 | 2;
+import type { AccountType } from "./User";
+import type { SessionState } from "./Auth";
+import type { TeamMemberStatus } from "./Team";
+import type {
+  EntryStatusName,
+  HabitState,
+  HabitTypeName,
+  UnitName,
+} from "./Habit";
 
 export type UserDto = {
   id: string;
   name: string;
   email: string;
-  userType: UserTypeDto;
+  userType: AccountType;
   timezone: string | null;
 };
 
 export type SessionDto = {
   sessionId: string;
-  userType: UserTypeDto;
+  userType: AccountType;
   createdAt: string;
   lastActiveAt: string;
   expiresAt: string;
-  sessionState: SessionStateDto;
+  sessionState: SessionState;
   isCurrent: boolean;
   deviceInfo: string | null;
   ipAddress: string | null;
@@ -37,13 +33,13 @@ export type RegisterRequestDto = {
   email: string;
   password: string;
   timezone: string;
-  userType: UserTypeDto;
+  userType: AccountType;
 };
 
 export type LoginRequestDto = {
   email: string;
   password: string;
-  userType: UserTypeDto;
+  userType: AccountType;
 };
 
 export type ChangePasswordRequestDto = {
@@ -72,7 +68,7 @@ export type TeamMemberDto = {
   memberId: string;
   name: string;
   email: string;
-  status: MembershipStatusDto;
+  status: TeamMemberStatus;
 };
 
 export type InviteCodeDto = {
@@ -101,17 +97,17 @@ export type HabitSummaryDto = {
   habitId: string;
   name: string;
   goal: string | null;
-  habitState: HabitStateDto;
-  habitType: HabitTypeDto;
-  unit: UnitDto | null;
+  habitState: HabitState;
+  habitType: HabitTypeName;
+  unit: UnitName | null;
   expiryDate: string | null;
 };
 
 export type CreateHabitRequestDto = {
   name: string;
   goal: string | null;
-  habitType: HabitTypeDto;
-  unit: UnitDto | null;
+  habitType: HabitTypeName;
+  unit: UnitName | null;
   expiryDate: string | null;
 };
 
@@ -142,7 +138,7 @@ export type HabitEntryResponseDto = {
   memberId: string;
   loggedAt: string;
   logDate: string;
-  status: EntryStatusDto;
+  status: EntryStatusName;
   value: number | null;
   notes: string | null;
 };
@@ -150,10 +146,10 @@ export type HabitEntryResponseDto = {
 export type LogProgressRequestDto = {
   value: number | null;
   notes: string | null;
-  status: EntryStatusDto;
+  status: EntryStatusName;
 };
 
 export type TodayHabitEntryStatusDto = {
-  status: EntryStatusDto;
+  status: EntryStatusName;
   entry: HabitEntryResponseDto | null;
 };

@@ -19,12 +19,14 @@ const handlers = [
       {
         memberId: "john1",
         name: "John Member The 1st",
-        email: "john.member.i@example.com"
+        email: "john.member.i@example.com",
+        status: "Active"
       },
       {
         memberId: "john2",
         name: "John Member The 2nd",
-        email: "john.member.ii@example.com"
+        email: "john.member.ii@example.com",
+        status: "Active"
       }
     ], {status: 200})
   }),

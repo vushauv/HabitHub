@@ -108,7 +108,7 @@ export default function Sessions() {
         }
 
         const activeSessions = rawData.filter(
-          (session) => session.sessionState === 0,
+          (session) => session.sessionState === "Active",
         );
 
         setSessions(activeSessions);

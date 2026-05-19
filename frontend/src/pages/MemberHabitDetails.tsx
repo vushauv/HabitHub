@@ -5,13 +5,10 @@ import "./MemberHabitDetails.css";
 import "../App.css";
 import {
   clearStoredAuth,
-  formatEntryStatus,
   formatHabitEntryDate,
   formatHabitEntryDateTime,
   formatHabitEntryValue,
   formatHabitExpiryDate,
-  formatHabitState,
-  formatHabitType,
   formatHabitUnit,
   getHabit,
   getHabitEntries,
@@ -186,14 +183,14 @@ export default function MemberHabitDetails() {
                   <div className="habit-details-item">
                     <p className="habit-details-label">State</p>
                     <p className="habit-details-value">
-                      {formatHabitState(habit.habitState)}
+                      {habit.habitState}
                     </p>
                   </div>
 
                   <div className="habit-details-item">
                     <p className="habit-details-label">Type</p>
                     <p className="habit-details-value">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </p>
                   </div>
 
@@ -220,7 +217,7 @@ export default function MemberHabitDetails() {
                 </section>
 
                 <div className="habit-details-actions">
-                  {habit.habitState === 0 ? (
+                  {habit.habitState === "Active" ? (
                     <Link
                       to={`/member/teams/${encodeURIComponent(
                         teamId,
@@ -269,7 +266,7 @@ export default function MemberHabitDetails() {
                           {formatHabitEntryDate(entry.logDate)}
                         </span>
                         <span className="member-habit-progress-meta">
-                          {formatEntryStatus(entry.status)}
+                          {entry.status}
                         </span>
                         <span className="member-habit-progress-meta">
                           {formatHabitEntryValue(entry, habit)}

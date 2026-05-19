@@ -12,7 +12,6 @@ import {
   createEditHabitDefaultValues,
   editHabit,
   editHabitFormSchema,
-  formatHabitType,
   formatHabitUnit,
   getHabit,
   getHabitErrorMessage,
@@ -290,7 +289,7 @@ export default function EditHabit() {
                 <div className="habit-form-row">
                   <span className="form-label">Type</span>
                   <p className="habit-form-readonly">
-                    {formatHabitType(habit.habitType)}
+                    {habit.habitType}
                   </p>
                 </div>
 

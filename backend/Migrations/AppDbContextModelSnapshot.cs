@@ -49,6 +49,9 @@ namespace backend.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTime?>("ReminderTime")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
 
@@ -178,6 +181,99 @@ namespace backend.Migrations
                     b.ToTable("Memberships");
                 });
 
+            modelBuilder.Entity("backend.Models.Message", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("SendDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("ChatId");
+
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("backend.Models.Notification", b =>
+                {
+                    b.Property<Guid>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("UserId", "UserType");
+
+                    b.HasIndex("UserId", "UserType", "Status", "Type");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("backend.Models.Reminder", b =>
+                {
+                    b.Property<Guid>("ReminderId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("HabitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("LastSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ReminderId");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("HabitId", "MemberId")
+                        .IsUnique();
+
+                    b.ToTable("Reminders");
+                });
+
             modelBuilder.Entity("backend.Models.Session", b =>
                 {
                     b.Property<string>("SessionId")
@@ -210,7 +306,26 @@ namespace backend.Migrations
 
                     b.HasKey("SessionId");
 
+                    b.HasIndex("UserId", "UserType");
+
                     b.ToTable("Sessions");
+                });
+
+            modelBuilder.Entity("backend.Models.TeamChat", b =>
+                {
+                    b.Property<Guid>("ChatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ChatId");
+
+                    b.HasIndex("TeamId")
+                        .IsUnique();
+
+                    b.ToTable("TeamChats");
                 });
 
             modelBuilder.Entity("backend.Models.TeamCreator", b =>
@@ -302,7 +417,7 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.HasOne("backend.Models.TeamMember", "Member")
-                        .WithMany()
+                        .WithMany("HabitEntries")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -353,18 +468,69 @@ namespace backend.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("backend.Models.Message", b =>
+                {
+                    b.HasOne("backend.Models.TeamChat", "Chat")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+                });
+
+            modelBuilder.Entity("backend.Models.Reminder", b =>
+                {
+                    b.HasOne("backend.Models.Habit", "Habit")
+                        .WithMany("Reminders")
+                        .HasForeignKey("HabitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.TeamMember", "Member")
+                        .WithMany("Reminders")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Habit");
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("backend.Models.TeamChat", b =>
+                {
+                    b.HasOne("backend.Models.HabitTeam", "Team")
+                        .WithOne("Chat")
+                        .HasForeignKey("backend.Models.TeamChat", "TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("backend.Models.Habit", b =>
                 {
                     b.Navigation("Entries");
+
+                    b.Navigation("Reminders");
                 });
 
             modelBuilder.Entity("backend.Models.HabitTeam", b =>
                 {
+                    b.Navigation("Chat")
+                        .IsRequired();
+
                     b.Navigation("Habits");
 
                     b.Navigation("InviteCodes");
 
                     b.Navigation("Memberships");
+                });
+
+            modelBuilder.Entity("backend.Models.TeamChat", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("backend.Models.TeamCreator", b =>
@@ -374,7 +540,11 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.TeamMember", b =>
                 {
+                    b.Navigation("HabitEntries");
+
                     b.Navigation("Memberships");
+
+                    b.Navigation("Reminders");
                 });
 #pragma warning restore 612, 618
         }

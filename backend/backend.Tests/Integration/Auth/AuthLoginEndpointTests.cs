@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -25,18 +26,18 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
             var response1 = await _client.PostAsJsonAsync("/auth/register", new
             {
                 name = "Test User",
-                email = "infra-test-login-type0@example.com",
+                email = "infra-test-login-typecreator@example.com",
                 password = "Test1234!",
                 timezone = "UTC",
-                userType = 0  // UserType.Creator
+                userType = UserType.Creator
             });
             var response2 = await _client.PostAsJsonAsync("/auth/register", new
             {
                 name = "Test User",
-                email = "infra-test-login-type1@example.com",
+                email = "infra-test-login-typemember@example.com",
                 password = "Test1234!",
                 timezone = "UTC",
-                userType = 1  // UserType.Member
+                userType = UserType.Member
             });
             var response3 = await _client.PostAsJsonAsync("/auth/register", new
             {
@@ -44,7 +45,7 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
                 email = "infra-test-login-shared@example.com",
                 password = "Test1234!",
                 timezone = "UTC",
-                userType = 0  // UserType.Creator
+                userType = UserType.Creator
             });
             var response4 = await _client.PostAsJsonAsync("/auth/register", new
             {
@@ -52,7 +53,7 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
                 email = "infra-test-login-shared@example.com",
                 password = "Test1234!",
                 timezone = "UTC",
-                userType = 1  // UserType.Member
+                userType = UserType.Member
             });
 
             Assert.Equal(HttpStatusCode.Created, response1.StatusCode);
@@ -61,7 +62,7 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
             Assert.Equal(HttpStatusCode.Created, response4.StatusCode);
         }
     }
-    
+
     private readonly HttpClient _client;
 
     public AuthLoginEndpointTests(TestWebAppFactory factory)
@@ -70,13 +71,13 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task Login_WithValidData_Returns200AndSessionForCorrectUser(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task Login_WithValidData_Returns200AndSessionForCorrectUser(UserType userType)
     {
         var response = await _client.PostAsJsonAsync("/auth/login", new
         {
-            email = $"infra-test-login-type{userType}@example.com",
+            email = $"infra-test-login-type{userType.ToString().ToLowerInvariant()}@example.com",
             password = "Test1234!",
             userType
         }, TestContext.Current.CancellationToken);
@@ -85,14 +86,14 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
         var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.NotNull(body.User);
-        Assert.Equal($"infra-test-login-type{userType}@example.com", body.User.Email);
-        Assert.Equal(userType, (int)body.User.UserType);
+        Assert.Equal($"infra-test-login-type{userType.ToString().ToLowerInvariant()}@example.com", body.User.Email);
+        Assert.Equal(userType, body.User.UserType);
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task Login_WithEmailSharedBetweenTwoAccounts_Returns200AndSessionForCorrectUser(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task Login_WithEmailSharedBetweenTwoAccounts_Returns200AndSessionForCorrectUser(UserType userType)
     {
         var response = await _client.PostAsJsonAsync("/auth/login", new
         {
@@ -101,18 +102,18 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
             userType
         }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
+
         var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         Assert.NotNull(body.User);
         Assert.Equal("infra-test-login-shared@example.com", body.User.Email);
-        Assert.Equal(userType, (int)body.User.UserType);
+        Assert.Equal(userType, body.User.UserType);
     }
 
     [Theory]
-    [InlineData(0, 1)]
-    [InlineData(1, 0)]
-    public async Task Login_WithUserTypeMismatch_Returns401(int userTypeA, int userTypeB)
+    [InlineData(UserType.Creator, UserType.Member)]
+    [InlineData(UserType.Member, UserType.Creator)]
+    public async Task Login_WithUserTypeMismatch_Returns401(UserType userTypeA, UserType userTypeB)
     {
         var response = await _client.PostAsJsonAsync("/auth/login", new
         {
@@ -131,7 +132,7 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
         {
             email = "infra-test-login-shared@example.com",
             password = "Test1234!",
-            //userType = 0  // UserType.Creator
+            //userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -146,7 +147,7 @@ public class AuthLoginEndpointTests : IClassFixture<AuthLoginEndpointTests.Datab
         {
             email = field != "email" ? "infra-test-login-shared@example.com" : null,
             password = field != "password" ? "Test1234!" : null,
-            userType = 0  // UserType.Creator
+            userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

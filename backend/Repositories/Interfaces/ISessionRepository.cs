@@ -1,7 +1,7 @@
 using backend.Models;
 using backend.Enums;
 
-namespace backend.Repositories;
+namespace backend.Repositories.Interfaces;
 
 public interface ISessionRepository
 {

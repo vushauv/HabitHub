@@ -1,7 +1,7 @@
 ﻿using backend.Enums;
 using backend.Dtos.TeamDtos;
 
-namespace backend.Service
+namespace backend.Service.Interfaces
 {
     public interface ITeamService
     {

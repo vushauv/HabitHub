@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -17,9 +18,9 @@ public class AuthChangeEmailEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ChangeEmail_ToUnusedEmail_Returns200_AndLoginWorks(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ChangeEmail_ToUnusedEmail_Returns200_AndLoginWorks(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -58,9 +59,9 @@ public class AuthChangeEmailEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ChangeEmail_ToUsedEmail_Returns409_AndEmailDoesNotChange(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ChangeEmail_ToUsedEmail_Returns409_AndEmailDoesNotChange(UserType userType)
     {
         var uuid1 = Guid.NewGuid().ToString();
         var uuid2 = Guid.NewGuid().ToString();
@@ -99,9 +100,9 @@ public class AuthChangeEmailEndpointTests
     }
 
     [Theory]
-    [InlineData(0, 1)]
-    [InlineData(1, 0)]
-    public async Task ChangeEmail_ToEmailUsedByOtherUserType_Returns200_AndLoginWorks(int userTypeA, int userTypeB)
+    [InlineData(UserType.Creator, UserType.Member)]
+    [InlineData(UserType.Member, UserType.Creator)]
+    public async Task ChangeEmail_ToEmailUsedByOtherUserType_Returns200_AndLoginWorks(UserType userTypeA, UserType userTypeB)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -147,9 +148,9 @@ public class AuthChangeEmailEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task ChangeEmail_WithWrongPassword_Returns401_AndEmailDoesNotChange(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task ChangeEmail_WithWrongPassword_Returns401_AndEmailDoesNotChange(UserType userType)
     {
         var uuid = Guid.NewGuid().ToString();
         var sessionId = await TestUtils.AuthRegister(
@@ -191,7 +192,7 @@ public class AuthChangeEmailEndpointTests
             $"{uuid}@example.com",
             "Test1234!",
             "UTC",
-            0);
+            UserType.Creator);
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionId);
         
         var response1 = await _client.PostAsJsonAsync("/auth/change-email", new
@@ -208,7 +209,7 @@ public class AuthChangeEmailEndpointTests
         {
             email = $"{uuid}@example.com",
             password = "Test1234!",
-            userType = 0
+            userType = UserType.Creator
         }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
     }

@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using backend.Enums;
 using backend.Logging;
-using backend.Repositories;
+using backend.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 

@@ -1,7 +1,7 @@
 ﻿using backend.Dtos.AuthDtos;
 using backend.Enums;
 
-namespace backend.Service
+namespace backend.Service.Interfaces
 {
     public interface IAuthService
     {

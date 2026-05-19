@@ -3,6 +3,7 @@ using backend.Logging;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using backend.Enums;
+using backend.Repositories.Interfaces;
 
 namespace backend.Repositories;
 

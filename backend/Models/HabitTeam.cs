@@ -9,4 +9,5 @@ public class HabitTeam
     public List<Membership> Memberships { get; set; } = new List<Membership>();
     public List<InviteCode> InviteCodes { get;set; } = new List<InviteCode>();
     public List<Habit> Habits { get; set; } = new List<Habit>();
+    public TeamChat Chat { get; set; } = null!;
 }

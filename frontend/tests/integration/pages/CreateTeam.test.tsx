@@ -66,7 +66,7 @@ it("shows validation errors on blur with empty fields", async () => {
   });
 });
 
-it("redirects to /teams-creator on 200 response", async () => {
+it("redirects to /creator/teams on 200 response", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -75,7 +75,7 @@ it("redirects to /teams-creator on 200 response", async () => {
   fireEvent.submit(screen.getByLabelText("Name"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /teams-creator!")).toBeInTheDocument();
+    expect(screen.getByText("This is /creator/teams!")).toBeInTheDocument();
   });
 });
 

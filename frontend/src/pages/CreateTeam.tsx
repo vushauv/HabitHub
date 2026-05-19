@@ -74,7 +74,7 @@ export default function CreateTeam() {
 
     try {
       await createTeam(auth, form);
-      navigate("/teams-creator", { replace: true });
+      navigate("/creator/teams", { replace: true });
     } catch (error) {
       if (error instanceof TeamRequestError && error.code === "auth-required") {
         clearStoredAuth();
@@ -108,7 +108,7 @@ export default function CreateTeam() {
               </Link>
 
               <Link
-                to="/teams-creator"
+                to="/creator/teams"
                 className="button button-secondary page-nav-button"
               >
                 Teams

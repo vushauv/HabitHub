@@ -1,11 +1,12 @@
 ﻿using backend.Dtos.AuthDtos;
 using backend.Logging;
-using backend.Repositories;
 using Microsoft.AspNetCore.Identity;
 using backend.Models;
 using backend.Exceptions;
 using backend.Enums;
 using backend.Utils;
+using backend.Service.Interfaces;
+using backend.Repositories.Interfaces;
 
 namespace backend.Service
 {

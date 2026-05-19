@@ -1,6 +1,7 @@
 ﻿using backend.Auth;
 using backend.Dtos.TeamDtos;
 using backend.Exceptions;
+using backend.Service.Interfaces;
 using backend.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

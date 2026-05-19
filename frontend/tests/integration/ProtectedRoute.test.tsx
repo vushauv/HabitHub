@@ -14,17 +14,17 @@ const handlers = [
         id: "1234",
         name: "John Creator",
         email: "john@example.com",
-        userType: 0,
-        timezone: "UTC",
-      });
-    } else if (sessionId == "member") {
+        userType: "Creator",
+        timezone: "UTC"
+      })
+    } else if(sessionId == "member") {
       return HttpResponse.json({
         id: "1235",
         name: "John Member",
         email: "john@example.com",
-        userType: 1,
-        timezone: "UTC",
-      });
+        userType: "Member",
+        timezone: "UTC"
+      })
     } else {
       return HttpResponse.json(
         { error: "auth-required", message: "Authentication is required." },

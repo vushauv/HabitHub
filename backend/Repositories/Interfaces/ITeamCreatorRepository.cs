@@ -1,6 +1,6 @@
 using backend.Models;
 
-namespace backend.Repositories;
+namespace backend.Repositories.Interfaces;
 
 public interface ITeamCreatorRepository
 {

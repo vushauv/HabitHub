@@ -14,6 +14,7 @@ public class Habit
     public HabitType HabitType { get; set; }
     public Unit? Unit { get; set; }
     public DateTime? ExpiryDate { get; set; }
-    //public DateTime ReminderTime { get; set; }
+    public DateTime? ReminderTime { get; set; } 
+    public List<Reminder> Reminders { get; set; } = new List<Reminder>();
     public List<HabitEntry> Entries { get; set; } = new List<HabitEntry>();
 }

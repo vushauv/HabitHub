@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.TeamDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Team;
@@ -74,7 +75,7 @@ public class TeamJoinTeamEndpointTests
             $"{uuid}2@example.com",
             "Test1234!",
             "UTC",
-            1);
+            UserType.Member);
         
         // Set session header
         _client.DefaultRequestHeaders.Remove("X-Session-Id");

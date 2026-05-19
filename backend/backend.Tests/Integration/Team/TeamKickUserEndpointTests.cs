@@ -1,4 +1,5 @@
 using System.Net;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Team;
@@ -68,14 +69,14 @@ public class TeamKickUserEndpointTests
             $"{uuid}2@example.com",
             "Test1234!",
             "UTC",
-            1);
+            UserType.Member);
         var sessionId3 = await TestUtils.AuthRegister(
             _client,
             uuid,
             $"{uuid}3@example.com",
             "Test1234!",
             "UTC",
-            1);
+            UserType.Member);
         
         // Set session header
         _client.DefaultRequestHeaders.Remove("X-Session-Id");
@@ -121,7 +122,7 @@ public class TeamKickUserEndpointTests
             $"{uuid}2@example.com",
             "Test1234!",
             "UTC",
-            1);
+            UserType.Member);
         
         // Set session header
         _client.DefaultRequestHeaders.Remove("X-Session-Id");

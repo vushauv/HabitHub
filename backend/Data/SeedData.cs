@@ -90,6 +90,18 @@ public static class SeedData
                 logger.LogInformation("Seeded team {TeamId}", team.TeamId);
             }
 
+            bool chatExists = await db.TeamChats.AnyAsync(c => c.TeamId == team.TeamId);
+            if (!chatExists)
+            {
+                db.TeamChats.Add(new TeamChat
+                {
+                    ChatId = Guid.NewGuid(),
+                    TeamId = team.TeamId,
+                });
+                await db.SaveChangesAsync();
+                logger.LogInformation("Seeded chat for team {TeamId}", team.TeamId);
+            }
+
             int membershipCount = 0;
             foreach (string memberEmail in memberEmails)
             {

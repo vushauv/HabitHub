@@ -3,17 +3,21 @@ using backend.Dtos.TeamDtos;
 using backend.Enums;
 using backend.Exceptions;
 using backend.Models;
-using backend.Repositories;
+using backend.Repositories.Interfaces;
+using backend.Service.Interfaces;
 using backend.Utils;
 
 namespace backend.Service
 {
     public class TeamService(
         IHabitTeamRepository habitTeams,
+        IHabitRepository habits,
         ITeamMemberRepository members,
         IMembershipRepository memberships,
         ITeamCreatorRepository creators,
         IInviteCodeRepository inviteCodes,
+        IReminderRepository reminders,
+        IChatRepository chats,
         ILogger<TeamService> logger
         ): ITeamService
     {
@@ -29,16 +33,23 @@ namespace backend.Service
                 logger.LogWarning("Create team rejected: creator {UserId} not found", userId);
                 throw new ForbiddenException();
             }
-
+            //This probably should be done using a transaction
             HabitTeam team = new HabitTeam
             {
                 TeamId = Guid.NewGuid(),
                 Name = name,
                 CreatorId = creator.CreatorId
             };
-
             HabitTeam createdTeam = await habitTeams.CreateHabitTeamAsync(team);
-            logger.LogInformation("Created team {TeamId} for creator {CreatorId}", createdTeam.TeamId, creator.CreatorId);
+
+            TeamChat chat = new TeamChat
+            {
+                ChatId = Guid.NewGuid(),
+                TeamId = createdTeam.TeamId
+            };
+            TeamChat createdChat = await chats.CreateChatAsync(chat);
+            logger.LogInformation("Created team {TeamId} for creator {CreatorId} with chat {ChatId}", createdTeam.TeamId, creator.CreatorId, createdChat.ChatId);
+
             return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
         }
 
@@ -191,7 +202,11 @@ namespace backend.Service
             {
                 await memberships.UpdateMembershipStatusAsync(inviteCode.TeamId, member.MemberId, MembershipStatus.Active);
             }
-            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}", member.MemberId, inviteCode.TeamId, inviteCode.CodeId);
+            List<Guid> habitIdsWithReminders = await habits.GetActiveHabitIdsWithReminderTimeByTeamIdAsync(habitTeam.TeamId);
+            await reminders.CreateMissingRemindersForMemberAsync(member.MemberId, habitIdsWithReminders);
+
+            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}. Ensured reminder setting for {HabitCount} habits.", member.MemberId, inviteCode.TeamId, inviteCode.CodeId, habitIdsWithReminders.Count);
+
             return new JoinTeamResponseDto(inviteCode.TeamId, member.MemberId);
         }
         public async Task KickUser(Guid userId, Guid teamId, Guid memberId)

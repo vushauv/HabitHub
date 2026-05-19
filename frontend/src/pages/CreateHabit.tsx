@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLens } from "@hookform/lenses";
@@ -40,8 +40,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function CreateHabit() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
+  const { teamId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [serverError, setServerError] = useState("");
@@ -164,7 +163,7 @@ export default function CreateHabit() {
 
     try {
       await createHabit(auth, teamId, form);
-      navigate(`/habits-creator?teamId=${encodeURIComponent(teamId)}`, {
+      navigate(`/creator/teams/${encodeURIComponent(teamId)}/habits`, {
         replace: true,
       });
     } catch (error) {
@@ -200,7 +199,7 @@ export default function CreateHabit() {
               </Link>
 
               <Link
-                to={`/habits-creator?teamId=${encodeURIComponent(teamId)}`}
+                to={`/creator/teams/${encodeURIComponent(teamId)}/habits`}
                 className="button button-secondary page-nav-button"
               >
                 Habits

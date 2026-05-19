@@ -66,7 +66,7 @@ it("shows validation errors on blur with empty fields", async () => {
   });
 });
 
-it("redirects to /teams-member on 200 response", async () => {
+it("redirects to /member/teams on 200 response", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Invite Code"), {
@@ -75,7 +75,7 @@ it("redirects to /teams-member on 200 response", async () => {
   fireEvent.submit(screen.getByLabelText("Invite Code"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /teams-member!")).toBeInTheDocument();
+    expect(screen.getByText("This is /member/teams!")).toBeInTheDocument();
   });
 });
 

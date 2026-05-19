@@ -86,8 +86,8 @@ export function getDashboardPathForUser(
   user: Pick<UserDto, "userType">,
 ): string {
   return user.userType === "Creator"
-    ? "/main-creator"
-    : "/main-member";
+    ? "/creator"
+    : "/member";
 }
 
 export async function getCurrentUser(auth: StoredAuth | null): Promise<UserDto> {

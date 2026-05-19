@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./CreatorHabits.css";
 import "../App.css";
@@ -41,8 +41,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function CreatorHabits() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
+  const { teamId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habits, setHabits] = useState<HabitSummaryDto[]>([]);
@@ -221,7 +220,7 @@ export default function CreatorHabits() {
               </Link>
 
               <Link
-                to="/teams-creator"
+                to="/creator/teams"
                 className="button button-secondary page-nav-button"
               >
                 Teams
@@ -239,7 +238,7 @@ export default function CreatorHabits() {
 
               <div className="creator-habits-actions">
                 <Link
-                  to={`/create-habit?teamId=${encodeURIComponent(teamId)}`}
+                  to={`/creator/teams/${encodeURIComponent(teamId)}/habits/new`}
                   className="button button-primary"
                 >
                   Create Habit
@@ -310,9 +309,9 @@ export default function CreatorHabits() {
                   const isDeleting =
                     pendingAction?.habitId === habit.habitId &&
                     pendingAction.action === "delete";
-                  const detailsLink = `/habit-details?teamId=${encodeURIComponent(
+                  const detailsLink = `/creator/teams/${encodeURIComponent(
                     teamId,
-                  )}&habitId=${encodeURIComponent(habit.habitId)}`;
+                  )}/habits/${encodeURIComponent(habit.habitId)}/details`;
 
                   return (
                     <article
@@ -342,9 +341,9 @@ export default function CreatorHabits() {
                         </Link>
 
                         <Link
-                          to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                          to={`/teams/${encodeURIComponent(
                             teamId,
-                          )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                          )}/habits/${encodeURIComponent(habit.habitId)}/leaderboard`}
                           className="button button-secondary table-row-button"
                         >
                           Leaderboard
@@ -352,9 +351,9 @@ export default function CreatorHabits() {
 
                         {selectedState === "Active" ? (
                           <Link
-                            to={`/edit-habit?teamId=${encodeURIComponent(
+                            to={`/creator/teams/${encodeURIComponent(
                               teamId,
-                            )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                            )}/habits/${encodeURIComponent(habit.habitId)}/edit`}
                             className="button button-secondary table-row-button"
                           >
                             Edit

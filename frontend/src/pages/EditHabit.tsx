@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLens } from "@hookform/lenses";
@@ -41,9 +41,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function EditHabit() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
@@ -209,9 +207,9 @@ export default function EditHabit() {
     try {
       await editHabit(auth, habitId, form, habit);
       navigate(
-        `/habit-details?teamId=${encodeURIComponent(teamId)}&habitId=${encodeURIComponent(
+        `/creator/teams/${encodeURIComponent(teamId)}/habits/${encodeURIComponent(
           habitId,
-        )}`,
+        )}/details`,
         { replace: true },
       );
     } catch (error) {
@@ -247,7 +245,7 @@ export default function EditHabit() {
               </Link>
 
               <Link
-                to={`/habits-creator?teamId=${encodeURIComponent(teamId)}`}
+                to={`/creator/teams/${encodeURIComponent(teamId)}/habits`}
                 className="button button-secondary page-nav-button"
               >
                 Habits

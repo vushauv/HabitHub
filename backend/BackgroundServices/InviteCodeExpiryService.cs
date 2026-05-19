@@ -1,4 +1,4 @@
-﻿using backend.Repositories;
+﻿using backend.Repositories.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

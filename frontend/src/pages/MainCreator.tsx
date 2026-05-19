@@ -31,7 +31,7 @@ export default function MainCreator() {
 
           <div className="buttons dashboard-actions">
             <Link
-              to="/teams-creator"
+              to="/creator/teams"
               className="button button-primary dashboard-action"
             >
               Manage your teams

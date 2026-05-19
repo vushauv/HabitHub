@@ -1,4 +1,4 @@
-import { Link, useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
 import "../App.css";
@@ -37,9 +37,7 @@ function resolveErrorMessage(error: unknown): string {
 export default function HabitLeaderboard() {
   const navigate = useNavigate();
   const currentUser = useOutletContext<UserDto>();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
@@ -49,8 +47,8 @@ export default function HabitLeaderboard() {
   const accountType = currentUser.userType;
   const habitsPath =
     accountType === "Creator"
-      ? `/habits-creator?teamId=${encodeURIComponent(teamId)}`
-      : `/habits-member?teamId=${encodeURIComponent(teamId)}`;
+      ? `/creator/teams/${encodeURIComponent(teamId)}/habits`
+      : `/member/teams/${encodeURIComponent(teamId)}/habits`;
 
   useEffect(() => {
     let isMounted = true;

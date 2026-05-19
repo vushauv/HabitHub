@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLens } from "@hookform/lenses";
@@ -63,9 +63,7 @@ function getTodayStatusText(todayStatus: TodayHabitEntryStatusDto | null): strin
 
 export default function MemberLogHabit() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
@@ -297,7 +295,7 @@ export default function MemberLogHabit() {
               </Link>
 
               <Link
-                to={`/habits-member?teamId=${encodeURIComponent(teamId)}`}
+                to={`/member/teams/${encodeURIComponent(teamId)}/habits`}
                 className="button button-secondary page-nav-button"
               >
                 Habits

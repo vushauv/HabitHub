@@ -43,9 +43,9 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 const App = () => (
-  <MemoryRouter initialEntries={["/tested-page?teamId=A113"]}>
+  <MemoryRouter initialEntries={["/creator/teams/A113/members"]}>
     <Routes>
-      <Route path="tested-page" element={<MemberList/>}/>
+      <Route path="/creator/teams/:teamId/members" element={<MemberList/>}/>
       <Route path="/*" element={<PathDisplay/>}/>
     </Routes>
   </MemoryRouter>
@@ -59,11 +59,11 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
-it("renders team name and members correctly", () => {
+it("renders team name and members correctly", async () => {
   render(App());
 
-  waitFor(() => {
-    expect(screen.getByText("Team Alpha")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByText("Team 1")).toBeInTheDocument();
     expect(screen.getByText("John Member The 1st")).toBeInTheDocument();
     expect(screen.getByText("john.member.i@example.com")).toBeInTheDocument();
     expect(screen.getByText("John Member The 2nd")).toBeInTheDocument();
@@ -76,9 +76,8 @@ it("on kick with confirmation removes member from list", async () => {
   const confirm = vi.fn(() => true);
   vi.stubGlobal('confirm', confirm);
 
-  await waitFor(() => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Kick" })[1]);
-  });
+  const kickButtons = await screen.findAllByRole("button", { name: "Kick" });
+  fireEvent.click(kickButtons[1]);
 
   await waitFor(() => {
     expect(confirm).toHaveBeenCalledOnce();
@@ -94,9 +93,8 @@ it("on kick with reject doesn't remove member from list", async () => {
   const confirm = vi.fn(() => false);
   vi.stubGlobal('confirm', confirm);
 
-  await waitFor(() => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Kick" })[1]);
-  });
+  const kickButtons = await screen.findAllByRole("button", { name: "Kick" });
+  fireEvent.click(kickButtons[1]);
 
   await waitFor(() => {
     expect(confirm).toHaveBeenCalledOnce();
@@ -112,9 +110,8 @@ it("on kick with error doesn't remove member from list", async () => {
   const confirm = vi.fn(() => true);
   vi.stubGlobal('confirm', confirm);
 
-  await waitFor(() => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Kick" })[0]);
-  });
+  const kickButtons = await screen.findAllByRole("button", { name: "Kick" });
+  fireEvent.click(kickButtons[0]);
 
   await waitFor(() => {
     expect(confirm).toHaveBeenCalledOnce();

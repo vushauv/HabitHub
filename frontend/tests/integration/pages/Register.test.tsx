@@ -87,7 +87,7 @@ it("shows validation errors on blur with empty fields", async () => {
 });
 
 // TODO: Fix
-it.skip("navigates to /main-creator and stores auth on successful Creator register", async () => {
+it.skip("navigates to /creator and stores auth on successful Creator register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -103,7 +103,7 @@ it.skip("navigates to /main-creator and stores auth on successful Creator regist
   fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /main-creator!")).toBeInTheDocument();
+    expect(screen.getByText("This is /creator!")).toBeInTheDocument();
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
@@ -113,7 +113,7 @@ it.skip("navigates to /main-creator and stores auth on successful Creator regist
 });
 
 // TODO: Fix
-it.skip("navigates to /main-member and stores auth on successful Member register", async () => {
+it.skip("navigates to /member and stores auth on successful Member register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -129,7 +129,7 @@ it.skip("navigates to /main-member and stores auth on successful Member register
   fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
+    expect(screen.getByText("This is /member!")).toBeInTheDocument();
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);

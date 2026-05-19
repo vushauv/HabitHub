@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
 import "../App.css";
@@ -35,9 +35,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function HabitDetails() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
@@ -139,7 +137,7 @@ export default function HabitDetails() {
               </Link>
 
               <Link
-                to={`/habits-creator?teamId=${encodeURIComponent(teamId)}`}
+                to={`/creator/teams/${encodeURIComponent(teamId)}/habits`}
                 className="button button-secondary page-nav-button"
               >
                 Habits
@@ -216,18 +214,18 @@ export default function HabitDetails() {
                 {canEdit ? (
                   <div className="habit-details-actions">
                     <Link
-                      to={`/edit-habit?teamId=${encodeURIComponent(
+                      to={`/creator/teams/${encodeURIComponent(
                         teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                      )}/habits/${encodeURIComponent(habit.habitId)}/edit`}
                       className="button button-primary"
                     >
                       Edit Habit
                     </Link>
 
                     <Link
-                      to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                      to={`/teams/${encodeURIComponent(
                         teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                      )}/habits/${encodeURIComponent(habit.habitId)}/leaderboard`}
                       className="button button-secondary"
                     >
                       Leaderboard
@@ -236,9 +234,9 @@ export default function HabitDetails() {
                 ) : (
                   <div className="habit-details-actions">
                     <Link
-                      to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                      to={`/teams/${encodeURIComponent(
                         teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                      )}/habits/${encodeURIComponent(habit.habitId)}/leaderboard`}
                       className="button button-primary"
                     >
                       Leaderboard

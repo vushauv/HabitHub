@@ -80,7 +80,7 @@ export default function JoinTeam() {
       setSuccessMessage("You joined the team.");
 
       setTimeout(() => {
-        navigate("/teams-member", { replace: true });
+        navigate("/member/teams", { replace: true });
       }, 800);
     } catch (error) {
       if (error instanceof TeamRequestError && error.code === "auth-required") {
@@ -115,7 +115,7 @@ export default function JoinTeam() {
               </Link>
 
               <Link
-                to="/teams-member"
+                to="/member/teams"
                 className="button button-secondary page-nav-button"
               >
                 Teams

@@ -1,6 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace backend.Enums;
 
-public enum UserType {
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum UserType
+{
     Creator,
     Member
 }

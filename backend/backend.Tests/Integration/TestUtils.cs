@@ -2,12 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
 using backend.Dtos.TeamDtos;
+using backend.Enums;
 
 namespace backend.Tests.Integration;
 
 public static class TestUtils
 {
-    public static async Task<string> AuthRegister(HttpClient client, string name, string email, string password, string timezone, int userType)
+    public static async Task<string> AuthRegister(HttpClient client, string name, string email, string password, string timezone, UserType userType)
     {
         var response = await client.PostAsJsonAsync("/auth/register", new
         {
@@ -23,7 +24,7 @@ public static class TestUtils
         Assert.NotNull(body);
         return body.SessionId;
     }
-    public static async Task<string> AuthLogIn(HttpClient client, string email, string password, int userType)
+    public static async Task<string> AuthLogIn(HttpClient client, string email, string password, UserType userType)
     {
         var response = await client.PostAsJsonAsync("/auth/login", new
         {

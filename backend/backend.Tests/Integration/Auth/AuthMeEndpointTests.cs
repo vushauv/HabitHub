@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using backend.Dtos.AuthDtos;
+using backend.Enums;
 using backend.Tests.Fixtures;
 
 namespace backend.Tests.Integration.Auth;
@@ -25,9 +26,9 @@ public class AuthMeEndpointTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public async Task GetMe_Returns200_AndCorrectData(int userType)
+    [InlineData(UserType.Creator)]
+    [InlineData(UserType.Member)]
+    public async Task GetMe_Returns200_AndCorrectData(UserType userType)
     {
         // Generate user data
         var email = $"{Guid.NewGuid().ToString()}@example.com";
@@ -59,7 +60,7 @@ public class AuthMeEndpointTests
         Assert.NotNull(user);
         Assert.Equal(name, user.Name);
         Assert.Equal(email, user.Email);
-        if(userType == 0)
+        if(userType == UserType.Creator)
         {
             Assert.Null(user.Timezone);
         }
@@ -67,6 +68,6 @@ public class AuthMeEndpointTests
         {
             Assert.Equal(timezone, user.Timezone);
         }
-        Assert.Equal(userType, (int)user.UserType);
+        Assert.Equal(userType, user.UserType);
     }
 }

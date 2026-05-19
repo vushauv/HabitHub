@@ -211,6 +211,7 @@ Unit tests render a single component in isolation and assert on what is visible.
 cd frontend && npm run test:unit
 
 # Docker
+docker compose -f docker-compose.test.yml run --rm frontend-unit-test
 
 # Script (Docker internally)
 ./scripts/run_tests.sh frontend-unit-test

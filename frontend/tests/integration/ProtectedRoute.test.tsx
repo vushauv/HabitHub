@@ -104,7 +104,7 @@ it("renders Member Dashboard when authenticated as Member", async () => {
 });
 
 // TODO: Fix
-it.skip("redirects Creator to /creator when accessing Member route", () => {
+it.skip("redirects Creator to /creator when accessing Member route", async () => {
   localStorage.setItem(
     "habithubAuth",
     JSON.stringify({ sessionId: "creator" }),

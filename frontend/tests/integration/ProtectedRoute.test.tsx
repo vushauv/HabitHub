@@ -9,10 +9,10 @@ function renderApp(initialPath: string) {
       <Routes>
         <Route path="/login" element={<div>Login Page</div>} />
         <Route element={<ProtectedRoute allowedUserType="Creator" />}>
-          <Route path="/main-creator" element={<div>Creator Dashboard</div>} />
+          <Route path="/creator" element={<div>Creator Dashboard</div>} />
         </Route>
         <Route element={<ProtectedRoute allowedUserType="Member" />}>
-          <Route path="/main-member" element={<div>Member Dashboard</div>} />
+          <Route path="/member" element={<div>Member Dashboard</div>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -27,7 +27,7 @@ afterAll(() => {
 });
 
 it("redirects to /login when not authenticated", () => {
-  renderApp("/main-creator");
+  renderApp("/creator");
 
   expect(screen.getByText("Login Page")).toBeInTheDocument();
 });
@@ -38,7 +38,7 @@ it("redirects to /login when isLoggedIn is false", () => {
     JSON.stringify({ isLoggedIn: false, userType: "Creator" }),
   );
 
-  renderApp("/main-creator");
+  renderApp("/creator");
 
   expect(screen.getByText("Login Page")).toBeInTheDocument();
 });
@@ -50,7 +50,7 @@ it.skip("renders Creator Dashboard when authenticated as Creator", () => {
     JSON.stringify({ isLoggedIn: true, userType: "Creator" }),
   );
 
-  renderApp("/main-creator");
+  renderApp("/creator");
 
   expect(screen.getByText("Creator Dashboard")).toBeInTheDocument();
 });
@@ -62,19 +62,19 @@ it.skip("renders Member Dashboard when authenticated as Member", () => {
     JSON.stringify({ isLoggedIn: true, userType: "Member" }),
   );
 
-  renderApp("/main-member");
+  renderApp("/member");
 
   expect(screen.getByText("Member Dashboard")).toBeInTheDocument();
 });
 
 // TODO: Fix
-it.skip("redirects Creator to /main-creator when accessing Member route", () => {
+it.skip("redirects Creator to /creator when accessing Member route", () => {
   localStorage.setItem(
     "habithubAuth",
     JSON.stringify({ isLoggedIn: true, userType: "Creator" }),
   );
 
-  renderApp("/main-member");
+  renderApp("/member");
 
   expect(screen.getByText("Creator Dashboard")).toBeInTheDocument();
 });
@@ -82,7 +82,7 @@ it.skip("redirects Creator to /main-creator when accessing Member route", () => 
 it("redirects to /login and clears storage when localStorage contains corrupted data", () => {
   localStorage.setItem("habithubAuth", "not-valid-json{{{");
 
-  renderApp("/main-creator");
+  renderApp("/creator");
 
   expect(screen.getByText("Login Page")).toBeInTheDocument();
   expect(localStorage.getItem("habithubAuth")).toBeNull();

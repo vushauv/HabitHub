@@ -31,7 +31,7 @@ export default function MainMember() {
 
         <div className="buttons dashboard-actions">
           <Link
-            to="/teams-member"
+            to="/member/teams"
             className="button button-primary dashboard-action"
           >
             View your teams

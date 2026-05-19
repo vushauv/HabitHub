@@ -32,28 +32,28 @@ export default function App() {
         <Route path="/register" element={<Register />} />
 
          <Route element={<ProtectedRoute allowedUserType="Creator" />}>
-          <Route path="/main-creator" element={<MainCreator />} />
-          <Route path="/teams-creator" element={<TeamsCreator />} />
-          <Route path="/create-team" element={<CreateTeam />} />
-          <Route path="/member-list" element={<MemberList />} />
-          <Route path="/habits-creator" element={<CreatorHabits />} />
-          <Route path="/create-habit" element={<CreateHabit />} />
-          <Route path="/habit-details" element={<HabitDetails />} />
-          <Route path="/edit-habit" element={<EditHabit />} />
+          <Route path="/creator" element={<MainCreator />} />
+          <Route path="/creator/teams" element={<TeamsCreator />} />
+          <Route path="/creator/teams/create" element={<CreateTeam />} />
+          <Route path="/creator/teams/:teamId/members" element={<MemberList />} />
+          <Route path="/creator/teams/:teamId/habits" element={<CreatorHabits />} />
+          <Route path="/creator/teams/:teamId/habits/new" element={<CreateHabit />} />
+          <Route path="/creator/teams/:teamId/habits/:habitId/details" element={<HabitDetails />} />
+          <Route path="/creator/teams/:teamId/habits/:habitId/edit" element={<EditHabit />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedUserType="Member" />}>
-          <Route path="/main-member" element={<MainMember />} />
-          <Route path="/teams-member" element={<TeamsMember />} />
-          <Route path="/join-team" element={<JoinTeam />} />
-          <Route path="/habits-member" element={<MemberHabits />} />
+          <Route path="/member" element={<MainMember />} />
+          <Route path="/member/teams" element={<TeamsMember />} />
+          <Route path="/member/teams/join" element={<JoinTeam />} />
+          <Route path="/member/teams/:teamId/habits" element={<MemberHabits />} />
           <Route path="/member/teams/:teamId/habits/:habitId/details" element={<MemberHabitDetails />} />
-          <Route path="/member-log-habit" element={<MemberLogHabit />} />
+          <Route path="/member/teams/:teamId/habits/:habitId/log" element={<MemberLogHabit />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/settings" element={<Settings />} />
-          <Route path="/habit-leaderboard" element={<HabitLeaderboard />} />
+          <Route path="/teams/:teamId/habits/:habitId/leaderboard" element={<HabitLeaderboard />} />
         </Route>
 
         <Route element={<ProtectedRoute/>}> 

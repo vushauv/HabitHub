@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./MemberHabits.css";
 import "../App.css";
@@ -35,8 +35,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function MemberHabits() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
+  const { teamId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habits, setHabits] = useState<HabitSummaryDto[]>([]);
@@ -142,7 +141,7 @@ export default function MemberHabits() {
               </Link>
 
               <Link
-                to="/teams-member"
+                to="/member/teams"
                 className="button button-secondary page-nav-button"
               >
                 Teams
@@ -242,9 +241,9 @@ export default function MemberHabits() {
 
                       {habit.habitState === 0 ? (
                         <Link
-                          to={`/member-log-habit?teamId=${encodeURIComponent(
+                          to={`/member/teams/${encodeURIComponent(
                             teamId,
-                          )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                          )}/habits/${encodeURIComponent(habit.habitId)}/log`}
                           className="button button-secondary table-row-button"
                         >
                           Log
@@ -252,9 +251,9 @@ export default function MemberHabits() {
                       ) : null}
 
                       <Link
-                        to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                        to={`/teams/${encodeURIComponent(
                           teamId,
-                        )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                        )}/habits/${encodeURIComponent(habit.habitId)}/leaderboard`}
                         className="button button-secondary table-row-button"
                       >
                         Leaderboard

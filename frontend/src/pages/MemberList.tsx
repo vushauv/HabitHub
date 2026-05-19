@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./MemberList.css";
 import "../App.css";
@@ -24,8 +24,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function MemberList() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
+  const { teamId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [members, setMembers] = useState<TeamMemberDto[]>([]);
@@ -162,7 +161,7 @@ export default function MemberList() {
               </Link>
 
               <Link
-                to="/teams-creator"
+                to="/creator/teams"
                 className="button button-secondary page-nav-button"
               >
                 Teams

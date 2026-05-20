@@ -55,8 +55,6 @@ namespace backend.Service
             bool cleared = await reminders.ClearHabitReminderTimeAsync(habit.HabitId);
             if (!cleared)
                 throw new NotFoundException();
-
-            await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
         }
 
         public async Task<MyReminderResponseDto> ChangeMyReminder(Guid userId, UserType userType, Guid habitId, ChangeMyReminderRequestDto request)

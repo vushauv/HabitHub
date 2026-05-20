@@ -297,13 +297,14 @@ export default function TeamsCreator() {
                         Show Habits
                       </Link>
 
-                      <button
-                        type="button"
+                      <Link
+                        to={`/creator/teams/${encodeURIComponent(
+                          team.teamId,
+                        )}/chat`}
                         className="button button-secondary table-row-button"
-                        disabled
                       >
                         Show Chat
-                      </button>
+                      </Link>
 
                       <div className="teams-creator-code-cell">
                         {currentInviteCode ? (

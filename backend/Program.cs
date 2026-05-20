@@ -57,6 +57,8 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();
 builder.Services.AddScoped<IHabitEntryRepository, HabitEntryRepository>();
 builder.Services.AddScoped<IHabitService, HabitService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
 

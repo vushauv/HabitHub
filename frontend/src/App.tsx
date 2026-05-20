@@ -22,6 +22,7 @@ import MemberHabits from "./pages/MemberHabits";
 import MemberHabitDetails from "./pages/MemberHabitDetails";
 import HabitLeaderboard from "./pages/HabitLeaderboard";
 import MemberLogHabit from "./pages/MemberLogHabit";
+import Chat from "./pages/Chat";
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/creator/teams/:teamId/habits/new" element={<CreateHabit />} />
           <Route path="/creator/teams/:teamId/habits/:habitId/details" element={<HabitDetails />} />
           <Route path="/creator/teams/:teamId/habits/:habitId/edit" element={<EditHabit />} />
+          <Route path="/creator/teams/:teamId/chat" element={<Chat />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedUserType="Member" />}>
@@ -49,6 +51,7 @@ export default function App() {
           <Route path="/member/teams/:teamId/habits" element={<MemberHabits />} />
           <Route path="/member/teams/:teamId/habits/:habitId/details" element={<MemberHabitDetails />} />
           <Route path="/member/teams/:teamId/habits/:habitId/log" element={<MemberLogHabit />} />
+          <Route path="/member/teams/:teamId/chat" element={<Chat />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

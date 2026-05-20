@@ -207,13 +207,14 @@ export default function TeamsMember() {
                         Show Habits
                       </Link>
 
-                      <button
-                        type="button"
+                      <Link
+                        to={`/member/teams/${encodeURIComponent(
+                          team.teamId,
+                        )}/chat`}
                         className="button button-secondary table-row-button"
-                        disabled
                       >
                         Show Chat
-                      </button>
+                      </Link>
 
                       <button
                         type="button"

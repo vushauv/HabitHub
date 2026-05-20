@@ -80,7 +80,7 @@ namespace backend.Repositories
             db.Reminders.AddRange(newReminders);
             await db.SaveChangesAsync();
         }
-        public async Task<bool> SetHabitReminderTimeAsync(Guid habitId, DateTime reminderTime)
+        public async Task<bool> SetHabitReminderTimeAsync(Guid habitId, TimeOnly reminderTime)
         {
             Habit? habit = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
             if (habit == null)

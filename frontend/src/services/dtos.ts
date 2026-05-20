@@ -149,6 +149,19 @@ export type LogProgressRequestDto = {
   status: EntryStatusName;
 };
 
+export type ChatMessageDto = {
+  messageId: string;
+  chatId: string;
+  userId: string;
+  authorName: string;
+  content: string;
+  sendDate: string;
+};
+
+export type SendChatMessageRequestDto = {
+  content: string;
+};
+
 export type TodayHabitEntryStatusDto = {
   status: EntryStatusName;
   entry: HabitEntryResponseDto | null;

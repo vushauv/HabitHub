@@ -2,7 +2,6 @@
 using backend.Dtos.HabitEntryDtos;
 using backend.Enums;
 using backend.Exceptions;
-using backend.Migrations;
 using backend.Models;
 using backend.Repositories.Interfaces;
 using backend.Service.Interfaces;
@@ -204,8 +203,6 @@ namespace backend.Service
             bool deleted = await habits.DeleteHabitAsync(habit.HabitId);
             if (!deleted)
                 throw new NotFoundException();
-
-            await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
         }
 
         public async Task<HabitSummaryDto> GetHabit(Guid userId, UserType userType, Guid habitId) 

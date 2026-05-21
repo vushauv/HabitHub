@@ -59,8 +59,10 @@ builder.Services.AddScoped<IHabitEntryRepository, HabitEntryRepository>();
 builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
+builder.Services.AddHostedService<ReminderNotificationService>();
 
 builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
     .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });
@@ -109,6 +111,9 @@ using (var scope = app.Services.CreateScope())
         await SeedData.SeedTeamsAsync(db, app.Logger);
         await SeedData.SeedHabitsAsync(db, app.Logger);
         await SeedData.SeedHabitEntriesAsync(db, app.Logger);
+        await SeedData.SeedRemindersAsync(db, app.Logger);
+        await SeedData.SeedChatMessagesAsync(db, app.Logger);
+        await SeedData.SeedNotificationsAsync(db, app.Logger);
     }
 }
 

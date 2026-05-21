@@ -10,7 +10,6 @@ import type {
   InviteCodeDto,
   JoinTeamRequestDto,
   JoinTeamResponseDto,
-  MembershipStatusDto,
   TeamDetailsDto,
   TeamMemberDto as TeamMemberResponseDto,
   TeamSummaryDto,
@@ -328,19 +327,5 @@ function normalizeErrorCode(rawCode: string | null | undefined): TeamErrorCode {
 }
 
 function normalizeTeamMember(raw: TeamMemberResponseDto): TeamMemberDto {
-  return {
-    ...raw,
-    status: normalizeMembershipStatus(raw.status),
-  };
-}
-
-function normalizeMembershipStatus(status: MembershipStatusDto): TeamMemberStatus {
-  switch (status) {
-    case 1:
-      return "Kicked";
-    case 2:
-      return "Left";
-    default:
-      return "Active";
-  }
+  return raw;
 }

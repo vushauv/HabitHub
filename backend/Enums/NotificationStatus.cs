@@ -1,5 +1,8 @@
-﻿namespace backend.Enums
+using System.Text.Json.Serialization;
+
+namespace backend.Enums
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NotificationStatus
     {
         Unread = 0,

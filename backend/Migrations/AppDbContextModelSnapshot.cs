@@ -49,8 +49,8 @@ namespace backend.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime?>("ReminderTime")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<TimeOnly?>("ReminderTime")
+                        .HasColumnType("time without time zone");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");

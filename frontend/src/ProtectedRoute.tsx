@@ -3,7 +3,6 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import {
   clearStoredAuth,
-  getAccountTypeForUser,
   getDashboardPathForUser,
   getStoredAuth,
 } from "./services/Auth";
@@ -69,7 +68,7 @@ export default function ProtectedRoute({
 
   if (
     allowedUserType &&
-    getAccountTypeForUser(currentUser) !== allowedUserType
+    currentUser.userType !== allowedUserType
   ) {
     return <Navigate to={getDashboardPathForUser(currentUser)} replace />;
   }

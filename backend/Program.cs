@@ -111,6 +111,9 @@ using (var scope = app.Services.CreateScope())
         await SeedData.SeedTeamsAsync(db, app.Logger);
         await SeedData.SeedHabitsAsync(db, app.Logger);
         await SeedData.SeedHabitEntriesAsync(db, app.Logger);
+        await SeedData.SeedRemindersAsync(db, app.Logger);
+        await SeedData.SeedChatMessagesAsync(db, app.Logger);
+        await SeedData.SeedNotificationsAsync(db, app.Logger);
     }
 }
 

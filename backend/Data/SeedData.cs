@@ -7,6 +7,334 @@ namespace backend.Data;
 
 public static class SeedData
 {
+    public static async Task SeedHabitsAsync(AppDbContext db, ILogger logger)
+    {
+        (string TeamName, (string Name, string? Goal, HabitType Type, Unit? Unit)[])[] teamHabits =
+        [
+            ("Team Alpha",
+            [
+                ("Daily Run",    "Run 5km every day",          HabitType.Quantitative, Unit.Km),
+                ("Drink Water",  "Drink 8 cups daily",         HabitType.Quantitative, Unit.Cups),
+                ("Read 30 Min",  "Read every day",             HabitType.Binary,       null),
+            ]),
+            ("Team Beta",
+            [
+                ("Morning Workout", "Complete morning workout", HabitType.Binary,       null),
+                ("Track Steps",     "Walk 10,000 steps daily",  HabitType.Quantitative, Unit.Steps),
+            ]),
+        ];
+
+        int habitCount = 0;
+        foreach (var (teamName, habits) in teamHabits)
+        {
+            HabitTeam? team = await db.HabitTeams.FirstOrDefaultAsync(t => t.Name == teamName);
+            if (team == null) continue;
+
+            foreach (var (name, goal, type, unit) in habits)
+            {
+                bool exists = await db.Habits.AnyAsync(h => h.TeamId == team.TeamId && h.Name == name);
+                if (exists) continue;
+
+                db.Habits.Add(new Habit
+                {
+                    HabitId = Guid.NewGuid(),
+                    TeamId = team.TeamId,
+                    Name = name,
+                    Goal = goal,
+                    CreatorId = team.CreatorId,
+                    HabitState = HabitState.Active,
+                    HabitType = type,
+                    Unit = unit,
+                });
+                habitCount++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {HabitCount} habits", habitCount);
+    }
+
+    public static async Task SeedHabitEntriesAsync(AppDbContext db, ILogger logger)
+    {
+        var habits = await db.Habits
+            .Include(h => h.Team)
+                .ThenInclude(t => t.Memberships)
+                    .ThenInclude(m => m.Member)
+            .ToListAsync();
+
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        int entryCount = 0;
+
+        foreach (Habit habit in habits)
+        {
+            List<TeamMember> members = habit.Team.Memberships
+                .Where(m => m.Status == MembershipStatus.Active)
+                .Select(m => m.Member)
+                .ToList();
+
+            foreach (TeamMember member in members)
+            {
+                int memberSeed = Math.Abs(member.MemberId.GetHashCode());
+
+                for (int daysAgo = 13; daysAgo >= 1; daysAgo--)
+                {
+                    DateOnly logDate = today.AddDays(-daysAgo);
+
+                    bool exists = await db.HabitEntries.AnyAsync(e =>
+                        e.HabitId == habit.HabitId &&
+                        e.MemberId == member.MemberId &&
+                        e.LogDate == logDate);
+                    if (exists) continue;
+
+                    bool skipped = (memberSeed % 5 == 0) && (daysAgo % 5 == 0);
+                    EntryStatus status = skipped ? EntryStatus.Skipped : EntryStatus.Logged;
+
+                    float? value = null;
+                    if (status == EntryStatus.Logged && habit.HabitType == HabitType.Quantitative)
+                    {
+                        value = habit.Unit switch
+                        {
+                            Unit.Km    => 4.0f + memberSeed % 3,
+                            Unit.Cups  => 6.0f + memberSeed % 3,
+                            Unit.Steps => 7500.0f + (memberSeed % 4) * 500,
+                            _          => 1.0f,
+                        };
+                    }
+
+                    db.HabitEntries.Add(new HabitEntry
+                    {
+                        EntryId = Guid.NewGuid(),
+                        HabitId = habit.HabitId,
+                        MemberId = member.MemberId,
+                        LogDate = logDate,
+                        LoggedAt = new DateTime(logDate.Year, logDate.Month, logDate.Day, 8, 0, 0, DateTimeKind.Utc),
+                        Status = status,
+                        Value = value,
+                    });
+                    entryCount++;
+                }
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {EntryCount} habit entries", entryCount);
+    }
+
+
+    public static async Task SeedChatMessagesAsync(AppDbContext db, ILogger logger)
+    {
+        var chats = await db.TeamChats
+            .Include(c => c.Team)
+                .ThenInclude(t => t.Memberships)
+                    .ThenInclude(m => m.Member)
+            .Include(c => c.Team)
+                .ThenInclude(t => t.Creator)
+            .ToListAsync();
+
+        string[] templates =
+        [
+            "Hey team, ready for today's habits?",
+            "Just logged my run, feeling great.",
+            "Anyone tracking water intake this week?",
+            "Don't forget tomorrow's check-in.",
+            "Great job everyone, keep it up!",
+            "I missed yesterday, getting back on track today.",
+            "What's everyone's streak right now?",
+            "Reminder: weekly summary on Sunday.",
+            "Morning! Coffee then habits.",
+            "Did 6km this morning, new personal best.",
+            "Struggling with consistency this week, any tips?",
+            "Try habit stacking, works for me.",
+            "Stacking after brushing teeth — game changer.",
+            "Logged 10k steps already, lunch walk helps.",
+            "Weather's nice, perfect for outdoor runs.",
+            "Anyone want to do a virtual run together?",
+            "Count me in for Saturday morning.",
+            "Skipped today, family stuff came up.",
+            "No worries, tomorrow is a new day.",
+            "Hit my weekly goal early, feeling proud.",
+            "Nice! That's the energy.",
+            "Reading 30 min before bed actually helps me sleep.",
+            "I switched to mornings, evenings I just crash.",
+            "Whatever works — consistency matters more than timing.",
+            "Quick reminder: log entries before midnight.",
+            "Thanks, almost forgot yesterday.",
+            "How are we tracking on the team goal?",
+            "Pretty good, around 80% completion this week.",
+            "Let's push for 90% next week.",
+            "Agreed, I'll set extra reminders.",
+            "New habit idea: 10 min meditation, thoughts?",
+            "Sounds great, I'd join.",
+            "Same here, would help with stress.",
+            "Cool, I'll propose it next week.",
+            "Good night team, see you tomorrow.",
+            "Sleep well, big day ahead.",
+        ];
+
+        int msgCount = 0;
+        foreach (TeamChat chat in chats)
+        {
+            bool hasMessages = await db.Messages.AnyAsync(m => m.ChatId == chat.ChatId);
+            if (hasMessages) continue;
+
+            List<(Guid UserId, UserType UserType)> speakers = new();
+            if (chat.Team.Creator != null)
+            {
+                speakers.Add((chat.Team.CreatorId, UserType.Creator));
+            }
+            foreach (Membership ms in chat.Team.Memberships.Where(m => m.Status == MembershipStatus.Active))
+            {
+                speakers.Add((ms.MemberId, UserType.Member));
+            }
+            if (speakers.Count == 0) continue;
+
+            DateTime baseTime = DateTime.UtcNow.AddDays(-7);
+            double stepHours = 7 * 24.0 / templates.Length;
+            for (int i = 0; i < templates.Length; i++)
+            {
+                var (userId, userType) = speakers[i % speakers.Count];
+                db.Messages.Add(new Message
+                {
+                    MessageId = Guid.NewGuid(),
+                    ChatId = chat.ChatId,
+                    UserId = userId,
+                    UserType = userType,
+                    Content = templates[i],
+                    SendDate = baseTime.AddHours(i * stepHours),
+                });
+                msgCount++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {MessageCount} chat messages", msgCount);
+    }
+
+    public static async Task SeedRemindersAsync(AppDbContext db, ILogger logger)
+    {
+        var habits = await db.Habits
+            .Include(h => h.Team)
+                .ThenInclude(t => t.Memberships)
+            .ToListAsync();
+
+        int reminderCount = 0;
+        foreach (Habit habit in habits)
+        {
+            if (habit.ReminderTime == null)
+            {
+                habit.ReminderTime = new TimeOnly(8, 0);
+            }
+
+            List<Guid> memberIds = habit.Team.Memberships
+                .Where(m => m.Status == MembershipStatus.Active)
+                .Select(m => m.MemberId)
+                .ToList();
+
+            int idx = 0;
+            foreach (Guid memberId in memberIds)
+            {
+                bool exists = await db.Reminders.AnyAsync(r =>
+                    r.HabitId == habit.HabitId && r.MemberId == memberId);
+                if (exists) { idx++; continue; }
+
+                bool enabled = idx % 2 == 0;
+                DateTime? lastSent = idx % 3 == 0
+                    ? DateTime.UtcNow.AddDays(-1)
+                    : null;
+
+                db.Reminders.Add(new Reminder
+                {
+                    ReminderId = Guid.NewGuid(),
+                    HabitId = habit.HabitId,
+                    MemberId = memberId,
+                    Enabled = enabled,
+                    LastSentAt = lastSent,
+                });
+                reminderCount++;
+                idx++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {ReminderCount} reminders", reminderCount);
+    }
+
+    public static async Task SeedNotificationsAsync(AppDbContext db, ILogger logger)
+    {
+        var members = await db.TeamMembers.ToListAsync();
+        var creators = await db.TeamCreators.ToListAsync();
+
+        (string Content, NotificationType Type, NotificationStatus Status, int DaysAgo)[] memberTemplates =
+        [
+            ("Welcome to HabitHub!",                NotificationType.System,   NotificationStatus.Read,   7),
+            ("Your team invite was accepted.",      NotificationType.System,   NotificationStatus.Unread, 3),
+            ("Time to log Daily Run.",              NotificationType.Reminder, NotificationStatus.Unread, 1),
+            ("Don't forget Drink Water today.",     NotificationType.Reminder, NotificationStatus.Unread, 0),
+            ("You missed yesterday's Track Steps.", NotificationType.Reminder, NotificationStatus.Read,   2),
+        ];
+
+        (string Content, NotificationType Type, NotificationStatus Status, int DaysAgo)[] creatorTemplates =
+        [
+            ("Welcome, team creator!",                       NotificationType.System,   NotificationStatus.Read,   10),
+            ("A new member joined your team.",               NotificationType.System,   NotificationStatus.Unread, 2),
+            ("Weekly summary: 3 habits active.",             NotificationType.System,   NotificationStatus.Unread, 0),
+            ("Reminder: review pending invite codes.",       NotificationType.Reminder, NotificationStatus.Unread, 1),
+        ];
+
+        int notifCount = 0;
+
+        foreach (TeamMember member in members)
+        {
+            foreach (var (content, type, status, daysAgo) in memberTemplates)
+            {
+                bool exists = await db.Notifications.AnyAsync(n =>
+                    n.UserId == member.MemberId &&
+                    n.UserType == UserType.Member &&
+                    n.Content == content);
+                if (exists) continue;
+
+                db.Notifications.Add(new Notification
+                {
+                    NotificationId = Guid.NewGuid(),
+                    UserId = member.MemberId,
+                    UserType = UserType.Member,
+                    Content = content,
+                    Type = type,
+                    Status = status,
+                    CreatedAt = DateTime.UtcNow.AddDays(-daysAgo),
+                });
+                notifCount++;
+            }
+        }
+
+        foreach (TeamCreator creator in creators)
+        {
+            foreach (var (content, type, status, daysAgo) in creatorTemplates)
+            {
+                bool exists = await db.Notifications.AnyAsync(n =>
+                    n.UserId == creator.CreatorId &&
+                    n.UserType == UserType.Creator &&
+                    n.Content == content);
+                if (exists) continue;
+
+                db.Notifications.Add(new Notification
+                {
+                    NotificationId = Guid.NewGuid(),
+                    UserId = creator.CreatorId,
+                    UserType = UserType.Creator,
+                    Content = content,
+                    Type = type,
+                    Status = status,
+                    CreatedAt = DateTime.UtcNow.AddDays(-daysAgo),
+                });
+                notifCount++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {NotificationCount} notifications", notifCount);
+    }
+
     public static async Task SeedUsersAsync(AppDbContext db, ILogger logger)
     {
         PasswordHasher<object> hasher = new();
@@ -88,6 +416,18 @@ public static class SeedData
                 db.HabitTeams.Add(team);
                 await db.SaveChangesAsync();
                 logger.LogInformation("Seeded team {TeamId}", team.TeamId);
+            }
+
+            bool chatExists = await db.TeamChats.AnyAsync(c => c.TeamId == team.TeamId);
+            if (!chatExists)
+            {
+                db.TeamChats.Add(new TeamChat
+                {
+                    ChatId = Guid.NewGuid(),
+                    TeamId = team.TeamId,
+                });
+                await db.SaveChangesAsync();
+                logger.LogInformation("Seeded chat for team {TeamId}", team.TeamId);
             }
 
             int membershipCount = 0;

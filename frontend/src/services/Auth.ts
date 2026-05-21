@@ -1,5 +1,5 @@
 import type { UserDto } from "./dtos";
-import { API_BASE_URL, mapUserTypeFromEnum, type AccountType } from "./User";
+import { API_BASE_URL } from "./User";
 
 const AUTH_STORAGE_KEY = "habithubAuth";
 
@@ -8,6 +8,8 @@ export type StoredAuth = {
 };
 
 export type AuthErrorCode = "auth-required" | "not-found" | "unknown";
+
+export type SessionState = "Active" | "Invalidated" | "Expired";
 
 type RawErrorResponse = {
   error?: string | null;
@@ -80,18 +82,12 @@ export function getAuthHeaders(auth: StoredAuth | null): HeadersInit {
   };
 }
 
-export function getAccountTypeForUser(
-  user: Pick<UserDto, "userType">,
-): AccountType {
-  return mapUserTypeFromEnum(user.userType);
-}
-
 export function getDashboardPathForUser(
   user: Pick<UserDto, "userType">,
 ): string {
-  return getAccountTypeForUser(user) === "Creator"
-    ? "/main-creator"
-    : "/main-member";
+  return user.userType === "Creator"
+    ? "/creator"
+    : "/member";
 }
 
 export async function getCurrentUser(auth: StoredAuth | null): Promise<UserDto> {

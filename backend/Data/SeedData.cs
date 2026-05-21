@@ -121,6 +121,131 @@ public static class SeedData
     }
 
 
+    public static async Task SeedRemindersAsync(AppDbContext db, ILogger logger)
+    {
+        var habits = await db.Habits
+            .Include(h => h.Team)
+                .ThenInclude(t => t.Memberships)
+            .ToListAsync();
+
+        int reminderCount = 0;
+        foreach (Habit habit in habits)
+        {
+            if (habit.ReminderTime == null)
+            {
+                habit.ReminderTime = new TimeOnly(8, 0);
+            }
+
+            List<Guid> memberIds = habit.Team.Memberships
+                .Where(m => m.Status == MembershipStatus.Active)
+                .Select(m => m.MemberId)
+                .ToList();
+
+            int idx = 0;
+            foreach (Guid memberId in memberIds)
+            {
+                bool exists = await db.Reminders.AnyAsync(r =>
+                    r.HabitId == habit.HabitId && r.MemberId == memberId);
+                if (exists) { idx++; continue; }
+
+                bool enabled = idx % 2 == 0;
+                DateTime? lastSent = idx % 3 == 0
+                    ? DateTime.UtcNow.AddDays(-1)
+                    : null;
+
+                db.Reminders.Add(new Reminder
+                {
+                    ReminderId = Guid.NewGuid(),
+                    HabitId = habit.HabitId,
+                    MemberId = memberId,
+                    Enabled = enabled,
+                    LastSentAt = lastSent,
+                });
+                reminderCount++;
+                idx++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {ReminderCount} reminders", reminderCount);
+    }
+
+    public static async Task SeedNotificationsAsync(AppDbContext db, ILogger logger)
+    {
+        var members = await db.TeamMembers.ToListAsync();
+        var creators = await db.TeamCreators.ToListAsync();
+
+        (string Content, NotificationType Type, NotificationStatus Status, int DaysAgo)[] memberTemplates =
+        [
+            ("Welcome to HabitHub!",                NotificationType.System,   NotificationStatus.Read,   7),
+            ("Your team invite was accepted.",      NotificationType.System,   NotificationStatus.Unread, 3),
+            ("Time to log Daily Run.",              NotificationType.Reminder, NotificationStatus.Unread, 1),
+            ("Don't forget Drink Water today.",     NotificationType.Reminder, NotificationStatus.Unread, 0),
+            ("You missed yesterday's Track Steps.", NotificationType.Reminder, NotificationStatus.Read,   2),
+        ];
+
+        (string Content, NotificationType Type, NotificationStatus Status, int DaysAgo)[] creatorTemplates =
+        [
+            ("Welcome, team creator!",                       NotificationType.System,   NotificationStatus.Read,   10),
+            ("A new member joined your team.",               NotificationType.System,   NotificationStatus.Unread, 2),
+            ("Weekly summary: 3 habits active.",             NotificationType.System,   NotificationStatus.Unread, 0),
+            ("Reminder: review pending invite codes.",       NotificationType.Reminder, NotificationStatus.Unread, 1),
+        ];
+
+        int notifCount = 0;
+
+        foreach (TeamMember member in members)
+        {
+            foreach (var (content, type, status, daysAgo) in memberTemplates)
+            {
+                bool exists = await db.Notifications.AnyAsync(n =>
+                    n.UserId == member.MemberId &&
+                    n.UserType == UserType.Member &&
+                    n.Content == content);
+                if (exists) continue;
+
+                db.Notifications.Add(new Notification
+                {
+                    NotificationId = Guid.NewGuid(),
+                    UserId = member.MemberId,
+                    UserType = UserType.Member,
+                    Content = content,
+                    Type = type,
+                    Status = status,
+                    CreatedAt = DateTime.UtcNow.AddDays(-daysAgo),
+                });
+                notifCount++;
+            }
+        }
+
+        foreach (TeamCreator creator in creators)
+        {
+            foreach (var (content, type, status, daysAgo) in creatorTemplates)
+            {
+                bool exists = await db.Notifications.AnyAsync(n =>
+                    n.UserId == creator.CreatorId &&
+                    n.UserType == UserType.Creator &&
+                    n.Content == content);
+                if (exists) continue;
+
+                db.Notifications.Add(new Notification
+                {
+                    NotificationId = Guid.NewGuid(),
+                    UserId = creator.CreatorId,
+                    UserType = UserType.Creator,
+                    Content = content,
+                    Type = type,
+                    Status = status,
+                    CreatedAt = DateTime.UtcNow.AddDays(-daysAgo),
+                });
+                notifCount++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {NotificationCount} notifications", notifCount);
+    }
+
     public static async Task SeedUsersAsync(AppDbContext db, ILogger logger)
     {
         PasswordHasher<object> hasher = new();

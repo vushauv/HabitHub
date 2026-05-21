@@ -19,7 +19,33 @@ const TEAM_ID = "team-1";
 const HABIT_ID = "habit-1";
 const ENTRY_ID = "entry-1";
 
-const binaryHabit = {
+type HabitFixture = {
+  habitId: string;
+  name: string;
+  goal: string | null;
+  habitState: string;
+  habitType: string;
+  unit: string | null;
+  expiryDate: string | null;
+};
+
+type EntryFixture = {
+  entryId: string;
+  habitId: string;
+  memberId: string;
+  loggedAt: string;
+  logDate: string;
+  status: string;
+  value: number | null;
+  notes: string | null;
+};
+
+type StatusFixture = {
+  status: string;
+  entry: EntryFixture | null;
+};
+
+const binaryHabit: HabitFixture = {
   habitId: HABIT_ID,
   name: "Morning Walk",
   goal: "Walk before work",
@@ -29,7 +55,7 @@ const binaryHabit = {
   expiryDate: null,
 };
 
-const quantitativeHabit = {
+const quantitativeHabit: HabitFixture = {
   habitId: HABIT_ID,
   name: "Water Intake",
   goal: null,
@@ -39,9 +65,9 @@ const quantitativeHabit = {
   expiryDate: null,
 };
 
-const pendingStatus = { status: "Pending", entry: null };
+const pendingStatus: StatusFixture = { status: "Pending", entry: null };
 
-const loggedStatus = {
+const loggedStatus: StatusFixture = {
   status: "Logged",
   entry: {
     entryId: ENTRY_ID,

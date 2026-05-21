@@ -18,7 +18,17 @@ import { API_URL } from "../../const";
 const TEAM_ID = "team-1";
 const HABIT_ID = "habit-1";
 
-const activeHabit = {
+type HabitFixture = {
+  habitId: string;
+  name: string;
+  goal: string | null;
+  habitState: string;
+  habitType: string;
+  unit: string | null;
+  expiryDate: string | null;
+};
+
+const activeHabit: HabitFixture = {
   habitId: HABIT_ID,
   name: "Morning Walk",
   goal: "Walk before work",

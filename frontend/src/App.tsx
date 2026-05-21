@@ -23,6 +23,8 @@ import MemberHabitDetails from "./pages/MemberHabitDetails";
 import HabitLeaderboard from "./pages/HabitLeaderboard";
 import MemberLogHabit from "./pages/MemberLogHabit";
 import Chat from "./pages/Chat";
+import Reminders from "./pages/Reminders";
+import Notifications from "./pages/Notifications";
 
 export default function App() {
   return (
@@ -55,6 +57,8 @@ export default function App() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/reminders" element={<Reminders />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/teams/:teamId/habits/:habitId/leaderboard" element={<HabitLeaderboard />} />
         </Route>

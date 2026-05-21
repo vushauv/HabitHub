@@ -101,6 +101,7 @@ export type HabitSummaryDto = {
   habitType: HabitTypeName;
   unit: UnitName | null;
   expiryDate: string | null;
+  reminderTime?: string | null;
 };
 
 export type CreateHabitRequestDto = {
@@ -165,4 +166,40 @@ export type SendChatMessageRequestDto = {
 export type TodayHabitEntryStatusDto = {
   status: EntryStatusName;
   entry: HabitEntryResponseDto | null;
+};
+
+export type NotificationStatus = "Unread" | "Read" | "Deleted";
+
+export type NotificationType = "System" | "Reminder";
+
+export type NotificationDto = {
+  notificationId: string;
+  content: string;
+  createdAt: string;
+  status: NotificationStatus;
+  type: NotificationType;
+};
+
+export type NotificationCountDto = {
+  count: number;
+};
+
+export type SetReminderRequestDto = {
+  reminderTime: string;
+};
+
+export type HabitReminderResponseDto = {
+  habitId: string;
+  reminderTime: string | null;
+};
+
+export type ChangeMyReminderRequestDto = {
+  enabled: boolean;
+};
+
+export type MyReminderResponseDto = {
+  habitId: string;
+  memberId: string;
+  enabled: boolean;
+  reminderTime: string | null;
 };

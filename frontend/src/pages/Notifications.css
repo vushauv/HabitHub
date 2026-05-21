@@ -1,0 +1,137 @@
+.notifications-card {
+  width: min(100%, 86rem);
+}
+
+.notifications-content {
+  max-width: 82rem;
+  gap: 1.5rem;
+}
+
+.notifications-header {
+  gap: 0.9rem;
+}
+
+.notifications-title {
+  width: min(100%, 34rem);
+}
+
+.notifications-summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--text-color-soft);
+  font-weight: 700;
+}
+
+.notifications-summary-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.65rem;
+  min-height: 1.65rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--primary-color-dark);
+}
+
+.notifications-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notifications-mark-all {
+  min-width: 10rem;
+}
+
+.notifications-table-row {
+  grid-template-columns:
+    minmax(8rem, 0.7fr) minmax(6rem, 0.45fr) minmax(16rem, 1.2fr)
+    minmax(5.5rem, 0.45fr) minmax(10rem, 0.75fr);
+}
+
+.notifications-table-row-unread {
+  border-color: rgba(0, 113, 227, 0.16);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.notifications-date,
+.notifications-message {
+  color: var(--text-color);
+  text-align: center;
+  word-break: break-word;
+}
+
+.notifications-message {
+  text-align: left;
+  line-height: 1.55;
+}
+
+.notifications-type,
+.notifications-status {
+  justify-self: center;
+  min-width: 5.5rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.07);
+  color: var(--text-color);
+  font-weight: 700;
+  text-align: center;
+}
+
+.notifications-type {
+  color: var(--text-color-soft);
+}
+
+.notifications-status-new {
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--primary-color-dark);
+}
+
+.notifications-row-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.notifications-row-actions .table-row-button:only-child {
+  grid-column: 1 / -1;
+}
+
+.notifications-delete-button {
+  color: #b42318;
+}
+
+@media (max-width: 1120px) {
+  .notifications-table-row {
+    grid-template-columns: 1fr;
+  }
+
+  .notifications-table-head {
+    display: none;
+  }
+
+  .notifications-message {
+    text-align: center;
+  }
+
+  .notifications-row-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .notifications-content {
+    gap: 1.25rem;
+  }
+
+  .notifications-actions {
+    justify-content: stretch;
+  }
+
+  .notifications-mark-all {
+    width: 100%;
+  }
+}

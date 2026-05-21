@@ -15,8 +15,7 @@ const handlers = [
       return new HttpResponse(null, { status: 400 });
     logoutMockHandler(sessionId);
     return new HttpResponse(null, { status: 204 });
-  }),
-  http.get(`${API_URL}/auth/me`, () => new HttpResponse(null, { status: 401 })),
+  })
 ]
 const server = setupServer(...handlers);
 beforeAll(() => server.listen())

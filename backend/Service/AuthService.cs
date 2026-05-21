@@ -10,7 +10,7 @@ using backend.Repositories.Interfaces;
 
 namespace backend.Service
 {
-    public class AuthService(ITeamCreatorRepository creators, ITeamMemberRepository members, ISessionRepository sessions, ILogger<AuthService> logger) : IAuthService
+    public class AuthService(ITeamCreatorRepository creators, ITeamMemberRepository members, ISessionRepository sessions, INotificationRepository notifications, ILogger<AuthService> logger) : IAuthService
     {
         private PasswordHasher<object> hasher = new PasswordHasher<object>();
         public async Task<AuthResponseDto> Register(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
@@ -242,6 +242,7 @@ namespace backend.Service
                 throw new AuthRequiredException(); 
             }
 
+            await CreateSystemNotification(userId, userType, "Your password was changed.");
             await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
         }
         public async Task ChangeEmail(Guid userId, UserType userType, string currentSessionId, ChangeEmailRequestDto request)
@@ -299,6 +300,7 @@ namespace backend.Service
                 throw new AuthRequiredException();
             }
 
+            await CreateSystemNotification(userId, userType, "Your email address was changed.");
             await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
         }
 
@@ -329,6 +331,21 @@ namespace backend.Service
         private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
         private static string NormalizeName(string name) => name.Trim();
         private static string NormalizeTimezone(string timezone) => timezone.Trim();
+        private async Task CreateSystemNotification(Guid userId, UserType userType, string content)
+        {
+            Notification notification = new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                UserId = userId,
+                UserType = userType,
+                Content = content,
+                CreatedAt = DateTime.UtcNow,
+                Status = NotificationStatus.Unread,
+                Type = NotificationType.System
+            };
+
+            await notifications.CreateNotificationAsync(notification);
+        }
     }
 }
           

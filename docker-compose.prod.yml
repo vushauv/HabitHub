@@ -15,7 +15,9 @@ services:
     working_dir: /app
     command: []
     ports: !reset []
-    depends_on: !reset []
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - habithub-network
       - web

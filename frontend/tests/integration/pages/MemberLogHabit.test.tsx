@@ -264,9 +264,6 @@ it("shows error on failed log", async () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Mark Completed" }));
 
-  await waitFor(() => {
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Progress was already logged for today.",
-    );
-  });
+  const alert = await screen.findByRole("alert", {}, { timeout: 4000 });
+  expect(alert).toHaveTextContent("Progress was already logged for today.");
 });

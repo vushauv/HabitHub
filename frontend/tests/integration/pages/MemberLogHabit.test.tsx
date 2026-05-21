@@ -163,9 +163,9 @@ it("logs binary habit progress and shows success message", async () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Mark Completed" }));
 
-  await waitFor(() => {
-    expect(screen.getByText("Progress logged.")).toBeInTheDocument();
-  });
+  expect(
+    await screen.findByText("Progress logged.", {}, { timeout: 4000 }),
+  ).toBeInTheDocument();
 });
 
 it("skips today and shows success message", async () => {
@@ -200,9 +200,9 @@ it("skips today and shows success message", async () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Skip Today" }));
 
-  await waitFor(() => {
-    expect(screen.getByText("Progress skipped.")).toBeInTheDocument();
-  });
+  expect(
+    await screen.findByText("Progress skipped.", {}, { timeout: 4000 }),
+  ).toBeInTheDocument();
 });
 
 it("shows Undo Log button when already logged today", async () => {
@@ -237,11 +237,13 @@ it("undoes today's log and shows success message", async () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Undo Log" }));
 
-  await waitFor(() => {
-    expect(
-      screen.getByText("Today's progress log was undone."),
-    ).toBeInTheDocument();
-  });
+  expect(
+    await screen.findByText(
+      "Today's progress log was undone.",
+      {},
+      { timeout: 4000 },
+    ),
+  ).toBeInTheDocument();
 });
 
 it("shows error on failed log", async () => {

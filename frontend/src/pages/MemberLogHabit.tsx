@@ -52,9 +52,9 @@ function getTodayStatusText(todayStatus: TodayHabitEntryStatusDto | null): strin
   }
 
   switch (todayStatus.status) {
-    case "Logged":
+    case 0:
       return "Progress was already logged today.";
-    case "Skipped":
+    case 2:
       return "Progress was skipped today.";
     default:
       return "No progress has been logged today.";

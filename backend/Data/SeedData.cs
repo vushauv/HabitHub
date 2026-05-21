@@ -121,6 +121,95 @@ public static class SeedData
     }
 
 
+    public static async Task SeedChatMessagesAsync(AppDbContext db, ILogger logger)
+    {
+        var chats = await db.TeamChats
+            .Include(c => c.Team)
+                .ThenInclude(t => t.Memberships)
+                    .ThenInclude(m => m.Member)
+            .Include(c => c.Team)
+                .ThenInclude(t => t.Creator)
+            .ToListAsync();
+
+        string[] templates =
+        [
+            "Hey team, ready for today's habits?",
+            "Just logged my run, feeling great.",
+            "Anyone tracking water intake this week?",
+            "Don't forget tomorrow's check-in.",
+            "Great job everyone, keep it up!",
+            "I missed yesterday, getting back on track today.",
+            "What's everyone's streak right now?",
+            "Reminder: weekly summary on Sunday.",
+            "Morning! Coffee then habits.",
+            "Did 6km this morning, new personal best.",
+            "Struggling with consistency this week, any tips?",
+            "Try habit stacking, works for me.",
+            "Stacking after brushing teeth — game changer.",
+            "Logged 10k steps already, lunch walk helps.",
+            "Weather's nice, perfect for outdoor runs.",
+            "Anyone want to do a virtual run together?",
+            "Count me in for Saturday morning.",
+            "Skipped today, family stuff came up.",
+            "No worries, tomorrow is a new day.",
+            "Hit my weekly goal early, feeling proud.",
+            "Nice! That's the energy.",
+            "Reading 30 min before bed actually helps me sleep.",
+            "I switched to mornings, evenings I just crash.",
+            "Whatever works — consistency matters more than timing.",
+            "Quick reminder: log entries before midnight.",
+            "Thanks, almost forgot yesterday.",
+            "How are we tracking on the team goal?",
+            "Pretty good, around 80% completion this week.",
+            "Let's push for 90% next week.",
+            "Agreed, I'll set extra reminders.",
+            "New habit idea: 10 min meditation, thoughts?",
+            "Sounds great, I'd join.",
+            "Same here, would help with stress.",
+            "Cool, I'll propose it next week.",
+            "Good night team, see you tomorrow.",
+            "Sleep well, big day ahead.",
+        ];
+
+        int msgCount = 0;
+        foreach (TeamChat chat in chats)
+        {
+            bool hasMessages = await db.Messages.AnyAsync(m => m.ChatId == chat.ChatId);
+            if (hasMessages) continue;
+
+            List<(Guid UserId, UserType UserType)> speakers = new();
+            if (chat.Team.Creator != null)
+            {
+                speakers.Add((chat.Team.CreatorId, UserType.Creator));
+            }
+            foreach (Membership ms in chat.Team.Memberships.Where(m => m.Status == MembershipStatus.Active))
+            {
+                speakers.Add((ms.MemberId, UserType.Member));
+            }
+            if (speakers.Count == 0) continue;
+
+            DateTime baseTime = DateTime.UtcNow.AddDays(-7);
+            double stepHours = 7 * 24.0 / templates.Length;
+            for (int i = 0; i < templates.Length; i++)
+            {
+                var (userId, userType) = speakers[i % speakers.Count];
+                db.Messages.Add(new Message
+                {
+                    MessageId = Guid.NewGuid(),
+                    ChatId = chat.ChatId,
+                    UserId = userId,
+                    UserType = userType,
+                    Content = templates[i],
+                    SendDate = baseTime.AddHours(i * stepHours),
+                });
+                msgCount++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {MessageCount} chat messages", msgCount);
+    }
+
     public static async Task SeedRemindersAsync(AppDbContext db, ILogger logger)
     {
         var habits = await db.Habits

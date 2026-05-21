@@ -225,7 +225,7 @@ export default function TeamsCreator() {
               <h1 className="title page-title teams-creator-title pill-title">Your Teams</h1>
 
               <Link
-                to="/create-team"
+                to="/creator/teams/create"
                 className="button button-primary teams-creator-create-button"
               >
                 Create a New Team
@@ -289,21 +289,22 @@ export default function TeamsCreator() {
                       </span>
 
                       <Link
-                        to={`/habits-creator?teamId=${encodeURIComponent(
+                        to={`/creator/teams/${encodeURIComponent(
                           team.teamId,
-                        )}`}
+                        )}/habits`}
                         className="button button-secondary table-row-button"
                       >
                         Show Habits
                       </Link>
 
-                      <button
-                        type="button"
+                      <Link
+                        to={`/creator/teams/${encodeURIComponent(
+                          team.teamId,
+                        )}/chat`}
                         className="button button-secondary table-row-button"
-                        disabled
                       >
                         Show Chat
-                      </button>
+                      </Link>
 
                       <div className="teams-creator-code-cell">
                         {currentInviteCode ? (
@@ -350,9 +351,9 @@ export default function TeamsCreator() {
                       </div>
 
                       <Link
-                        to={`/member-list?teamId=${encodeURIComponent(
+                        to={`/creator/teams/${encodeURIComponent(
                           team.teamId,
-                        )}`}
+                        )}/members`}
                         className="button button-secondary table-row-button"
                       >
                         Show List

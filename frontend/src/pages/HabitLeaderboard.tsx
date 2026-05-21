@@ -1,10 +1,9 @@
-import { Link, useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
 import "../App.css";
 import {
   clearStoredAuth,
-  formatHabitType,
   formatHabitUnit,
   formatLeaderboardValue,
   getHabit,
@@ -15,9 +14,6 @@ import {
   type HabitSummaryDto,
   type LeaderboardResponseDto,
 } from "../services/Habit";
-import {
-  getAccountTypeForUser,
-} from "../services/Auth";
 import {
   getTeam,
   getTeamErrorMessage,
@@ -41,20 +37,18 @@ function resolveErrorMessage(error: unknown): string {
 export default function HabitLeaderboard() {
   const navigate = useNavigate();
   const currentUser = useOutletContext<UserDto>();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
-  const accountType = getAccountTypeForUser(currentUser);
+  const accountType = currentUser.userType;
   const habitsPath =
     accountType === "Creator"
-      ? `/habits-creator?teamId=${encodeURIComponent(teamId)}`
-      : `/habits-member?teamId=${encodeURIComponent(teamId)}`;
+      ? `/creator/teams/${encodeURIComponent(teamId)}/habits`
+      : `/member/teams/${encodeURIComponent(teamId)}/habits`;
 
   useEffect(() => {
     let isMounted = true;
@@ -194,7 +188,7 @@ export default function HabitLeaderboard() {
                   <div className="habit-details-item">
                     <p className="habit-details-label">Type</p>
                     <p className="habit-details-value">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </p>
                   </div>
 

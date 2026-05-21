@@ -1,17 +1,14 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./HabitDetails.css";
 import "./MemberHabitDetails.css";
 import "../App.css";
 import {
   clearStoredAuth,
-  formatEntryStatus,
   formatHabitEntryDate,
   formatHabitEntryDateTime,
   formatHabitEntryValue,
   formatHabitExpiryDate,
-  formatHabitState,
-  formatHabitType,
   formatHabitUnit,
   getHabit,
   getHabitEntries,
@@ -42,9 +39,7 @@ function resolveErrorMessage(error: unknown): string {
 
 export default function MemberHabitDetails() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
@@ -147,7 +142,7 @@ export default function MemberHabitDetails() {
               </Link>
 
               <Link
-                to={`/habits-member?teamId=${encodeURIComponent(teamId)}`}
+                to={`/member/teams/${encodeURIComponent(teamId)}/habits`}
                 className="button button-secondary page-nav-button"
               >
                 Habits
@@ -188,14 +183,14 @@ export default function MemberHabitDetails() {
                   <div className="habit-details-item">
                     <p className="habit-details-label">State</p>
                     <p className="habit-details-value">
-                      {formatHabitState(habit.habitState)}
+                      {habit.habitState}
                     </p>
                   </div>
 
                   <div className="habit-details-item">
                     <p className="habit-details-label">Type</p>
                     <p className="habit-details-value">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </p>
                   </div>
 
@@ -222,11 +217,11 @@ export default function MemberHabitDetails() {
                 </section>
 
                 <div className="habit-details-actions">
-                  {habit.habitState === 0 ? (
+                  {habit.habitState === "Active" ? (
                     <Link
-                      to={`/member-log-habit?teamId=${encodeURIComponent(
+                      to={`/member/teams/${encodeURIComponent(
                         teamId,
-                      )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                      )}/habits/${encodeURIComponent(habit.habitId)}/log`}
                       className="button button-primary"
                     >
                       Log Habit
@@ -234,9 +229,9 @@ export default function MemberHabitDetails() {
                   ) : null}
 
                   <Link
-                    to={`/habit-leaderboard?teamId=${encodeURIComponent(
+                    to={`/teams/${encodeURIComponent(
                       teamId,
-                    )}&habitId=${encodeURIComponent(habit.habitId)}`}
+                    )}/habits/${encodeURIComponent(habit.habitId)}/leaderboard`}
                     className="button button-secondary"
                   >
                     Leaderboard
@@ -271,7 +266,7 @@ export default function MemberHabitDetails() {
                           {formatHabitEntryDate(entry.logDate)}
                         </span>
                         <span className="member-habit-progress-meta">
-                          {formatEntryStatus(entry.status)}
+                          {entry.status}
                         </span>
                         <span className="member-habit-progress-meta">
                           {formatHabitEntryValue(entry, habit)}

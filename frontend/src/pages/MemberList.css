@@ -1,0 +1,52 @@
+.member-list-content {
+  max-width: 52rem;
+  gap: 1.75rem;
+}
+
+.member-list-header {
+  gap: 0.75rem;
+}
+
+.member-list-title {
+  width: min(100%, 30rem);
+}
+
+.member-list-text {
+  margin-top: 0;
+}
+
+.member-list-table-row {
+  grid-template-columns: minmax(8rem, 1fr) minmax(12rem, 1.4fr) minmax(7rem, 0.6fr);
+}
+
+.member-list-name,
+.member-list-email {
+  color: var(--text-color);
+  text-align: center;
+  word-break: break-word;
+}
+
+.member-list-name {
+  font-weight: 700;
+}
+
+.member-list-kick-button {
+  color: #b42318;
+}
+
+@media (max-width: 820px) {
+  .member-list-table-row {
+    grid-template-columns: 1fr;
+  }
+
+  .member-list-table-head {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .member-list-content {
+    gap: 1.35rem;
+  }
+
+}

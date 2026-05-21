@@ -1,0 +1,93 @@
+.member-habits-content {
+  max-width: 74rem;
+  gap: 1.75rem;
+}
+
+.member-habits-header {
+  gap: 0.85rem;
+}
+
+.member-habits-title {
+  width: min(100%, 34rem);
+}
+
+.member-habits-team-name {
+  margin-top: 0;
+}
+
+.member-habits-state-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(8rem, 1fr));
+  gap: 0.55rem;
+  width: min(100%, 22rem);
+  margin: 0 auto;
+  padding: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.member-habits-state-button {
+  min-width: 0;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: none;
+  box-shadow: none;
+}
+
+.member-habits-state-button-active {
+  background: rgba(0, 113, 227, 0.92);
+  color: #ffffff;
+}
+
+.member-habits-table-row {
+  grid-template-columns:
+    minmax(7rem, 0.9fr) minmax(5.5rem, 0.65fr) minmax(5.5rem, 0.65fr)
+    minmax(8rem, 0.9fr) minmax(5rem, 0.55fr) minmax(20rem, 1.8fr);
+}
+
+.member-habits-name,
+.member-habits-meta,
+.member-habits-goal {
+  color: var(--text-color);
+  text-align: center;
+  word-break: break-word;
+}
+
+.member-habits-name {
+  font-weight: 700;
+}
+
+.member-habits-goal {
+  color: var(--text-color-soft);
+  line-height: 1.45;
+}
+
+.member-habits-row-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 1180px) {
+  .member-habits-table-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .member-habits-table-head {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .member-habits-content {
+    gap: 1.35rem;
+  }
+
+  .member-habits-state-toggle,
+  .member-habits-table-row,
+  .member-habits-row-actions {
+    grid-template-columns: 1fr;
+  }
+}

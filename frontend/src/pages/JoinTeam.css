@@ -1,0 +1,63 @@
+.join-team-content {
+  max-width: 42rem;
+  gap: 2rem;
+}
+
+.join-team-title {
+  width: min(100%, 32rem);
+}
+
+.join-team-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.join-team-code-row {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.join-team-label {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 700;
+  text-align: right;
+}
+
+.join-team-input {
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+.join-team-code-row .field-error {
+  grid-column: 2;
+}
+
+.join-team-submit {
+  width: min(100%, 30rem);
+  min-height: 4rem;
+  margin: 0 auto;
+  border: none;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .join-team-content {
+    gap: 1.5rem;
+  }
+
+  .join-team-code-row {
+    grid-template-columns: 1fr;
+  }
+
+  .join-team-label {
+    text-align: left;
+  }
+
+  .join-team-code-row .field-error {
+    grid-column: 1;
+  }
+}

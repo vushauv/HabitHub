@@ -1,0 +1,36 @@
+.login-card {
+  width: min(100%, 40rem);
+  padding: 2.5rem;
+}
+
+.login-top {
+  margin-bottom: 1rem;
+}
+
+.login-header {
+  width: 100%;
+}
+
+.login-title {
+  width: 100%;
+  text-align: center;
+}
+
+.login-text {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.login-form {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .login-card {
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+  }
+}

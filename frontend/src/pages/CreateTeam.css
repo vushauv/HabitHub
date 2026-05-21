@@ -1,0 +1,62 @@
+.create-team-content {
+  max-width: 42rem;
+  gap: 2rem;
+}
+
+.create-team-title {
+  width: min(100%, 30rem);
+}
+
+.create-team-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.create-team-name-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.create-team-label {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  text-align: right;
+}
+
+.create-team-input {
+  border-radius: 999px;
+}
+
+.create-team-name-row .field-error {
+  grid-column: 2;
+}
+
+.create-team-submit {
+  width: min(100%, 30rem);
+  min-height: 4rem;
+  margin: 0 auto;
+  border: none;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .create-team-content {
+    gap: 1.5rem;
+  }
+
+  .create-team-name-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-team-label {
+    text-align: left;
+  }
+
+  .create-team-name-row .field-error {
+    grid-column: 1;
+  }
+}

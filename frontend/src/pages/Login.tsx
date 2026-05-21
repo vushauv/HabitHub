@@ -6,7 +6,6 @@ import type { LoginRequestDto } from "../services/dtos";
 import { loginFormSchema, type LoginForm } from "../services/Login";
 import {
   API_BASE_URL,
-  mapUserTypeToEnum,
 } from "../services/User";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -61,7 +60,7 @@ export default function Login() {
       const payload: LoginRequestDto = {
         email: form.email,
         password: form.password,
-        userType: mapUserTypeToEnum(form.userType),
+        userType: form.userType,
       };
 
       const response = await fetch(`${API_BASE_URL}/auth/login`, {

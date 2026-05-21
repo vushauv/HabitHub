@@ -112,7 +112,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
            e.Property(h => h.HabitType).IsRequired();
            e.Property(h => h.Unit).IsRequired(false);
            e.Property(h => h.ExpiryDate).IsRequired(false);
-           e.Property(h => h.ReminderTime).IsRequired(false);
+           e.Property(h => h.ReminderTime)
+           .HasColumnType("time without time zone")
+           .IsRequired(false);
 
            e.HasOne(h => h.Team)
            .WithMany(t => t.Habits)

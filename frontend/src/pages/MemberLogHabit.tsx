@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLens } from "@hookform/lenses";
@@ -9,10 +9,8 @@ import "../App.css";
 import TextInput from "../components/form/TextInput";
 import {
   clearStoredAuth,
-  formatEntryStatus,
   formatHabitEntryDateTime,
   formatHabitEntryValue,
-  formatHabitType,
   formatHabitUnit,
   getHabit,
   getHabitErrorMessage,
@@ -54,9 +52,9 @@ function getTodayStatusText(todayStatus: TodayHabitEntryStatusDto | null): strin
   }
 
   switch (todayStatus.status) {
-    case 0:
+    case "Logged":
       return "Progress was already logged today.";
-    case 2:
+    case "Skipped":
       return "Progress was skipped today.";
     default:
       return "No progress has been logged today.";
@@ -65,9 +63,7 @@ function getTodayStatusText(todayStatus: TodayHabitEntryStatusDto | null): strin
 
 export default function MemberLogHabit() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId") ?? "";
-  const habitId = searchParams.get("habitId") ?? "";
+  const { teamId = "", habitId = "" } = useParams();
   const auth = useMemo(() => getStoredAuth(), []);
   const [team, setTeam] = useState<TeamDetailsDto | null>(null);
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
@@ -190,12 +186,12 @@ export default function MemberLogHabit() {
       return;
     }
 
-    if (habit.habitState !== 0) {
+    if (habit.habitState !== "Active") {
       setPageError("Archived habits cannot be changed.");
       return;
     }
 
-    if (status === "Logged" && habit.habitType === 1) {
+    if (status === "Logged" && habit.habitType === "Quantitative") {
       const numericValue = Number(logValue);
 
       if (logValue.trim() === "" || Number.isNaN(numericValue)) {
@@ -276,11 +272,11 @@ export default function MemberLogHabit() {
   };
 
   const canLogToday =
-    habit?.habitState === 0 &&
-    todayStatus?.status === 1 &&
+    habit?.habitState === "Active" &&
+    todayStatus?.status === "Pending" &&
     todayStatus.entry === null;
-  const canUndoToday = habit?.habitState === 0 && todayStatus?.entry != null;
-  const isQuantitativeHabit = habit?.habitType === 1;
+  const canUndoToday = habit?.habitState === "Active" && todayStatus?.entry != null;
+  const isQuantitativeHabit = habit?.habitType === "Quantitative";
 
   return (
     <main className="page">
@@ -299,7 +295,7 @@ export default function MemberLogHabit() {
               </Link>
 
               <Link
-                to={`/habits-member?teamId=${encodeURIComponent(teamId)}`}
+                to={`/member/teams/${encodeURIComponent(teamId)}/habits`}
                 className="button button-secondary page-nav-button"
               >
                 Habits
@@ -341,7 +337,7 @@ export default function MemberLogHabit() {
                   <div className="habit-details-item">
                     <p className="habit-details-label">Type</p>
                     <p className="habit-details-value">
-                      {formatHabitType(habit.habitType)}
+                      {habit.habitType}
                     </p>
                   </div>
 
@@ -357,7 +353,7 @@ export default function MemberLogHabit() {
                   <div className="member-habit-log-top">
                     <p className="member-habit-log-title">Today</p>
                     <span className="member-habit-status-pill">
-                      {todayStatus ? formatEntryStatus(todayStatus.status) : "Loading"}
+                      {todayStatus ? todayStatus.status : "Loading"}
                     </span>
                   </div>
 
@@ -446,7 +442,7 @@ export default function MemberLogHabit() {
                         {pendingAction === "undo" ? "Undoing..." : "Undo Log"}
                       </button>
                     </div>
-                  ) : habit.habitState !== 0 ? (
+                  ) : habit.habitState !== "Active" ? (
                     <p className="member-habit-log-text">
                       Changes are disabled because this habit is archived.
                     </p>

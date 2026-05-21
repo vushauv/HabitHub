@@ -8,7 +8,6 @@ import {
   API_BASE_URL,
   DEFAULT_TIMEZONE,
   TIMEZONE_OPTIONS,
-  mapUserTypeToEnum,
 } from "../services/User.ts"
 import { useForm } from "react-hook-form"
 import TextInput from "../components/form/TextInput.tsx";
@@ -71,7 +70,7 @@ export default function Register() {
         email: form.email,
         password: form.password,
         timezone: form.timezone,
-        userType: mapUserTypeToEnum(form.userType),
+        userType: form.userType,
       };
 
       const response = await fetch(`${API_BASE_URL}/auth/register`, {

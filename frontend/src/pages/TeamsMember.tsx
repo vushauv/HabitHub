@@ -144,7 +144,7 @@ export default function TeamsMember() {
               <h1 className="title page-title teams-member-title pill-title">Your Memberships</h1>
 
               <Link
-                to="/join-team"
+                to="/member/teams/join"
                 className="button button-primary teams-member-join-button"
               >
                 Join a New Team
@@ -199,21 +199,22 @@ export default function TeamsMember() {
                       <span className="teams-member-team-name">{team.name}</span>
 
                       <Link
-                        to={`/habits-member?teamId=${encodeURIComponent(
+                        to={`/member/teams/${encodeURIComponent(
                           team.teamId,
-                        )}`}
+                        )}/habits`}
                         className="button button-secondary table-row-button"
                       >
                         Show Habits
                       </Link>
 
-                      <button
-                        type="button"
+                      <Link
+                        to={`/member/teams/${encodeURIComponent(
+                          team.teamId,
+                        )}/chat`}
                         className="button button-secondary table-row-button"
-                        disabled
                       >
                         Show Chat
-                      </button>
+                      </Link>
 
                       <button
                         type="button"

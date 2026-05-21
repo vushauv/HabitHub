@@ -1,38 +1,46 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { it, expect, vi, beforeEach, beforeAll, afterEach, afterAll } from "vitest";
+import {
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterEach,
+  afterAll,
+} from "vitest";
 import Register from "../../../src/pages/Register";
 import PathDisplay from "../PathDisplay";
-import { http, HttpResponse } from "msw"
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { API_URL } from "../../const";
 
 const handlers = [
   http.post(`${API_URL}/auth/register`, async ({ request }) => {
-    const data = await request.json() as {email: string} | undefined;
+    const data = (await request.json()) as { email: string } | undefined;
     if (data == null || !("email" in data) || data.email.includes("400")) {
-      return new HttpResponse(null, {status: 400});
+      return new HttpResponse(null, { status: 400 });
     }
     if (data.email.includes("creator")) {
       return HttpResponse.json({
         sessionId: "creator",
-      })
+      });
     }
     if (data.email.includes("member")) {
       return HttpResponse.json({
         sessionId: "member",
-      })
+      });
     }
-    return new HttpResponse(null, {status: 500}) // Case shouldn't be used in tests
+    return new HttpResponse(null, { status: 500 }); // Case shouldn't be used in tests
   }),
   http.get(`${API_URL}/auth/me`, async ({ request }) => {
     const sessionId = request.headers.get("X-Session-Id");
-    if(sessionId == "creator") {
+    if (sessionId == "creator") {
       return HttpResponse.json({
         id: "1234",
         name: "John Creator",
         email: "john@example.com",
-        userType: 0,
+        userType: "Creator",
         timezone: "UTC"
       })
     } else if(sessionId == "member") {
@@ -40,27 +48,30 @@ const handlers = [
         id: "1235",
         name: "John Member",
         email: "john@example.com",
-        userType: 1,
+        userType: "Member",
         timezone: "UTC"
       })
     } else {
-      return HttpResponse.json({ error: "auth-required", message: "Authentication is required." }, {status: 401})
+      return HttpResponse.json(
+        { error: "auth-required", message: "Authentication is required." },
+        { status: 401 },
+      );
     }
-  })
-]
+  }),
+];
 const server = setupServer(...handlers);
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 const App = () => (
   <MemoryRouter initialEntries={["/register"]}>
     <Routes>
-      <Route path="register" element={<Register />}/>
-      <Route path="/*" element={<PathDisplay/>}/>
+      <Route path="register" element={<Register />} />
+      <Route path="/*" element={<PathDisplay />} />
     </Routes>
   </MemoryRouter>
-)
+);
 
 beforeEach(() => {
   localStorage.clear();
@@ -93,12 +104,14 @@ it("shows validation errors on blur with empty fields", async () => {
 
   await waitFor(() => {
     expect(screen.getByText("Name is required.")).toBeInTheDocument();
-    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Enter a valid email address."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Password is required.")).toBeInTheDocument();
   });
 });
 
-it("navigates to /main-creator and stores auth on successful Creator register", async () => {
+it("navigates to /creator and stores auth on successful Creator register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -114,14 +127,14 @@ it("navigates to /main-creator and stores auth on successful Creator register", 
   fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /main-creator!")).toBeInTheDocument();
+    expect(screen.getByText("This is /creator!")).toBeInTheDocument();
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
   expect(stored.sessionId).toBe("creator");
 });
 
-it("navigates to /main-member and stores auth on successful Member register", async () => {
+it("navigates to /member and stores auth on successful Member register", async () => {
   render(App());
 
   fireEvent.change(screen.getByLabelText("Name"), {
@@ -137,7 +150,7 @@ it("navigates to /main-member and stores auth on successful Member register", as
   fireEvent.submit(screen.getByLabelText("Email"));
 
   await waitFor(() => {
-    expect(screen.getByText("This is /main-member!")).toBeInTheDocument();
+    expect(screen.getByText("This is /member!")).toBeInTheDocument();
   });
 
   const stored = JSON.parse(localStorage.getItem("habithubAuth")!);
@@ -157,7 +170,7 @@ it("shows error message on 400 response", async () => {
     target: { value: "password123" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Creator" }));
-  fireEvent.submit(screen.getByLabelText("Name"))
+  fireEvent.submit(screen.getByLabelText("Name"));
 
   await waitFor(() => {
     expect(screen.getByRole("alert")).toHaveTextContent(

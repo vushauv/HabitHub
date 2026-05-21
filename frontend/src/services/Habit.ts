@@ -8,15 +8,11 @@ import type {
   CreateHabitRequestDto,
   CreateHabitResponseDto,
   EditHabitRequestDto,
-  EntryStatusDto,
   HabitEntryResponseDto,
-  HabitStateDto,
   HabitSummaryDto,
-  HabitTypeDto,
   LeaderboardResponseDto,
   LogProgressRequestDto,
   TodayHabitEntryStatusDto,
-  UnitDto,
 } from "./dtos";
 
 export type {
@@ -29,6 +25,8 @@ export type {
   TodayHabitEntryStatusDto,
 } from "./dtos";
 export { clearStoredAuth, getStoredAuth } from "./Auth";
+
+export type HabitState = "Active" | "Archived" | "Closed";
 
 export type HabitStateFilter = "Active" | "Archived";
 
@@ -203,38 +201,8 @@ export function getHabitErrorMessage(errorCode: HabitErrorCode): string {
   }
 }
 
-export function formatHabitState(habitState: HabitStateDto): string {
-  switch (habitState) {
-    case 1:
-      return "Archived";
-    case 2:
-      return "Closed";
-    default:
-      return "Active";
-  }
-}
-
-export function formatHabitType(habitType: HabitTypeDto): HabitTypeName {
-  return habitType === 1 ? "Quantitative" : "Binary";
-}
-
-export function formatEntryStatus(status: EntryStatusDto): EntryStatusName {
-  switch (status) {
-    case 1:
-      return "Pending";
-    case 2:
-      return "Skipped";
-    default:
-      return "Logged";
-  }
-}
-
-export function formatHabitUnit(unit: UnitDto | null): string {
-  if (unit === null) {
-    return "No unit";
-  }
-
-  return unitOptions[unit] ?? "Unknown unit";
+export function formatHabitUnit(unit: UnitName | null): string {
+  return unit ?? "No unit";
 }
 
 export function formatHabitExpiryDate(dateString: string | null): string {
@@ -283,11 +251,11 @@ export function formatHabitEntryValue(
   entry: HabitEntryResponseDto,
   habit: HabitSummaryDto,
 ): string {
-  if (entry.status === 2) {
+  if (entry.status === "Skipped") {
     return "Skipped";
   }
 
-  if (habit.habitType === 0) {
+  if (habit.habitType === "Binary") {
     return "Completed";
   }
 
@@ -310,7 +278,7 @@ export function formatLeaderboardValue(
 
   const unit = formatHabitUnit(habit.unit);
 
-  return habit.habitType === 1 && habit.unit !== null
+  return habit.habitType === "Quantitative" && habit.unit !== null
     ? `${row.totalValue} ${unit}`
     : `${row.totalValue}`;
 }
@@ -481,7 +449,7 @@ function toCreateHabitRequest(form: CreateHabitForm): CreateHabitRequestDto {
   return {
     name: form.name.trim(),
     goal: normalizeNullableString(form.goal),
-    habitType: mapHabitTypeToDto(form.habitType),
+    habitType: form.habitType,
     unit: form.habitType === "Quantitative" ? mapUnitToDto(form.unit) : null,
     expiryDate: normalizeDateTime(form.expiryDate),
   };
@@ -528,30 +496,16 @@ function toLogProgressRequest(
 ): LogProgressRequestDto {
   return {
     value:
-      status === "Logged" && habit.habitType === 1
+      status === "Logged" && habit.habitType === "Quantitative"
         ? Number(form.value)
         : null,
     notes: normalizeNullableString(form.notes),
-    status: mapEntryStatusToDto(status),
+    status,
   };
 }
 
-function mapHabitTypeToDto(habitType: HabitTypeName): HabitTypeDto {
-  return habitType === "Quantitative" ? 1 : 0;
-}
-
-function mapUnitToDto(unit: "" | UnitName): UnitDto | null {
-  if (unit === "") {
-    return null;
-  }
-
-  const unitIndex = unitOptions.indexOf(unit);
-
-  return unitIndex === -1 ? null : (unitIndex as UnitDto);
-}
-
-function mapEntryStatusToDto(status: Exclude<EntryStatusName, "Pending">): EntryStatusDto {
-  return status === "Skipped" ? 2 : 0;
+function mapUnitToDto(unit: "" | UnitName): UnitName | null {
+  return unit === "" ? null : unit;
 }
 
 function compareHabitEntriesDescending(

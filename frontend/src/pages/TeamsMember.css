@@ -1,0 +1,52 @@
+.teams-member-content {
+  max-width: 58rem;
+  gap: 1.75rem;
+}
+
+.teams-member-header {
+  gap: 1rem;
+}
+
+.teams-member-title {
+  width: min(100%, 34rem);
+}
+
+.teams-member-join-button {
+  min-width: 14rem;
+  padding-block: 0.78rem;
+}
+
+.teams-member-table-row {
+  grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 0.8fr) minmax(8rem, 0.8fr) minmax(10rem, 0.9fr);
+}
+
+.teams-member-team-name {
+  font-weight: 700;
+  color: var(--text-color);
+  text-align: center;
+  word-break: break-word;
+}
+
+.teams-member-danger-button {
+  color: #b42318;
+}
+
+@media (max-width: 920px) {
+  .teams-member-table-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teams-member-table-head {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .teams-member-content {
+    gap: 1.35rem;
+  }
+
+  .teams-member-table-row {
+    grid-template-columns: 1fr;
+  }
+}

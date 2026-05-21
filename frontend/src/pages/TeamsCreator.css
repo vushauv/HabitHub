@@ -1,0 +1,80 @@
+.teams-creator-content {
+  max-width: 64rem;
+  gap: 1.75rem;
+}
+
+.teams-creator-header {
+  gap: 1rem;
+}
+
+.teams-creator-title {
+  width: min(100%, 34rem);
+}
+
+.teams-creator-create-button {
+  min-width: 14rem;
+  padding-block: 0.78rem;
+}
+
+.teams-creator-table-row {
+  grid-template-columns:
+    minmax(7rem, 1fr) minmax(7rem, 0.85fr) minmax(7rem, 0.8fr)
+    minmax(12rem, 1.2fr) minmax(7rem, 0.85fr) minmax(8rem, 0.9fr);
+}
+
+.teams-creator-team-name {
+  font-weight: 700;
+  color: var(--text-color);
+  text-align: center;
+  word-break: break-word;
+}
+
+.teams-creator-code-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.teams-creator-code-value {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-color);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.teams-creator-code-expiry,
+.teams-creator-code-empty {
+  color: var(--text-color-soft);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.teams-creator-danger-button {
+  color: #b42318;
+}
+
+@media (max-width: 1180px) {
+  .teams-creator-table-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teams-creator-table-head {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .teams-creator-content {
+    gap: 1.35rem;
+  }
+
+  .teams-creator-table-row {
+    grid-template-columns: 1fr;
+  }
+}

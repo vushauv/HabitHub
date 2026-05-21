@@ -1,0 +1,105 @@
+.creator-habits-content {
+  max-width: 76rem;
+  gap: 1.75rem;
+}
+
+.creator-habits-header {
+  gap: 1rem;
+}
+
+.creator-habits-title {
+  width: min(100%, 34rem);
+}
+
+.creator-habits-team-name {
+  margin-top: 0;
+}
+
+.creator-habits-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.creator-habits-state-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(8rem, 1fr));
+  gap: 0.55rem;
+  width: min(100%, 22rem);
+  margin: 0 auto;
+  padding: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.creator-habits-state-button {
+  min-width: 0;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: none;
+  box-shadow: none;
+}
+
+.creator-habits-state-button-active {
+  background: rgba(0, 113, 227, 0.92);
+  color: #ffffff;
+}
+
+.creator-habits-table-row {
+  grid-template-columns:
+    minmax(8rem, 1fr) minmax(6.5rem, 0.7fr) minmax(6.5rem, 0.7fr)
+    minmax(9rem, 0.9fr) minmax(8rem, 0.8fr) minmax(22rem, 2fr);
+}
+
+.creator-habits-name,
+.creator-habits-meta,
+.creator-habits-goal {
+  color: var(--text-color);
+  text-align: center;
+  word-break: break-word;
+}
+
+.creator-habits-name {
+  font-weight: 700;
+}
+
+.creator-habits-goal {
+  color: var(--text-color-soft);
+  line-height: 1.45;
+}
+
+.creator-habits-row-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.creator-habits-danger-button {
+  color: #b42318;
+}
+
+@media (max-width: 1180px) {
+  .creator-habits-table-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .creator-habits-table-head {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .creator-habits-content {
+    gap: 1.35rem;
+  }
+
+  .creator-habits-actions,
+  .creator-habits-table-row,
+  .creator-habits-row-actions,
+  .creator-habits-state-toggle {
+    grid-template-columns: 1fr;
+  }
+}

@@ -59,8 +59,10 @@ builder.Services.AddScoped<IHabitEntryRepository, HabitEntryRepository>();
 builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
+builder.Services.AddHostedService<ReminderNotificationService>();
 
 builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
     .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });

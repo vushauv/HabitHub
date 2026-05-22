@@ -24,8 +24,20 @@ import {
   TeamRequestError,
   type TeamDetailsDto,
 } from "../services/Team";
+import {
+  changeMyReminder,
+  formatReminderTime,
+  getMyReminder,
+  getReminderErrorMessage,
+  ReminderRequestError,
+  type MyReminderResponseDto,
+} from "../services/Reminder";
 
 function resolveErrorMessage(error: unknown): string {
+  if (error instanceof ReminderRequestError) {
+    return error.message || getReminderErrorMessage(error.code);
+  }
+
   if (error instanceof HabitRequestError) {
     return error.message || getHabitErrorMessage(error.code);
   }
@@ -46,6 +58,10 @@ export default function MemberHabitDetails() {
   const [entries, setEntries] = useState<HabitEntryResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [myReminder, setMyReminder] = useState<MyReminderResponseDto | null>(null);
+  const [reminderPending, setReminderPending] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState<string | null>(null);
+  const [reminderError, setReminderError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,10 +95,11 @@ export default function MemberHabitDetails() {
       }
 
       try {
-        const [loadedTeam, loadedHabit, loadedEntries] = await Promise.all([
+        const [loadedTeam, loadedHabit, loadedEntries, loadedReminder] = await Promise.all([
           getTeam(auth, teamId),
           getHabit(auth, habitId),
           getHabitEntries(auth, habitId),
+          getMyReminder(auth, habitId),
         ]);
 
         if (!isMounted) {
@@ -92,6 +109,7 @@ export default function MemberHabitDetails() {
         setTeam(loadedTeam);
         setHabit(loadedHabit);
         setEntries(loadedEntries);
+        setMyReminder(loadedReminder);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -99,7 +117,8 @@ export default function MemberHabitDetails() {
 
         if (
           (error instanceof HabitRequestError ||
-            error instanceof TeamRequestError) &&
+            error instanceof TeamRequestError ||
+            error instanceof ReminderRequestError) &&
           error.code === "auth-required"
         ) {
           clearStoredAuth();
@@ -124,6 +143,59 @@ export default function MemberHabitDetails() {
       isMounted = false;
     };
   }, [auth, habitId, navigate, teamId]);
+
+  const handleToggleReminder = async () => {
+    if (!habit || !myReminder) {
+      return;
+    }
+
+    const nextEnabled = !myReminder.enabled;
+
+    setReminderPending(true);
+    setReminderMessage(null);
+    setReminderError(null);
+
+    try {
+      const response = await changeMyReminder(
+        auth,
+        habit.habitId,
+        nextEnabled,
+      );
+
+      setMyReminder(response);
+      setReminderMessage(
+        response.enabled ? "Reminder enabled." : "Reminder disabled.",
+      );
+    } catch (error) {
+      if (error instanceof ReminderRequestError && error.code === "auth-required") {
+        clearStoredAuth();
+        setReminderError(getReminderErrorMessage(error.code));
+
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 1200);
+
+        return;
+      }
+
+      setReminderError(resolveErrorMessage(error));
+    } finally {
+      setReminderPending(false);
+    }
+  };
+
+  const canToggleReminder = Boolean(
+    habit?.habitState === "Active" &&
+      myReminder?.reminderTime &&
+      !reminderPending,
+  );
+  const hasReminderTime = Boolean(myReminder?.reminderTime);
+  const reminderEnabled = Boolean(myReminder?.enabled && hasReminderTime);
+  const reminderStatusText = hasReminderTime
+    ? reminderEnabled
+      ? "Enabled"
+      : "Disabled"
+    : "Not Set";
 
   return (
     <main className="page">
@@ -214,6 +286,57 @@ export default function MemberHabitDetails() {
                       {habit.goal ?? "No goal"}
                     </p>
                   </div>
+                </section>
+
+                <section
+                  className="habit-details-reminder-card"
+                  aria-label="Reminder settings"
+                >
+                  <div className="habit-details-reminder-top">
+                    <div>
+                      <p className="habit-details-section-title">Reminder</p>
+                      <p className="habit-details-reminder-text">
+                        {myReminder?.reminderTime
+                          ? formatReminderTime(myReminder.reminderTime)
+                          : "No reminder time set"}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`habit-details-reminder-status ${
+                        reminderEnabled
+                          ? "habit-details-reminder-status-enabled"
+                          : ""
+                      }`}
+                    >
+                      {reminderStatusText}
+                    </span>
+                  </div>
+
+                  <div className="habit-details-reminder-actions">
+                    <button
+                      type="button"
+                      className="button button-secondary"
+                      onClick={() => void handleToggleReminder()}
+                      disabled={!canToggleReminder}
+                    >
+                      {reminderPending
+                        ? "Updating..."
+                        : reminderEnabled
+                          ? "Disable Reminder"
+                          : "Enable Reminder"}
+                    </button>
+                  </div>
+
+                  {reminderError ? (
+                    <p className="form-error page-message" role="alert">
+                      {reminderError}
+                    </p>
+                  ) : null}
+
+                  {reminderMessage ? (
+                    <p className="alert-success">{reminderMessage}</p>
+                  ) : null}
                 </section>
 
                 <div className="habit-details-actions">

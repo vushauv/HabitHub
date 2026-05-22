@@ -187,11 +187,16 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
   min-width: 10.5rem;
   padding: 0.92rem 1.35rem;
   border-radius: 999px;
   border: 1px solid transparent;
   font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition:
     transform 0.18s ease,
@@ -307,6 +312,10 @@ textarea {
   -webkit-backdrop-filter: blur(18px);
 }
 
+.data-table-row > * {
+  min-width: 0;
+}
+
 .data-table-head {
   padding-block: 0.7rem;
   background: rgba(255, 255, 255, 0.72);
@@ -323,6 +332,7 @@ textarea {
   min-height: 2.75rem;
   padding: 0.65rem 0.8rem;
   font-size: 0.95rem;
+  align-self: stretch;
 }
 
 .page-card-shell {

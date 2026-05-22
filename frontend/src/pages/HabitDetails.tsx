@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import "./HabitDetails.css";
 import "../App.css";
 import {
@@ -18,8 +18,20 @@ import {
   TeamRequestError,
   type TeamDetailsDto,
 } from "../services/Team";
+import {
+  clearHabitReminder,
+  formatReminderTime,
+  formatReminderTimeInputValue,
+  getReminderErrorMessage,
+  ReminderRequestError,
+  setHabitReminder,
+} from "../services/Reminder";
 
 function resolveErrorMessage(error: unknown): string {
+  if (error instanceof ReminderRequestError) {
+    return error.message || getReminderErrorMessage(error.code);
+  }
+
   if (error instanceof HabitRequestError) {
     return error.message || getHabitErrorMessage(error.code);
   }
@@ -39,6 +51,11 @@ export default function HabitDetails() {
   const [habit, setHabit] = useState<HabitSummaryDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [reminderTime, setReminderTime] = useState("");
+  const [savedReminderTime, setSavedReminderTime] = useState<string | null>(null);
+  const [reminderAction, setReminderAction] = useState<"save" | "clear" | null>(null);
+  const [reminderMessage, setReminderMessage] = useState<string | null>(null);
+  const [reminderError, setReminderError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,6 +100,8 @@ export default function HabitDetails() {
 
         setTeam(loadedTeam);
         setHabit(loadedHabit);
+        setSavedReminderTime(loadedHabit.reminderTime ?? null);
+        setReminderTime(formatReminderTimeInputValue(loadedHabit.reminderTime ?? null));
       } catch (error) {
         if (!isMounted) {
           return;
@@ -90,7 +109,8 @@ export default function HabitDetails() {
 
         if (
           (error instanceof HabitRequestError ||
-            error instanceof TeamRequestError) &&
+            error instanceof TeamRequestError ||
+            error instanceof ReminderRequestError) &&
           error.code === "auth-required"
         ) {
           clearStoredAuth();
@@ -116,7 +136,73 @@ export default function HabitDetails() {
     };
   }, [auth, habitId, navigate, teamId]);
 
+  const handleSetReminder = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!habit || !reminderTime) {
+      return;
+    }
+
+    setReminderAction("save");
+    setReminderMessage(null);
+    setReminderError(null);
+
+    try {
+      const response = await setHabitReminder(
+        auth,
+        habit.habitId,
+        reminderTime,
+      );
+
+      setSavedReminderTime(response.reminderTime);
+      setReminderTime(formatReminderTimeInputValue(response.reminderTime));
+      setReminderMessage("Reminder saved.");
+    } catch (error) {
+      handleReminderActionError(error);
+    } finally {
+      setReminderAction(null);
+    }
+  };
+
+  const handleClearReminder = async () => {
+    if (!habit) {
+      return;
+    }
+
+    setReminderAction("clear");
+    setReminderMessage(null);
+    setReminderError(null);
+
+    try {
+      await clearHabitReminder(auth, habit.habitId);
+
+      setSavedReminderTime(null);
+      setReminderTime("");
+      setReminderMessage("Reminder cleared.");
+    } catch (error) {
+      handleReminderActionError(error);
+    } finally {
+      setReminderAction(null);
+    }
+  };
+
+  const handleReminderActionError = (error: unknown) => {
+    if (error instanceof ReminderRequestError && error.code === "auth-required") {
+      clearStoredAuth();
+      setReminderError(getReminderErrorMessage(error.code));
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1200);
+
+      return;
+    }
+
+    setReminderError(resolveErrorMessage(error));
+  };
+
   const canEdit = habit?.habitState === "Active";
+  const canChangeReminder = Boolean(canEdit && habit && !reminderAction);
 
   return (
     <main className="page">
@@ -207,6 +293,72 @@ export default function HabitDetails() {
                       {habit.goal ?? "No goal"}
                     </p>
                   </div>
+                </section>
+
+                <section
+                  className="habit-details-reminder-card"
+                  aria-label="Reminder settings"
+                >
+                  <div className="habit-details-reminder-top">
+                    <div>
+                      <p className="habit-details-section-title">Reminder</p>
+                      {savedReminderTime ? (
+                        <p className="habit-details-reminder-text">
+                          {formatReminderTime(savedReminderTime)}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <form
+                    className="habit-details-reminder-form"
+                    onSubmit={(event) => void handleSetReminder(event)}
+                  >
+                    <label className="form-field">
+                      <span className="form-label">Reminder time</span>
+                      <input
+                        type="time"
+                        className="form-input"
+                        value={reminderTime}
+                        onChange={(event) => setReminderTime(event.target.value)}
+                        disabled={!canChangeReminder}
+                        required
+                      />
+                    </label>
+
+                    <div className="habit-details-reminder-actions">
+                      <button
+                        type="submit"
+                        className="button button-primary"
+                        disabled={!canChangeReminder || !reminderTime}
+                      >
+                        {reminderAction === "save"
+                          ? "Saving..."
+                          : "Save Reminder"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="button button-secondary"
+                        onClick={() => void handleClearReminder()}
+                        disabled={!canChangeReminder}
+                      >
+                        {reminderAction === "clear"
+                          ? "Clearing..."
+                          : "Clear Reminder"}
+                      </button>
+                    </div>
+                  </form>
+
+                  {reminderError ? (
+                    <p className="form-error page-message" role="alert">
+                      {reminderError}
+                    </p>
+                  ) : null}
+
+                  {reminderMessage ? (
+                    <p className="alert-success">{reminderMessage}</p>
+                  ) : null}
                 </section>
 
                 {canEdit ? (

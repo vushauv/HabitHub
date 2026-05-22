@@ -21,6 +21,24 @@
   padding: 0.78rem 1.1rem;
 }
 
+.dashboard-notifications-link {
+  gap: 0.55rem;
+}
+
+.dashboard-notifications-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.45rem;
+  min-height: 1.45rem;
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(0, 113, 227, 0.92);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .dashboard-hero {
   margin: 2rem auto 0;
   width: min(100%, 30rem);

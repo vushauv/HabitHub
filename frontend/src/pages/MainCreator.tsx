@@ -2,6 +2,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import "./MainDashboard.css";
 import "../App.css";
 import type { UserDto } from "../services/dtos";
+import NotificationsDashboardLink from "../components/NotificationsDashboardLink";
 
 export default function MainCreator() {
   const currentUser = useOutletContext<UserDto>();
@@ -19,9 +20,7 @@ export default function MainCreator() {
             </Link>
 
             <div className="dashboard-top-right">
-              <button type="button" className="button button-secondary dashboard-pill">
-                Notifications (1)
-              </button>
+              <NotificationsDashboardLink />
             </div>
           </div>
 

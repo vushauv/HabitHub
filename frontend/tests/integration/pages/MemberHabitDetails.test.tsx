@@ -57,6 +57,14 @@ const makeHandlers = (h = habit, e = entries) => [
   ),
   http.get(`${API_URL}/habits/${HABIT_ID}`, () => HttpResponse.json(h)),
   http.get(`${API_URL}/habits/${HABIT_ID}/entries`, () => HttpResponse.json(e)),
+  http.get(`${API_URL}/habits/${HABIT_ID}/my-reminder`, () =>
+    HttpResponse.json({
+      habitId: HABIT_ID,
+      memberId: "member-1",
+      enabled: false,
+      reminderTime: null,
+    }),
+  ),
 ];
 
 const server = setupServer(...makeHandlers());

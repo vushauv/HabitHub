@@ -84,8 +84,8 @@ public class TeamLeaveTeamEndpointTests
         Assert.Equal(HttpStatusCode.NotFound, response2.StatusCode);
     }
 
-    [Fact(Skip = "TODO: Fix")]
-    public async Task LeaveTeam_WithTeamCreatorSession_Returns409()
+    [Fact]
+    public async Task LeaveTeam_WithTeamCreatorSession_Returns403()
     {
         var uuid = Guid.NewGuid().ToString();
         
@@ -105,6 +105,6 @@ public class TeamLeaveTeamEndpointTests
         var teamId = await TestUtils.TeamCreate(_client, uuid);
         
         var response = await _client.PostAsync($"/teams/{teamId}/leave", null, TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }

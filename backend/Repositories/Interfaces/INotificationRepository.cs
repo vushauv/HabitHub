@@ -11,5 +11,6 @@ namespace backend.Repositories.Interfaces
         Task<Notification> CreateNotificationAsync(Notification notification);
         Task<bool> MarkNotificationAsReadAsync(Guid notificationId);
         Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId);
+        Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status);
     }
 }

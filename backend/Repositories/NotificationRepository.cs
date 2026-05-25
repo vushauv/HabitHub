@@ -66,5 +66,22 @@ namespace backend.Repositories
             await db.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status)
+        {
+            Notification? notification = await db.Notifications.FirstOrDefaultAsync(n => n.NotificationId == notificationId);
+            if (notification == null)
+                return false;
+
+            if (notification.Type != NotificationType.Reminder)
+                return false;
+            if (notification.Status == NotificationStatus.Deleted)
+                return false;
+
+            notification.Status = status;
+            await db.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

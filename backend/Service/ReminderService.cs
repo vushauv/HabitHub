@@ -1,3 +1,4 @@
+using backend.Data.UnitOfWork;
 using backend.Dtos.ReminderDtos;
 using backend.Enums;
 using backend.Exceptions;
@@ -12,7 +13,8 @@ namespace backend.Service
         IHabitTeamRepository habitTeams,
         IMembershipRepository memberships,
         ITeamMemberRepository members,
-        IReminderRepository reminders
+        IReminderRepository reminders,
+        IUnitOfWork unitOfWork
     ) : IReminderService
     {
         public async Task<HabitReminderResponseDto> SetHabitReminder(Guid userId, UserType userType, Guid habitId, SetReminderRequestDto request)
@@ -29,16 +31,21 @@ namespace backend.Service
             if (!ownsTeam)
                 throw new ForbiddenException();
 
-            bool updated = await reminders.SetHabitReminderTimeAsync(habit.HabitId, request.ReminderTime);
-            if (!updated)
-                throw new NotFoundException();
+            HabitReminderResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                bool updated = await reminders.SetHabitReminderTimeAsync(habit.HabitId, request.ReminderTime);
+                if (!updated)
+                    throw new NotFoundException();
 
-            List<Membership> activeMemberships = await memberships.GetActiveMembershipsByTeamIdAsync(habit.TeamId);
-            List<Guid> memberIds = activeMemberships.Select(m => m.MemberId).ToList();
+                List<Membership> activeMemberships = await memberships.GetActiveMembershipsByTeamIdAsync(habit.TeamId);
+                List<Guid> memberIds = activeMemberships.Select(m => m.MemberId).ToList();
 
-            await reminders.CreateMissingRemindersForHabitAsync(habit.HabitId, memberIds);
+                await reminders.CreateMissingRemindersForHabitAsync(habit.HabitId, memberIds);
 
-            return new HabitReminderResponseDto(habit.HabitId, request.ReminderTime);
+                return new HabitReminderResponseDto(habit.HabitId, request.ReminderTime);
+            });
+
+            return response;
         }
 
         public async Task ClearHabitReminder(Guid userId, UserType userType, Guid habitId)

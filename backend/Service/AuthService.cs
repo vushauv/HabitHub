@@ -7,10 +7,17 @@ using backend.Enums;
 using backend.Utils;
 using backend.Service.Interfaces;
 using backend.Repositories.Interfaces;
+using backend.Data.UnitOfWork;
 
 namespace backend.Service
 {
-    public class AuthService(ITeamCreatorRepository creators, ITeamMemberRepository members, ISessionRepository sessions, INotificationRepository notifications, ILogger<AuthService> logger) : IAuthService
+    public class AuthService(
+        ITeamCreatorRepository creators, 
+        ITeamMemberRepository members, 
+        ISessionRepository sessions, 
+        INotificationRepository notifications, 
+        IUnitOfWork unitOfWork,
+        ILogger<AuthService> logger) : IAuthService
     {
         private PasswordHasher<object> hasher = new PasswordHasher<object>();
         public async Task<AuthResponseDto> Register(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
@@ -53,14 +60,19 @@ namespace backend.Service
                 PasswordHash = hasher.HashPassword(null!, request.Password),
             };
 
-            TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
-            Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
-            logger.LogInformation("Registered creator {CreatorId}", createdCreator.CreatorId);
+            AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
+                Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
 
-            return new AuthResponseDto(
-                createdSession.SessionId,
-                new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
-            ;
+                return new AuthResponseDto(
+                    createdSession.SessionId,
+                    new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
+                ;
+            });
+
+            logger.LogInformation("Registered creator {UserId}", response.User.Id);
+            return response;
         }
 
         private async Task<AuthResponseDto> RegisterMemberAsync(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
@@ -84,14 +96,18 @@ namespace backend.Service
                 Timezone = timezone
             };
 
-            TeamMember createdMember = await members.CreateMemberAsync(member);
-            Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress,deviceInfo);
-            logger.LogInformation("Registered member {MemberId}", createdMember.MemberId);
+            AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                TeamMember createdMember = await members.CreateMemberAsync(member);
+                Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress, deviceInfo);
 
-            return new AuthResponseDto(
-                createdSession.SessionId,
-                new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
-            ;
+                return new AuthResponseDto(
+                    createdSession.SessionId,
+                    new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
+                ;
+            });
+            logger.LogInformation("Registered member {MemberId}", response.User.Id);
+            return response;
         }
 
         private async Task<AuthResponseDto> LoginCreatorAsync(LoginRequestDto request, string? ipAddress, string? deviceInfo)
@@ -216,12 +232,8 @@ namespace backend.Service
                     logger.LogWarning("Change password rejected: invalid current password for creator {CreatorId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
                 }
-
-                string newHash = hasher.HashPassword(null!, request.NewPassword);
-                await creators.UpdatePasswordAsync(userId, newHash);
-                logger.LogInformation("Changed password for creator {CreatorId}", userId);
-
-            } else if(userType == UserType.Member)
+            } 
+            else if(userType == UserType.Member)
             {
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
                 if(member == null)
@@ -233,17 +245,33 @@ namespace backend.Service
                     logger.LogWarning("Change password rejected: invalid current password for member {MemberId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
                 }
-
-                string newHash = hasher.HashPassword(null!, request.NewPassword);
-                await members.UpdatePasswordAsync(userId, newHash);
-                logger.LogInformation("Changed password for member {MemberId}", userId);
-            } else
+            } 
+            else
             {
                 throw new AuthRequiredException(); 
             }
 
-            await CreateSystemNotification(userId, userType, "Your password was changed.");
-            await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+            string newHash = hasher.HashPassword(null!, request.NewPassword);
+
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                if (userType == UserType.Creator)
+                {
+                    await creators.UpdatePasswordAsync(userId, newHash);
+                }
+                else if (userType == UserType.Member)
+                {
+                    await members.UpdatePasswordAsync(userId, newHash);
+                }
+                else
+                {
+                    throw new AuthRequiredException();
+                }
+                await CreateSystemNotification(userId, userType, "Your password was changed.");
+                await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+            });
+           
+            logger.LogInformation("Changed password for {UserType} {UserId}", userType, userId);
         }
         public async Task ChangeEmail(Guid userId, UserType userType, string currentSessionId, ChangeEmailRequestDto request)
         {
@@ -269,11 +297,8 @@ namespace backend.Service
                     logger.LogWarning("Change email rejected: invalid password for creator {CreatorId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
                 }
-
-                await creators.ChangeEmailAsync(userId, email);
-                logger.LogInformation("Changed email for creator {CreatorId}", userId);
-
-            } else if(userType == UserType.Member)
+            } 
+            else if(userType == UserType.Member)
             {
                 if(await members.EmailAlreadyExistsAsync(email))
                 {
@@ -291,17 +316,30 @@ namespace backend.Service
                     logger.LogWarning("Change email rejected: invalid password for member {MemberId}", userId);
                     throw new AppException(StatusCodes.Status401Unauthorized, "invalid-credentials", "Invalid credentials.");
                 }
-
-                await members.ChangeEmailAsync(userId, email);
-                logger.LogInformation("Changed email for member {MemberId}", userId);
             }
             else
             {
                 throw new AuthRequiredException();
             }
 
-            await CreateSystemNotification(userId, userType, "Your email address was changed.");
-            await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                if (userType == UserType.Creator)
+                {
+                    await creators.ChangeEmailAsync(userId, email);
+                }
+                else if (userType == UserType.Member)
+                {
+                    await members.ChangeEmailAsync(userId, email);
+                }
+                else
+                {
+                    throw new AuthRequiredException();
+                }
+                await CreateSystemNotification(userId, userType, "Your email address was changed.");
+                await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+            });
+            logger.LogInformation("Changed email for {UserType} {UserId}", userType, userId);
         }
 
         public async Task<UserDto> GetMe(Guid userId, UserType userType)

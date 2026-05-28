@@ -1,3 +1,4 @@
+using backend.Data.UnitOfWork;
 using backend.Enums;
 using backend.Models;
 using backend.Repositories.Interfaces;
@@ -175,6 +176,17 @@ public sealed class FakeReminderRepository : IReminderRepository
     public Task<bool> UpdateLastSentAtAsync(Guid reminderId, DateTime lastSentAt) => throw new NotImplementedException();
 }
 
+public sealed class FakeUnitOfWork: IUnitOfWork
+{
+    public async Task ExecuteInTransactionAsync(Func<Task> action)
+    {
+        await action();
+    }
+    public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action)
+    {
+        return await action();
+    }
+}
 public static class HabitTestIds
 {
     public static readonly Guid UserId = Guid.Parse("11111111-1111-1111-1111-111111111111");

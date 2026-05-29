@@ -56,6 +56,30 @@ namespace backend.Repositories
             await db.SaveChangesAsync();
             return true;
         }
+        public async Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type)
+        {
+            IQueryable<Notification> query = db.Notifications.Where(n =>
+                n.UserId == userId &&
+                n.UserType == userType &&
+                n.Status == NotificationStatus.Unread
+            );
+
+            if(type != null)
+            {
+                query = query.Where(n => n.Type == type.Value);
+            }
+
+            List<Notification> unreadNotifications = await query.ToListAsync();
+
+            if (unreadNotifications.Count == 0)
+                return;
+            foreach(Notification notification in unreadNotifications)
+            {
+                notification.Status = NotificationStatus.Read;
+            }
+
+            await db.SaveChangesAsync();
+        }
         public async Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId)
         {
             Notification? notification = await db.Notifications.FirstOrDefaultAsync(n => n.NotificationId == notificationId);
@@ -64,6 +88,23 @@ namespace backend.Repositories
 
             notification.Status = NotificationStatus.Deleted;
             await db.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status)
+        {
+            Notification? notification = await db.Notifications.FirstOrDefaultAsync(n => n.NotificationId == notificationId);
+            if (notification == null)
+                return false;
+
+            if (notification.Type != NotificationType.Reminder)
+                return false;
+            if (notification.Status == NotificationStatus.Deleted)
+                return false;
+
+            notification.Status = status;
+            await db.SaveChangesAsync();
+
             return true;
         }
     }

@@ -13,6 +13,7 @@ using Serilog;
 using Serilog.Events;
 using backend.Service.Interfaces;
 using backend.Repositories.Interfaces;
+using backend.Data.UnitOfWork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,10 +53,12 @@ builder.Services.AddScoped<IInviteCodeRepository, InviteCodeRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();
 builder.Services.AddScoped<IHabitEntryRepository, HabitEntryRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();

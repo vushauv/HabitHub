@@ -84,26 +84,7 @@ namespace backend.Service
         }
         public async Task MarkAllAsRead(Guid userId, UserType userType, NotificationType? type)
         {
-            List<Notification> userNotifications = new List<Notification>();
-
-            if (type == null)
-            {
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, NotificationType.System));
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, NotificationType.Reminder));
-            }
-            else
-            {
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, type.Value));
-            }
-            
-            List<Notification> unreadNotifications = userNotifications
-                .Where(n => n.Status == NotificationStatus.Unread)
-                .ToList();
-
-            foreach (Notification notification in unreadNotifications)
-            {
-                await notifications.MarkNotificationAsReadAsync(notification.NotificationId);
-            }
+            await notifications.MarkAllUnreadNotificationsAsReadAsync(userId, userType, type);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using backend.Dtos.HabitDtos;
+﻿using backend.Data.UnitOfWork;
+using backend.Dtos.HabitDtos;
 using backend.Dtos.HabitEntryDtos;
 using backend.Enums;
 using backend.Exceptions;
@@ -14,7 +15,8 @@ namespace backend.Service
         IMembershipRepository memberships,
         IHabitEntryRepository habitEntries,
         ITeamMemberRepository members,
-        IReminderRepository reminders
+        IReminderRepository reminders,
+        IUnitOfWork unitOfWork
     ):IHabitService
     {
         public async Task<CreateHabitResponseDto> CreateHabit(Guid userId, Guid teamId, CreateHabitRequestDto request)
@@ -183,11 +185,14 @@ namespace backend.Service
             if (habit.HabitState == HabitState.Archived)
                 return;
 
-            bool archived = await habits.ArchiveHabitAsync(habit.HabitId);
-            if (!archived)
-                throw new NotFoundException();
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                bool archived = await habits.ArchiveHabitAsync(habit.HabitId);
+                if (!archived)
+                    throw new NotFoundException();
 
-            await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
+                await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
+            });
         }
 
         public async Task DeleteHabit(Guid userId, Guid habitId)

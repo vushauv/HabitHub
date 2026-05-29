@@ -1,11 +1,11 @@
-﻿using backend.Dtos.HabitDtos;
-using backend.Dtos.TeamDtos;
+﻿using backend.Dtos.TeamDtos;
 using backend.Enums;
 using backend.Exceptions;
 using backend.Models;
 using backend.Repositories.Interfaces;
 using backend.Service.Interfaces;
 using backend.Utils;
+using backend.Data.UnitOfWork;
 
 namespace backend.Service
 {
@@ -18,6 +18,7 @@ namespace backend.Service
         IInviteCodeRepository inviteCodes,
         IReminderRepository reminders,
         IChatRepository chats,
+        IUnitOfWork unitOfWork,
         ILogger<TeamService> logger
         ): ITeamService
     {
@@ -33,24 +34,31 @@ namespace backend.Service
                 logger.LogWarning("Create team rejected: creator {UserId} not found", userId);
                 throw new ForbiddenException();
             }
-            //This probably should be done using a transaction
-            HabitTeam team = new HabitTeam
-            {
-                TeamId = Guid.NewGuid(),
-                Name = name,
-                CreatorId = creator.CreatorId
-            };
-            HabitTeam createdTeam = await habitTeams.CreateHabitTeamAsync(team);
 
-            TeamChat chat = new TeamChat
+            Guid? teamChatId = null;
+            CreateTeamResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                ChatId = Guid.NewGuid(),
-                TeamId = createdTeam.TeamId
-            };
-            TeamChat createdChat = await chats.CreateChatAsync(chat);
-            logger.LogInformation("Created team {TeamId} for creator {CreatorId} with chat {ChatId}", createdTeam.TeamId, creator.CreatorId, createdChat.ChatId);
+                HabitTeam team = new HabitTeam
+                {
+                    TeamId = Guid.NewGuid(),
+                    Name = name,
+                    CreatorId = creator.CreatorId
+                };
+                HabitTeam createdTeam = await habitTeams.CreateHabitTeamAsync(team);
 
-            return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
+                TeamChat chat = new TeamChat
+                {
+                    ChatId = Guid.NewGuid(),
+                    TeamId = createdTeam.TeamId
+                };
+                TeamChat createdChat = await chats.CreateChatAsync(chat);
+                teamChatId = createdChat.ChatId;
+
+                return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
+            });
+
+            logger.LogInformation("Created team {TeamId} for creator {CreatorId} with chat {ChatId}", response.TeamId, creator.CreatorId, teamChatId);
+            return response;
         }
 
         public async Task<InviteCodeDto> GenerateInviteCode(Guid userId, Guid teamId)
@@ -69,26 +77,31 @@ namespace backend.Service
                 throw new ForbiddenException();
             }
 
-            await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId);
-
-            InviteCode inviteCode = new InviteCode
+            InviteCodeDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                CodeId = Guid.NewGuid(),
-                Code = InviteCodeGenerator.GenerateInviteCodeValue(),
-                TeamId = team.TeamId,
-                ExpiryDate = DateTime.UtcNow.AddDays(10), 
-                Status = CodeStatus.Active
-            };
+                await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId);
 
-            InviteCode createdInviteCode = await inviteCodes.CreateInviteCodeAsync(inviteCode);
-            logger.LogInformation("Generated invite code {CodeId} for team {TeamId}", createdInviteCode.CodeId, team.TeamId);
+                InviteCode inviteCode = new InviteCode
+                {
+                    CodeId = Guid.NewGuid(),
+                    Code = InviteCodeGenerator.GenerateInviteCodeValue(),
+                    TeamId = team.TeamId,
+                    ExpiryDate = DateTime.UtcNow.AddDays(10),
+                    Status = CodeStatus.Active
+                };
 
-            return new InviteCodeDto(
-                createdInviteCode.CodeId,
-                createdInviteCode.Code,
-                createdInviteCode.TeamId,
-                createdInviteCode.ExpiryDate
-            );
+                InviteCode createdInviteCode = await inviteCodes.CreateInviteCodeAsync(inviteCode);
+
+                return new InviteCodeDto(
+                    createdInviteCode.CodeId,
+                    createdInviteCode.Code,
+                    createdInviteCode.TeamId,
+                    createdInviteCode.ExpiryDate
+                );
+            });
+
+            logger.LogInformation("Generated invite code {CodeId} for team {TeamId}", response.CodeId, team.TeamId);
+            return response;
         }
         public async Task InvalidateInviteCode(Guid userId, Guid teamId, Guid codeId)
         {
@@ -187,27 +200,35 @@ namespace backend.Service
                 throw new ConflictException("already-member", "User is already a member of this team.");
             }
 
-            if(membership == null)
+            int habitReminderCount = 0;
+            JoinTeamResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                Membership createdMembership = new Membership
+                if (membership == null)
                 {
-                    MembershipId = Guid.NewGuid(),
-                    TeamId = inviteCode.TeamId,
-                    MemberId = member.MemberId,
-                    Status = MembershipStatus.Active
-                };
-                await memberships.CreateMembershipAsync(createdMembership);
-            }
-            else
-            {
-                await memberships.UpdateMembershipStatusAsync(inviteCode.TeamId, member.MemberId, MembershipStatus.Active);
-            }
-            List<Guid> habitIdsWithReminders = await habits.GetActiveHabitIdsWithReminderTimeByTeamIdAsync(habitTeam.TeamId);
-            await reminders.CreateMissingRemindersForMemberAsync(member.MemberId, habitIdsWithReminders);
+                    Membership createdMembership = new Membership
+                    {
+                        MembershipId = Guid.NewGuid(),
+                        TeamId = inviteCode.TeamId,
+                        MemberId = member.MemberId,
+                        Status = MembershipStatus.Active
+                    };
+                    await memberships.CreateMembershipAsync(createdMembership);
+                }
+                else
+                {
+                    await memberships.UpdateMembershipStatusAsync(inviteCode.TeamId, member.MemberId, MembershipStatus.Active);
+                }
+                List<Guid> habitIdsWithReminders = await habits.GetActiveHabitIdsWithReminderTimeByTeamIdAsync(habitTeam.TeamId);
 
-            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}. Ensured reminder setting for {HabitCount} habits.", member.MemberId, inviteCode.TeamId, inviteCode.CodeId, habitIdsWithReminders.Count);
+                habitReminderCount = habitIdsWithReminders.Count;
 
-            return new JoinTeamResponseDto(inviteCode.TeamId, member.MemberId);
+                await reminders.CreateMissingRemindersForMemberAsync(member.MemberId, habitIdsWithReminders);
+
+                return new JoinTeamResponseDto(inviteCode.TeamId, member.MemberId);
+            });
+
+            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}. Ensured reminder setting for {HabitCount} habits.", member.MemberId, inviteCode.TeamId, inviteCode.CodeId, habitReminderCount);
+            return response;
         }
         public async Task KickUser(Guid userId, Guid teamId, Guid memberId)
         {
@@ -272,9 +293,11 @@ namespace backend.Service
                 logger.LogWarning("Delete team rejected: user {UserId} is not owner of team {TeamId}", userId, teamId);
                 throw new ForbiddenException();
             }
-
-            await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId); //TODO: Discuss, not in sequence but i believe useful
-            await habitTeams.DeleteHabitTeamAsync(team.TeamId);
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await inviteCodes.InvalidateActiveInviteCodesByTeamIdAsync(team.TeamId); 
+                await habitTeams.DeleteHabitTeamAsync(team.TeamId);
+            });
             logger.LogInformation("Deleted team {TeamId} by creator {UserId}", teamId, userId);
         }
         public async Task<List<TeamSummaryDto>> GetTeams(Guid userId, UserType userType)

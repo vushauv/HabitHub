@@ -2,6 +2,7 @@ using backend.Data.UnitOfWork;
 using backend.Enums;
 using backend.Models;
 using backend.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Tests.Unit.Services.Habit;
 
@@ -64,10 +65,16 @@ public sealed class FakeHabitRepository : IHabitRepository
 public sealed class FakeHabitTeamRepository : IHabitTeamRepository
 {
     public Dictionary<Guid, HabitTeam> TeamsById { get; } = new();
+    public Dictionary<Guid, HabitTeam> TeamsByHabitId { get; } = new();
+
     public Dictionary<(Guid TeamId, Guid UserId), bool> Owners { get; } = new();
 
     public Task<HabitTeam?> GetHabitTeamByIdAsync(Guid teamId)
         => Task.FromResult(TeamsById.TryGetValue(teamId, out var t) ? t : null);
+
+    public Task<HabitTeam?> GetHabitTeamByHabitIdAsync(Guid habitId)
+        => Task.FromResult(TeamsByHabitId.TryGetValue(habitId, out var t) ? t : null);
+
 
     public Task<bool> CheckOwnershipOfTeamAsync(Guid teamId, Guid creatorId)
         => Task.FromResult(Owners.TryGetValue((teamId, creatorId), out var v) && v);
@@ -186,6 +193,23 @@ public sealed class FakeUnitOfWork: IUnitOfWork
     {
         return await action();
     }
+}
+
+public sealed class FakeLogger<T> : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        => null;
+
+    public bool IsEnabled(LogLevel logLevel)
+        => false;
+
+    public void Log<TState>(
+        LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    { }
 }
 public static class HabitTestIds
 {

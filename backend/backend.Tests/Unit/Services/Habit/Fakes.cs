@@ -72,10 +72,6 @@ public sealed class FakeHabitTeamRepository : IHabitTeamRepository
     public Task<HabitTeam?> GetHabitTeamByIdAsync(Guid teamId)
         => Task.FromResult(TeamsById.TryGetValue(teamId, out var t) ? t : null);
 
-    public Task<HabitTeam?> GetHabitTeamByHabitIdAsync(Guid habitId)
-        => Task.FromResult(TeamsByHabitId.TryGetValue(habitId, out var t) ? t : null);
-
-
     public Task<bool> CheckOwnershipOfTeamAsync(Guid teamId, Guid creatorId)
         => Task.FromResult(Owners.TryGetValue((teamId, creatorId), out var v) && v);
 

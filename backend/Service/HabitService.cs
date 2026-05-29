@@ -163,13 +163,6 @@ namespace backend.Service
                 throw new RequestValidationException("Expiry date must be in the future");
             }
 
-            HabitTeam? team = await habitTeams.GetHabitTeamByHabitIdAsync(habitId);
-            if (team == null)
-            {
-                logger.LogWarning("Edit habit rejected: habit team for {HabitId} not found.", habitId);
-                throw new NotFoundException();
-            }
-
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
             {
@@ -180,7 +173,7 @@ namespace backend.Service
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(habit.TeamId, userId);
             if (!isTeamCreator)
             {
-                logger.LogWarning("Edit habit rejected: user {UserId} is not a team creator of team {TeamId}.", userId, team.TeamId);
+                logger.LogWarning("Edit habit rejected: user {UserId} is not a team creator of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
             }
 
@@ -222,13 +215,6 @@ namespace backend.Service
         }
         public async Task ArchiveHabit(Guid userId, Guid habitId)
         {
-            HabitTeam? team = await habitTeams.GetHabitTeamByHabitIdAsync(habitId);
-            if (team == null)
-            {
-                logger.LogWarning("Archive habit rejected: habit team for {HabitId} not found.", habitId);
-                throw new NotFoundException();
-            }
-
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
             {
@@ -239,7 +225,7 @@ namespace backend.Service
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(habit.TeamId, userId);
             if (!isTeamCreator)
             {
-                logger.LogWarning("Archive habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, team.TeamId);
+                logger.LogWarning("Archive habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
             }
 
@@ -263,13 +249,6 @@ namespace backend.Service
 
         public async Task DeleteHabit(Guid userId, Guid habitId)
         {
-            HabitTeam? team = await habitTeams.GetHabitTeamByHabitIdAsync(habitId);
-            if (team == null)
-            {
-                logger.LogWarning("Delete habit rejected: habit team for {HabitId} not found.", habitId);
-                throw new NotFoundException();
-            }
-
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
             {
@@ -280,7 +259,7 @@ namespace backend.Service
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(habit.TeamId, userId);
             if (!isTeamCreator)
             {
-                logger.LogWarning("Delete habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, team.TeamId);
+                logger.LogWarning("Delete habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
             }
 

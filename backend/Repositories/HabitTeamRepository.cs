@@ -48,7 +48,4 @@ public class HabitTeamRepository(AppDbContext db, ILogger<HabitTeamRepository> l
 
     public async Task<HabitTeam?> GetHabitTeamByIdAsync(Guid teamId) =>
         await db.HabitTeams.SingleOrDefaultAsync(t => t.TeamId == teamId);
-    public async Task<HabitTeam?> GetHabitTeamByHabitIdAsync(Guid habitId) =>
-        await db.HabitTeams.FirstOrDefaultAsync(team => team.Habits.Any(habit => habit.HabitId == habitId));
-
 }

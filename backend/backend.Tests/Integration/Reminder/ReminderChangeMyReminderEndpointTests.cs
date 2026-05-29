@@ -4,15 +4,15 @@ using backend.Dtos.ReminderDtos;
 using backend.Enums;
 using backend.Tests.Fixtures;
 
-namespace backend.Tests.Integration.Habit;
+namespace backend.Tests.Integration.Reminder;
 
 [Trait("Category", "Integration")]
 [Collection("Web app collection")]
-public class HabitChangeMyReminderEndpointTests
+public class ReminderChangeMyReminderEndpointTests
 {
     private readonly HttpClient _client;
 
-    public HabitChangeMyReminderEndpointTests(TestWebAppFactory factory)
+    public ReminderChangeMyReminderEndpointTests(TestWebAppFactory factory)
     {
         _client = factory.CreateClient();
     }

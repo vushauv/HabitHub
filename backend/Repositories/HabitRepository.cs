@@ -3,6 +3,7 @@ using backend.Enums;
 using backend.Models;
 using backend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using backend.Exceptions;
 
 namespace backend.Repositories;
 
@@ -86,7 +87,7 @@ public class HabitRepository(AppDbContext db) : IHabitRepository
     {
         Habit? existing = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habit.HabitId);
         if (existing == null)
-            throw new KeyNotFoundException("Habit not found.");
+            throw new NotFoundException("habit-not-found", "Habit not found.");
 
         existing.Name = habit.Name;
         existing.Goal = habit.Goal;
@@ -99,7 +100,7 @@ public class HabitRepository(AppDbContext db) : IHabitRepository
     {
         Habit? habit = await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
         if(habit == null)
-            throw new KeyNotFoundException("Habit not found.");
+            throw new NotFoundException("habit-not-found", "Habit not found.");
         habit.HabitState = state;
         await db.SaveChangesAsync();
     }

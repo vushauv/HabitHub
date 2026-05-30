@@ -16,7 +16,8 @@ namespace backend.Service
         IHabitEntryRepository habitEntries,
         ITeamMemberRepository members,
         IReminderRepository reminders,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        ILogger<HabitService> logger
     ):IHabitService
     {
         public async Task<CreateHabitResponseDto> CreateHabit(Guid userId, Guid teamId, CreateHabitRequestDto request)
@@ -27,21 +28,36 @@ namespace backend.Service
             HabitType habitType = request.HabitType ?? HabitType.Binary;
 
             if (habitType == HabitType.Binary && request.Unit != null)
-                throw new RequestValidationException("Unit is allowed only for quantitative habits.");
+            {
+                logger.LogWarning("Create habit rejected: unit is not allowed for binary habits.");
+                throw new RequestValidationException("Unit is not allowed for binary habits.");
+            }
 
             if (habitType == HabitType.Quantitative && request.Unit == null)
+            {
+                logger.LogWarning("Create habit rejected: unit is required for quantitative habits.");
                 throw new RequestValidationException("Unit is required for quantitative habits.");
+            }
 
             if (request.ExpiryDate != null && request.ExpiryDate <= DateTime.UtcNow)
+            {
+                logger.LogWarning("Create habit rejected: expiry date must be in the future.");
                 throw new RequestValidationException("Expiry date must be in the future.");
+            }
 
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
+            {
+                logger.LogWarning("Create habit rejected: team {TeamId} not found.", teamId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Create habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, teamId);
                 throw new ForbiddenException();
+            }
 
             Habit habit = new Habit
             {
@@ -57,6 +73,8 @@ namespace backend.Service
             };
 
             Habit createdHabit = await habits.CreateHabitAsync(habit);
+
+            logger.LogInformation("Created habit {HabitId} for team {TeamId} by user {UserId}", habit.HabitId, teamId, userId);
 
             return new CreateHabitResponseDto(
                 createdHabit.HabitId,
@@ -122,27 +140,48 @@ namespace backend.Service
         public async Task<HabitSummaryDto> EditHabit(Guid userId, Guid habitId, EditHabitRequestDto request)
         {
             if (request.ClearGoal && NormalizeNullableString(request.Goal) != null)
+            {
+                logger.LogWarning("Edit habit rejected: goal cannot be defined and cleared at the same time.");
                 throw new RequestValidationException("Cannot define goal and clear goal at the same time.");
+            }
 
             if (request.ClearExpiryDate && request.ExpiryDate != null)
+            {
+                logger.LogWarning("Edit habit rejected: expiry date cannot be defined and cleared at the same time.");
                 throw new RequestValidationException("Cannot define expiry date and clear expiry date at the same time.");
+            }
 
             if (request.Name != null && NormalizeString(request.Name).Length == 0)
+            {
+                logger.LogWarning("Edit habit rejected: habit name cannot be empty.");
                 throw new RequestValidationException("Habit name cannot be empty.");
+            }
 
-            if(request.ExpiryDate != null && request.ExpiryDate <= DateTime.UtcNow)
+            if (request.ExpiryDate != null && request.ExpiryDate <= DateTime.UtcNow)
+            {
+                logger.LogWarning("Edit habit rejected: expiry date must be in the future.");
                 throw new RequestValidationException("Expiry date must be in the future");
+            }
 
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
+            {
+                logger.LogWarning("Edit habit rejected: habit {HabitId} not found.", habitId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(habit.TeamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Edit habit rejected: user {UserId} is not a team creator of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
+            }
 
-            if (habit.HabitState == HabitState.Archived) 
+            if (habit.HabitState == HabitState.Archived)
+            {
+                logger.LogWarning("Edit habit rejected: cannot edit an archived habit.");
                 throw new ConflictException("habit-archived", "Habit is archived.");
+            }
 
             if (request.Name != null)
             {
@@ -162,6 +201,8 @@ namespace backend.Service
 
             await habits.UpdateHabitAsync(habit);
 
+            logger.LogInformation("Edited habit {HabitId} by user {UserId}", habit.HabitId, userId);
+
             return new HabitSummaryDto(
                 habit.HabitId,
                 habit.Name,
@@ -176,11 +217,17 @@ namespace backend.Service
         {
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
+            {
+                logger.LogWarning("Archive habit rejected: habit {HabitId} not found.", habitId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(habit.TeamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Archive habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
+            }
 
             if (habit.HabitState == HabitState.Archived)
                 return;
@@ -189,25 +236,40 @@ namespace backend.Service
             {
                 bool archived = await habits.ArchiveHabitAsync(habit.HabitId);
                 if (!archived)
+                {
+                    logger.LogWarning("Archive habit rejected: habit {HabitId} not found.", habitId);
                     throw new NotFoundException();
+                }
 
                 await reminders.DisableAllRemindersForHabitAsync(habit.HabitId);
             });
+
+            logger.LogInformation("Archived habit {HabitId} by user {UserId}", habit.HabitId, userId);
         }
 
         public async Task DeleteHabit(Guid userId, Guid habitId)
         {
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
+            {
+                logger.LogWarning("Delete habit rejected: habit {HabitId} not found.", habitId);
                 throw new NotFoundException();
+            }
 
             bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(habit.TeamId, userId);
             if (!isTeamCreator)
+            {
+                logger.LogWarning("Delete habit rejected: user {UserId} is not an owner of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
+            }
 
             bool deleted = await habits.DeleteHabitAsync(habit.HabitId);
             if (!deleted)
+            {
+                logger.LogWarning( "Delete habit rejected: habit {HabitId} not found.", habitId);
                 throw new NotFoundException();
+            }
+            logger.LogInformation("Deleted habit {HabitId} by user {UserId}", habit.HabitId, userId);
         }
 
         public async Task<HabitSummaryDto> GetHabit(Guid userId, UserType userType, Guid habitId) 
@@ -245,38 +307,65 @@ namespace backend.Service
         public async Task<HabitEntryResponseDto> LogProgress(Guid userId, UserType userType, Guid habitId, LogProgressRequestDto request)
         {
             if (userType != UserType.Member)
+            {
+                logger.LogWarning("Log progress rejected: user {UserId} is not a team member.", userId);
                 throw new ForbiddenException();
+            }
 
             if (request.Status != EntryStatus.Logged && request.Status != EntryStatus.Skipped)
+            {
+                logger.LogWarning("Log progress rejected: log status {Status} is not allowed.", request.Status);
                 throw new RequestValidationException("Status must be Logged or Skipped.");
+            }
 
             if (request.Status == EntryStatus.Skipped && request.Value != null)
+            {
+                logger.LogWarning("Log progress rejected: value is not allowed when status is Skipped.");
                 throw new RequestValidationException("Value is not allowed when status is Skipped.");
+            }
 
             string? notes = NormalizeNullableString(request.Notes);
 
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
+            {
+                logger.LogWarning("Log progress rejected: habit {HabitId} not found.", habitId);
                 throw new NotFoundException();
+            }
 
             TeamMember? member = await members.GetMemberByIdAsync(userId);
             if (member == null)
+            {
+                logger.LogWarning("Log progress rejected: user {UserId} is not a member of team {TeamId}.", userId, habit.TeamId);
                 throw new ForbiddenException();
+            }
 
             bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
             if (!isActiveMember)
+            {
+                logger.LogWarning( "Log progress rejected: member {MemberId} does not have an active membership in team {TeamId}.", member.MemberId, habit.TeamId);
                 throw new ForbiddenException();
+            }
 
             if (habit.HabitState == HabitState.Archived)
+            {
+                logger.LogWarning("Log progress rejected: cannot log to an archived habit.");
                 throw new ConflictException("habit-archived", "Habit is archived.");
+            }
 
             if (request.Status == EntryStatus.Logged)
             {
                 if (habit.HabitType == HabitType.Binary && request.Value != null)
+                {
+                    logger.LogWarning("Log progress rejected: value is not allowed for binary habits.");
                     throw new RequestValidationException("Value is not allowed for binary habits.");
+                }
 
                 if (habit.HabitType == HabitType.Quantitative && request.Value == null)
+                {
+                    logger.LogWarning("Log progress rejected: value is required for quantitative habits.");
                     throw new RequestValidationException("Value is required for quantitative habits.");
+                }
             }
 
             DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -288,7 +377,10 @@ namespace backend.Service
             );
 
             if (existingEntry!=null)
+            {
+                logger.LogWarning("Log progress rejected: log already exists for user {UserId} in habit {HabitId} for today.", userId, habit.HabitId);
                 throw new ConflictException("log-already-exists", "Log already exists for this habit for today.");
+            }
 
             HabitEntry entry = new HabitEntry
             {
@@ -304,6 +396,7 @@ namespace backend.Service
 
             HabitEntry createdEntry = await habitEntries.CreateHabitEntryAsync(entry);
 
+            logger.LogInformation("Logged progress to habit {HabitId} by user {UserId}", habit.HabitId, userId);
             return new HabitEntryResponseDto(
                 createdEntry.EntryId,
                 createdEntry.HabitId,
@@ -318,32 +411,54 @@ namespace backend.Service
         public async Task UndoLog(Guid userId, UserType userType, Guid habitId, Guid entryId)
         {
             if (userType != UserType.Member)
+            {
+                logger.LogWarning("Undo log rejected: user {UserId} is not a team member.", userId);
                 throw new ForbiddenException();
+            }
 
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
             if (habit == null)
+            {
+                logger.LogWarning("Undo log rejected: habit {HabitId} not found.", habitId);
                 throw new NotFoundException();
+            }
 
             TeamMember? member = await members.GetMemberByIdAsync(userId);
             if (member == null)
+            {
+                logger.LogWarning("Undo log rejected: user {UserId} is not a team member.", userId);
                 throw new ForbiddenException();
+            }
 
             bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
             if (!isActiveMember)
+            {
+                logger.LogWarning("Undo log rejected: member {MemberId} does not have an active membership in team {TeamId}.", member.MemberId, habit.TeamId);
                 throw new ForbiddenException();
+            }
 
             if (habit.HabitState == HabitState.Archived)
+            {
+                logger.LogWarning("Undo log rejected: cannot undo log in an archived habit.");
                 throw new ConflictException("habit-archived", "Habit is archived.");
+            }
 
             DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
             HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.MemberId , today);
             if (entry == null || entry.EntryId != entryId)
+            {
+                logger.LogWarning("Undo log rejected: log {LogId} not found.", entryId);
                 throw new NotFoundException("log-not-found", "Log not found.");
+            }
 
             bool undone = await habitEntries.DeleteHabitEntryAsync(entry.EntryId);
             if (!undone)
-                throw new NotFoundException("log-not-found", "Log not found."); 
+            {
+                logger.LogWarning("Undo log rejected: log {LogId} not found.", entryId);
+                throw new NotFoundException("log-not-found", "Log not found.");
+            }
+            logger.LogInformation("Undid log {LogId} of user {UserId} in habit {HabitId}.", entryId, userId, habit.HabitId);
         }
         public async Task<List<HabitEntryResponseDto>> ViewProgress(Guid userId, UserType userType, Guid habitId, Guid? memberId)
         {

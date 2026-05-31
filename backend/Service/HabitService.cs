@@ -405,7 +405,7 @@ namespace backend.Service
             if (!isActiveMember)
                 throw new ForbiddenException();
 
-            DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+            DateOnly today = GetLocalToday(member);
 
             HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.MemberId, today);
             if (entry == null)

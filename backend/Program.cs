@@ -66,6 +66,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
 builder.Services.AddHostedService<ReminderNotificationService>();
+builder.Services.AddHostedService<ReminderNotificationCleanupService>();
 
 builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
     .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });

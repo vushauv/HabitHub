@@ -149,30 +149,20 @@ namespace backend.Service
         public async Task<MyReminderResponseDto> GetMyReminder(Guid userId, UserType userType, Guid habitId)
         {
             if (userType != UserType.Member)
-            {
-                logger.LogWarning("Get my reminder rejected: user {UserId} is not member", userId);
                 throw new ForbiddenException();
-            }
 
             Habit habit = await GetHabitOrThrow(habitId);
 
             TeamMember? member = await members.GetMemberByIdAsync(userId);
             if (member == null)
-            {
-                logger.LogWarning("Get my reminder rejected: member {MemberId} not found", userId);
                 throw new ForbiddenException();
-            }
 
             bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
             if (!isActiveMember)
-            {
-                logger.LogWarning("Get my reminder rejected: member {MemberId} not active in team {TeamId}", member.MemberId, habit.TeamId);
                 throw new ForbiddenException();
-            }
 
             Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(habit.HabitId, member.MemberId);
 
-            logger.LogInformation("Returned reminder setting for habit {HabitId}, member {MemberId}", habit.HabitId, member.MemberId);
             return new MyReminderResponseDto(habit.HabitId, member.MemberId, reminder?.Enabled ?? true, habit.ReminderTime);
         }
 
@@ -181,10 +171,7 @@ namespace backend.Service
             Habit? habit = await habits.GetHabitByIdAsync(habitId);
 
             if (habit == null)
-            {
-                logger.LogWarning("Habit {HabitId} not found", habitId);
                 throw new NotFoundException();
-            }
 
             return habit;
         }

@@ -73,7 +73,7 @@ public class HabitServiceCreateHabitTests : HabitServiceTestBase
             Sut().CreateHabit(UserId, TeamId, BinaryRequest(unit: backend.Enums.Unit.Minutes))
         );
 
-        Assert.Contains("Unit is allowed only for quantitative", ex.Message);
+        Assert.Contains("Unit is not allowed for binary", ex.Message);
         Assert.Null(_habits.LastCreated);
     }
 

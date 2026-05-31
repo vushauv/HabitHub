@@ -9,12 +9,12 @@ namespace backend.BackgroundServices
         ILogger<ReminderNotificationCleanupService> logger
     ) : BackgroundService
     {
-        private static readonly TimeSpan Interval = TimeSpan.FromMinutes(1);
-        private static readonly TimeOnly CleanupTime = new TimeOnly(23, 59);
+        private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
+        private const int DaysBackToCheck = 7;
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            logger.LogInformation("ReminderNotificationCleanupService started, interval {IntervalMinutes}m", Interval.TotalMinutes);
+            logger.LogInformation("ReminderNotificationCleanupService started, interval {IntervalHours}h", Interval.TotalHours);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -22,14 +22,17 @@ namespace backend.BackgroundServices
                 {
                     using IServiceScope scope = scopeFactory.CreateScope();
 
-                    IReminderRepository reminderRepository = scope.ServiceProvider.GetRequiredService<IReminderRepository>();
-                    INotificationRepository notificationRepository = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
+                    IReminderRepository reminderRepository =
+                        scope.ServiceProvider.GetRequiredService<IReminderRepository>();
+
+                    INotificationRepository notificationRepository =
+                        scope.ServiceProvider.GetRequiredService<INotificationRepository>();
 
                     List<Reminder> reminders = await reminderRepository.GetEnabledRemindersWithHabitAndMemberAsync();
 
                     foreach (Reminder reminder in reminders)
                     {
-                        await TryDeleteTodayReminderNotification(reminder, notificationRepository);
+                        await DeleteOldReminderNotifications(reminder, notificationRepository);
                     }
                 }
                 catch (Exception ex)
@@ -43,51 +46,54 @@ namespace backend.BackgroundServices
             logger.LogInformation("ReminderNotificationCleanupService stopped");
         }
 
-        private async Task TryDeleteTodayReminderNotification(Reminder reminder, INotificationRepository notificationRepository)
+        private async Task DeleteOldReminderNotifications(
+            Reminder reminder,
+            INotificationRepository notificationRepository)
         {
             TimeZoneInfo timezone = GetTimezone(reminder.Member.Timezone);
 
             DateTime localNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timezone);
-            TimeOnly localTimeNow = TimeOnly.FromDateTime(localNow);
-
-            if (localTimeNow < CleanupTime)
-                return;
-
             DateOnly localToday = DateOnly.FromDateTime(localNow);
 
-            Notification? notification = await notificationRepository.GetReminderNotificationForLocalDateAsync(
-                reminder.ReminderId,
-                localToday,
-                timezone
-            );
-
-            if (notification == null)
-                return;
-
-            if (notification.Status == NotificationStatus.Deleted)
-                return;
-
-            bool updated = await notificationRepository.ChangeReminderNotificationStatusAsync(
-                notification.NotificationId,
-                NotificationStatus.Deleted
-            );
-
-            if (!updated)
+            for (int i = 1; i <= DaysBackToCheck; i++)
             {
-                logger.LogWarning(
-                    "Failed to delete reminder notification {NotificationId} for reminder {ReminderId}",
-                    notification.NotificationId,
-                    reminder.ReminderId
+                DateOnly dateToClean = localToday.AddDays(-i);
+
+                Notification? notification = await notificationRepository.GetReminderNotificationForLocalDateAsync(
+                    reminder.ReminderId,
+                    dateToClean,
+                    timezone
                 );
 
-                return;
-            }
+                if (notification == null)
+                    continue;
 
-            logger.LogInformation(
-                "Deleted expired reminder notification {NotificationId} for reminder {ReminderId}",
-                notification.NotificationId,
-                reminder.ReminderId
-            );
+                if (notification.Status == NotificationStatus.Deleted)
+                    continue;
+
+                bool updated = await notificationRepository.ChangeReminderNotificationStatusAsync(
+                    notification.NotificationId,
+                    NotificationStatus.Deleted
+                );
+
+                if (!updated)
+                {
+                    logger.LogWarning(
+                        "Failed to delete old reminder notification {NotificationId} for reminder {ReminderId}",
+                        notification.NotificationId,
+                        reminder.ReminderId
+                    );
+
+                    continue;
+                }
+
+                logger.LogInformation(
+                    "Deleted old reminder notification {NotificationId} for reminder {ReminderId}, local date {LocalDate}",
+                    notification.NotificationId,
+                    reminder.ReminderId,
+                    dateToClean
+                );
+            }
         }
 
         private TimeZoneInfo GetTimezone(string timezoneId)

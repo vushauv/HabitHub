@@ -12,5 +12,8 @@ namespace backend.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
         public NotificationStatus Status { get; set; } = NotificationStatus.Unread; 
         public NotificationType Type { get; set; } 
+
+        public Guid? ReminderId { get; set; }
+        public Reminder? Reminder { get; set; }
     }
 }

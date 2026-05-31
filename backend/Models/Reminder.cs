@@ -9,5 +9,7 @@
         public Habit Habit { get; set; } = null!;
         public bool Enabled { get; set; }
         public DateTime? LastSentAt { get; set; }
+
+        public ICollection<Notification> Notifications { get; set; } = [];
     }
 }

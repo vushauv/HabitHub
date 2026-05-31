@@ -164,6 +164,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             e.HasIndex(n => new { n.UserId, n.UserType });
             e.HasIndex(n => new { n.UserId, n.UserType, n.Status, n.Type });
+
+            e.Property(n => n.ReminderId).IsRequired(false);
+
+            e.HasOne(n => n.Reminder)
+                .WithMany(r => r.Notifications)
+                .HasForeignKey(n => n.ReminderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasIndex(n => new { n.ReminderId, n.CreatedAt });
         });
         modelBuilder.Entity<Reminder>(e =>
         {

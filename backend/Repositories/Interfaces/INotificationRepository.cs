@@ -13,5 +13,6 @@ namespace backend.Repositories.Interfaces
         Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type);
         Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId);
         Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status);
+        Task<Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone);
     }
 }

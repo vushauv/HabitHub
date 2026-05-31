@@ -65,7 +65,6 @@ public sealed class FakeHabitRepository : IHabitRepository
 public sealed class FakeHabitTeamRepository : IHabitTeamRepository
 {
     public Dictionary<Guid, HabitTeam> TeamsById { get; } = new();
-    public Dictionary<Guid, HabitTeam> TeamsByHabitId { get; } = new();
 
     public Dictionary<(Guid TeamId, Guid UserId), bool> Owners { get; } = new();
 

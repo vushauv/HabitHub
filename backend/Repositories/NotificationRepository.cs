@@ -99,13 +99,35 @@ namespace backend.Repositories
 
             if (notification.Type != NotificationType.Reminder)
                 return false;
-            if (notification.Status == NotificationStatus.Deleted)
-                return false;
+            // if (notification.Status == NotificationStatus.Deleted)
+            //     return false;
 
             notification.Status = status;
             await db.SaveChangesAsync();
 
             return true;
+        }
+        public async Task<Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone)
+        {
+            DateTime localStart = localDate.ToDateTime(TimeOnly.MinValue);
+            DateTime localEnd = localDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+            DateTime utcStart = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(localStart, DateTimeKind.Unspecified),
+                timezone
+            );
+
+            DateTime utcEnd = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(localEnd, DateTimeKind.Unspecified),
+                timezone
+            );
+
+            return await db.Notifications
+                .FirstOrDefaultAsync(n =>
+                    n.ReminderId == reminderId &&
+                    n.Type == NotificationType.Reminder &&
+                    n.CreatedAt >= utcStart &&
+                    n.CreatedAt < utcEnd);
         }
     }
 }

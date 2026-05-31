@@ -16,6 +16,7 @@ namespace backend.Service
         IHabitEntryRepository habitEntries,
         ITeamMemberRepository members,
         IReminderRepository reminders,
+        INotificationRepository notifications,
         IUnitOfWork unitOfWork
     ):IHabitService
     {
@@ -279,7 +280,7 @@ namespace backend.Service
                     throw new RequestValidationException("Value is required for quantitative habits.");
             }
 
-            DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+            DateOnly today = GetLocalToday(member);
 
             HabitEntry? existingEntry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(
                 habit.HabitId,
@@ -303,6 +304,7 @@ namespace backend.Service
             };
 
             HabitEntry createdEntry = await habitEntries.CreateHabitEntryAsync(entry);
+            await DeleteTodayReminderNotificationIfExists(habit, member);
 
             return new HabitEntryResponseDto(
                 createdEntry.EntryId,
@@ -335,7 +337,7 @@ namespace backend.Service
             if (habit.HabitState == HabitState.Archived)
                 throw new ConflictException("habit-archived", "Habit is archived.");
 
-            DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+            DateOnly today = GetLocalToday(member);
 
             HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.MemberId , today);
             if (entry == null || entry.EntryId != entryId)
@@ -344,6 +346,7 @@ namespace backend.Service
             bool undone = await habitEntries.DeleteHabitEntryAsync(entry.EntryId);
             if (!undone)
                 throw new NotFoundException("log-not-found", "Log not found."); 
+            await RestoreOrCreateTodayReminderNotification(habit, member);
         }
         public async Task<List<HabitEntryResponseDto>> ViewProgress(Guid userId, UserType userType, Guid habitId, Guid? memberId)
         {
@@ -481,12 +484,119 @@ namespace backend.Service
                 index + 1
             )).ToList();
         }
+        private async Task DeleteTodayReminderNotificationIfExists(Habit habit, TeamMember member)
+        {
+            Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(
+                habit.HabitId,
+                member.MemberId
+            );
+
+            if (reminder == null)
+                return;
+
+            TimeZoneInfo timezone = GetTimezoneOrUtc(member.Timezone);
+            DateOnly localToday = GetLocalToday(member);
+
+            Notification? notification = await notifications.GetReminderNotificationForLocalDateAsync(
+                reminder.ReminderId,
+                localToday,
+                timezone
+            );
+
+            if (notification == null)
+                return;
+
+            await notifications.ChangeReminderNotificationStatusAsync(
+                notification.NotificationId,
+                NotificationStatus.Deleted
+            );
+        }
+        private async Task RestoreOrCreateTodayReminderNotification(Habit habit, TeamMember member)
+        {
+            if (habit.ReminderTime == null)
+                return;
+
+            if (!IsPastReminderTime(habit, member))
+                return;
+
+            Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(
+                habit.HabitId,
+                member.MemberId
+            );
+
+            if (reminder == null || !reminder.Enabled)
+                return;
+
+            TimeZoneInfo timezone = GetTimezoneOrUtc(member.Timezone);
+            DateOnly localToday = GetLocalToday(member);
+
+            Notification? notification = await notifications.GetReminderNotificationForLocalDateAsync(
+                reminder.ReminderId,
+                localToday,
+                timezone
+            );
+
+            if (notification != null)
+            {
+                await notifications.ChangeReminderNotificationStatusAsync(
+                    notification.NotificationId,
+                    NotificationStatus.Unread
+                );
+
+                return;
+            }
+
+            Notification newNotification = new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                UserId = member.MemberId,
+                UserType = UserType.Member,
+                Content = $"Reminder: you have not logged \"{habit.Name}\" today.",
+                CreatedAt = DateTime.UtcNow,
+                Status = NotificationStatus.Unread,
+                Type = NotificationType.Reminder,
+                ReminderId = reminder.ReminderId
+            };
+
+            await notifications.CreateNotificationAsync(newNotification);
+            await reminders.UpdateLastSentAtAsync(reminder.ReminderId, DateTime.UtcNow);
+        }
 
         private static string NormalizeString(string s) => s.Trim();
         private static string? NormalizeNullableString(string? s)
         {
             string normalized = s?.Trim() ?? "";
             return normalized.Length == 0 ? null : normalized;
+        }
+        private static TimeZoneInfo GetTimezoneOrUtc(string timezoneId)
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
+            }
+            catch
+            {
+                return TimeZoneInfo.Utc;
+            }
+        }
+        private static DateOnly GetLocalToday(TeamMember member)
+        {
+            TimeZoneInfo timezone = GetTimezoneOrUtc(member.Timezone);
+            DateTime localNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timezone);
+
+            return DateOnly.FromDateTime(localNow);
+        }
+
+        private static bool IsPastReminderTime(Habit habit, TeamMember member)
+        {
+            if (habit.ReminderTime == null)
+                return false;
+
+            TimeZoneInfo timezone = GetTimezoneOrUtc(member.Timezone);
+            DateTime localNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timezone);
+            TimeOnly localTimeNow = TimeOnly.FromDateTime(localNow);
+
+            return localTimeNow >= habit.ReminderTime.Value;
         }
     }
 }

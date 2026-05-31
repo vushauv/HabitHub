@@ -13,8 +13,9 @@ public abstract class HabitServiceTestBase
     protected readonly FakeTeamMemberRepository _members = new();
     protected readonly FakeReminderRepository _reminders = new();
     protected readonly FakeUnitOfWork _unitOfWork = new();
+    protected readonly FakeLogger<HabitService> _logger = new();
 
-    protected HabitService Sut() => new(_habits, _habitTeams, _memberships, _entries, _members, _reminders, _unitOfWork);
+    protected HabitService Sut() => new(_habits, _habitTeams, _memberships, _entries, _members, _reminders, _unitOfWork, _logger);
 
     protected static Models.Habit MakeHabit(
         Guid? habitId = null,

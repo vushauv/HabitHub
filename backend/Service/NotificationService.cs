@@ -26,8 +26,6 @@ namespace backend.Service
                 userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, type.Value));
             }
 
-            logger.LogInformation("Returned {NotificationCount} notifications for user {UserId} ({UserType})", userNotifications.Count, userId, userType);
-
             return userNotifications
                 .OrderByDescending(n => n.CreatedAt)
                 .Select(ToDto)
@@ -49,8 +47,6 @@ namespace backend.Service
             {
                 count = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, userType, type.Value);
             }
-
-            logger.LogInformation("Returned {UnreadCount} unread notifications for user {UserId} ({UserType})", count, userId, userType);
 
             return new NotificationCountDto(count);
         }
@@ -88,16 +84,10 @@ namespace backend.Service
             Notification? notification = await notifications.GetNotificationByIdAsync(notificationId);
 
             if (notification == null || notification.Status == NotificationStatus.Deleted)
-            {
-                logger.LogWarning("Notification access rejected: notification {NotificationId} not found", notificationId);
                 throw new NotFoundException();
-            }
 
             if (notification.UserId != userId || notification.UserType != userType)
-            {
-                logger.LogWarning("Notification access rejected: user {UserId} ({UserType}) not authorized for notification {NotificationId}", userId, userType, notificationId);
                 throw new ForbiddenException();
-            }
 
             return notification;
         }

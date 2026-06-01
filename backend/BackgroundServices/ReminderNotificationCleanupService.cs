@@ -1,4 +1,3 @@
-using backend.Enums;
 using backend.Models;
 using backend.Repositories.Interfaces;
 
@@ -10,7 +9,6 @@ namespace backend.BackgroundServices
     ) : BackgroundService
     {
         private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
-        private const int DaysBackToCheck = 7;
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {

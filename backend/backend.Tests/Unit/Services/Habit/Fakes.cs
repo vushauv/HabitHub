@@ -188,6 +188,7 @@ public sealed class FakeNotificationRepository : INotificationRepository
     public Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type) => throw new NotImplementedException();
     public Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId) => throw new NotImplementedException();
     public Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status) => throw new NotImplementedException();
+    public Task<int> MarkOldReminderNotificationsAsDeletedAsync(Guid reminderId, DateTime cutoffUtc) => throw new NotImplementedException();
     public Task<Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone) => throw new NotImplementedException();
 }
 

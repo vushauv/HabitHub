@@ -107,6 +107,24 @@ namespace backend.Repositories
 
             return true;
         }
+        public async Task<int> MarkOldReminderNotificationsAsDeletedAsync(Guid reminderId, DateTime cutoffUtc)
+        {
+            List<Notification> notifications = await db.Notifications
+                .Where(n =>
+                    n.ReminderId == reminderId &&
+                    n.Type == NotificationType.Reminder &&
+                    n.Status != NotificationStatus.Deleted &&
+                    n.CreatedAt < cutoffUtc)
+                .ToListAsync();
+
+            foreach(Notification notification in notifications)
+            {
+                notification.Status = NotificationStatus.Deleted;
+            }
+
+            await db.SaveChangesAsync();
+            return notifications.Count;
+        }
         public async Task<Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone)
         {
             DateTime localStart = localDate.ToDateTime(TimeOnly.MinValue);

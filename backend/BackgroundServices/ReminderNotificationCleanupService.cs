@@ -54,46 +54,27 @@ namespace backend.BackgroundServices
 
             DateTime localNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timezone);
             DateOnly localToday = DateOnly.FromDateTime(localNow);
+            DateTime localTodayStart = localToday.ToDateTime(TimeOnly.MinValue);
 
-            for (int i = 1; i <= DaysBackToCheck; i++)
-            {
-                DateOnly dateToClean = localToday.AddDays(-i);
+            DateTime cutoffUtc = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(localTodayStart, DateTimeKind.Unspecified),
+                timezone
+            );
 
-                Notification? notification = await notificationRepository.GetReminderNotificationForLocalDateAsync(
-                    reminder.ReminderId,
-                    dateToClean,
-                    timezone
-                );
+            int deletedCount = await notificationRepository.MarkOldReminderNotificationsAsDeletedAsync(
+                reminder.ReminderId,
+                cutoffUtc
+            );
 
-                if (notification == null)
-                    continue;
+            if (deletedCount == 0)
+                return;
 
-                if (notification.Status == NotificationStatus.Deleted)
-                    continue;
-
-                bool updated = await notificationRepository.ChangeReminderNotificationStatusAsync(
-                    notification.NotificationId,
-                    NotificationStatus.Deleted
-                );
-
-                if (!updated)
-                {
-                    logger.LogWarning(
-                        "Failed to delete old reminder notification {NotificationId} for reminder {ReminderId}",
-                        notification.NotificationId,
-                        reminder.ReminderId
-                    );
-
-                    continue;
-                }
-
-                logger.LogInformation(
-                    "Deleted old reminder notification {NotificationId} for reminder {ReminderId}, local date {LocalDate}",
-                    notification.NotificationId,
-                    reminder.ReminderId,
-                    dateToClean
-                );
-            }
+            logger.LogInformation(
+                "Deleted {DeletedCount} old reminder notifications for reminder {ReminderId}, before local date {LocalDate}",
+                deletedCount,
+                reminder.ReminderId,
+                localToday
+            );
         }
 
         private TimeZoneInfo GetTimezone(string timezoneId)

@@ -72,6 +72,7 @@ builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
     .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });
 
 builder.Services.AddCors();
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -131,7 +132,8 @@ var settings = app.Services.GetRequiredService<IOptions<AppSettings>>().Value;
 app.UseCors(policy => policy
     .WithOrigins(settings.CorsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
     .AllowAnyHeader()
-    .AllowAnyMethod());
+    .AllowAnyMethod()
+    .AllowCredentials());
 
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
@@ -142,6 +144,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<backend.Hubs.ChatHub>("/hubs/chat");
 
 app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);
 app.Run();

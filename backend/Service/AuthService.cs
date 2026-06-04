@@ -1,6 +1,5 @@
 ﻿using backend.Dtos.AuthDtos;
 using backend.Logging;
-using Microsoft.AspNetCore.Identity;
 using backend.Models;
 using backend.Exceptions;
 using backend.Enums;
@@ -8,18 +7,21 @@ using backend.Utils;
 using backend.Service.Interfaces;
 using backend.Repositories.Interfaces;
 using backend.Data.UnitOfWork;
+using backend.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace backend.Service
 {
     public class AuthService(
-        ITeamCreatorRepository creators, 
-        ITeamMemberRepository members, 
-        ISessionRepository sessions, 
-        INotificationRepository notifications, 
+        ITeamCreatorRepository creators,
+        ITeamMemberRepository members,
+        ISessionRepository sessions,
+        INotificationRepository notifications,
         IUnitOfWork unitOfWork,
+        IOptions<AppSettings> appSettings,
         ILogger<AuthService> logger) : IAuthService
     {
-        private PasswordHasher<object> hasher = new PasswordHasher<object>();
+        private readonly string _pepper = appSettings.Value.Pepper;
         public async Task<AuthResponseDto> Register(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
         {
             return request.UserType switch
@@ -57,7 +59,7 @@ namespace backend.Service
                 CreatorId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = hasher.HashPassword(null!, request.Password),
+                PasswordHash = PasswordUtils.HashPassword(request.Password, _pepper),
             };
 
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
@@ -92,7 +94,7 @@ namespace backend.Service
                 MemberId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = hasher.HashPassword(null!, request.Password),
+                PasswordHash = PasswordUtils.HashPassword(request.Password, _pepper),
                 Timezone = timezone
             };
 
@@ -121,8 +123,7 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
-            if(passwordResult == PasswordVerificationResult.Failed)
+            if (!PasswordUtils.VerifyPassword(request.Password, creator.PasswordHash, _pepper))
             {
                 logger.LogWarning("Login failed: invalid password for creator {CreatorId}", creator.CreatorId);
                 throw new InvalidCredentialsException();
@@ -147,8 +148,7 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
-            if (passwordResult == PasswordVerificationResult.Failed)
+            if (!PasswordUtils.VerifyPassword(request.Password, member.PasswordHash, _pepper))
             {
                 logger.LogWarning("Login failed: invalid password for member {MemberId}", member.MemberId);
                 throw new InvalidCredentialsException();
@@ -225,33 +225,31 @@ namespace backend.Service
                 TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
                 if(creator == null)
                     throw new NotFoundException("user-not-found", "User not found.");
-                
-                var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.CurrentPassword);
-                if(verifyResult == PasswordVerificationResult.Failed)
+
+                if (!PasswordUtils.VerifyPassword(request.CurrentPassword, creator.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change password rejected: invalid current password for creator {CreatorId}", userId);
                     throw new InvalidCredentialsException();
                 }
-            } 
+            }
             else if(userType == UserType.Member)
             {
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
                 if(member == null)
                     throw new NotFoundException("user-not-found", "User not found.");
 
-                var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.CurrentPassword);
-                if(verifyResult == PasswordVerificationResult.Failed)
+                if (!PasswordUtils.VerifyPassword(request.CurrentPassword, member.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change password rejected: invalid current password for member {MemberId}", userId);
                     throw new InvalidCredentialsException();
                 }
-            } 
+            }
             else
             {
-                throw new AuthRequiredException(); 
+                throw new AuthRequiredException();
             }
 
-            string newHash = hasher.HashPassword(null!, request.NewPassword);
+            string newHash = PasswordUtils.HashPassword(request.NewPassword, _pepper);
 
             await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
@@ -291,8 +289,7 @@ namespace backend.Service
                 if(creator == null)
                     throw new NotFoundException("user-not-found", "User not found.");
 
-                var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
-                if(verifyResult == PasswordVerificationResult.Failed)
+                if (!PasswordUtils.VerifyPassword(request.Password, creator.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change email rejected: invalid password for creator {CreatorId}", userId);
                     throw new InvalidCredentialsException();
@@ -310,8 +307,7 @@ namespace backend.Service
                 if(member == null)
                     throw new NotFoundException("user-not-found", "User not found.");
 
-                var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
-                if(verifyResult == PasswordVerificationResult.Failed)
+                if (!PasswordUtils.VerifyPassword(request.Password, member.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change email rejected: invalid password for member {MemberId}", userId);
                     throw new InvalidCredentialsException();

@@ -63,10 +63,10 @@ namespace backend.Service
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
-                Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+                var (_, rawCreatorId) = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
-                    createdSession.SessionId,
+                    rawCreatorId,
                     new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
                 ;
             });
@@ -99,10 +99,10 @@ namespace backend.Service
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamMember createdMember = await members.CreateMemberAsync(member);
-                Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress, deviceInfo);
+                var (_, rawMemberId) = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
-                    createdSession.SessionId,
+                    rawMemberId,
                     new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
                 ;
             });
@@ -128,10 +128,10 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+            var (_, rawCreatorId) = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
             logger.LogInformation("Creator {CreatorId} logged in", creator.CreatorId);
             return new AuthResponseDto(
-                createdSession.SessionId,
+                rawCreatorId,
                 new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
             );
         }
@@ -154,19 +154,20 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
+            var (_, rawMemberId) = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
             logger.LogInformation("Member {MemberId} logged in", member.MemberId);
             return new AuthResponseDto(
-                createdSession.SessionId,
+                rawMemberId,
                 new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
             );
         }
 
-        private async Task<Session> CreateSessionAsync(Guid userId, UserType userType, string? ipAddress, string? deviceInfo)
+        private async Task<(Session session, string rawId)> CreateSessionAsync(Guid userId, UserType userType, string? ipAddress, string? deviceInfo)
         {
+            string rawId = SessionIdGenerator.GenerateSessionId();
             Session session = new()
             {
-                SessionId = SessionIdGenerator.GenerateSessionId(),
+                SessionId = SessionIdHasher.Hash(rawId),
                 UserId = userId,
                 UserType = userType,
                 CreatedAt = DateTime.UtcNow,
@@ -177,7 +178,7 @@ namespace backend.Service
                 DeviceInfo = deviceInfo ?? string.Empty
             };
 
-            return await sessions.CreateAsync(session);
+            return (await sessions.CreateAsync(session), rawId);
         }
 
         public async Task<List<SessionDto>> ViewActiveSessions(Guid userId, UserType userType, string currentSessionId)

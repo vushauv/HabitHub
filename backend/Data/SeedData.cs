@@ -1,6 +1,6 @@
 using backend.Enums;
 using backend.Models;
-using Microsoft.AspNetCore.Identity;
+using backend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data;
@@ -335,11 +335,8 @@ public static class SeedData
         logger.LogInformation("Seeded {NotificationCount} notifications", notifCount);
     }
 
-    public static async Task SeedUsersAsync(AppDbContext db, ILogger logger)
+    public static async Task SeedUsersAsync(AppDbContext db, ILogger logger, string pepper)
     {
-        PasswordHasher<object> hasher = new();
-        string passwordHash = hasher.HashPassword(null!, "12345678");
-
         (string Name, string Email)[] creators =
         [
             ("Alice", "alice@g.com"),
@@ -367,7 +364,7 @@ public static class SeedData
                 CreatorId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = passwordHash,
+                PasswordHash = PasswordUtils.HashPassword("12345678", pepper),
             });
             creatorCount++;
         }
@@ -381,7 +378,7 @@ public static class SeedData
                 MemberId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = passwordHash,
+                PasswordHash = PasswordUtils.HashPassword("12345678", pepper),
                 Timezone = "Europe/Warsaw",
             });
             memberCount++;

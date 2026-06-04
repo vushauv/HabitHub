@@ -3,6 +3,7 @@ using backend.BackgroundServices;
 using backend.Configuration;
 using backend.Data;
 using backend.Exceptions;
+using backend.Logging;
 using backend.Repositories;
 using backend.Service;
 using Microsoft.AspNetCore.Authentication;
@@ -129,6 +130,7 @@ if (app.Environment.IsDevelopment())
 }
 
 var settings = app.Services.GetRequiredService<IOptions<AppSettings>>().Value;
+LogRedaction.Configure(settings.Pepper);
 app.UseCors(policy => policy
     .WithOrigins(settings.CorsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
     .AllowAnyHeader()

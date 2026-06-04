@@ -1,6 +1,5 @@
 ﻿using backend.Dtos.AuthDtos;
 using backend.Logging;
-using Microsoft.AspNetCore.Identity;
 using backend.Models;
 using backend.Exceptions;
 using backend.Enums;
@@ -8,18 +7,21 @@ using backend.Utils;
 using backend.Service.Interfaces;
 using backend.Repositories.Interfaces;
 using backend.Data.UnitOfWork;
+using backend.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace backend.Service
 {
     public class AuthService(
-        ITeamCreatorRepository creators, 
-        ITeamMemberRepository members, 
-        ISessionRepository sessions, 
-        INotificationRepository notifications, 
+        ITeamCreatorRepository creators,
+        ITeamMemberRepository members,
+        ISessionRepository sessions,
+        INotificationRepository notifications,
         IUnitOfWork unitOfWork,
+        IOptions<AppSettings> appSettings,
         ILogger<AuthService> logger) : IAuthService
     {
-        private PasswordHasher<object> hasher = new PasswordHasher<object>();
+        private readonly string _pepper = appSettings.Value.Pepper;
         public async Task<AuthResponseDto> Register(RegisterRequestDto request, string? ipAddress, string? deviceInfo)
         {
             return request.UserType switch
@@ -57,16 +59,16 @@ namespace backend.Service
                 CreatorId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = hasher.HashPassword(null!, request.Password),
+                PasswordHash = PasswordUtils.HashPassword(request.Password, _pepper),
             };
 
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
-                Session createdSession = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+                var (_, rawSessionId) = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
-                    createdSession.SessionId,
+                    rawSessionId,
                     new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
                 ;
             });
@@ -92,17 +94,17 @@ namespace backend.Service
                 MemberId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
-                PasswordHash = hasher.HashPassword(null!, request.Password),
+                PasswordHash = PasswordUtils.HashPassword(request.Password, _pepper),
                 Timezone = timezone
             };
 
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamMember createdMember = await members.CreateMemberAsync(member);
-                Session createdSession = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress, deviceInfo);
+                var (_, rawSessionId) = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
-                    createdSession.SessionId,
+                    rawSessionId,
                     new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
                 ;
             });
@@ -121,17 +123,16 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
-            if(passwordResult == PasswordVerificationResult.Failed)
+            if (!PasswordUtils.VerifyPassword(request.Password, creator.PasswordHash, _pepper))
             {
                 logger.LogWarning("Login failed: invalid password for creator {CreatorId}", creator.CreatorId);
                 throw new InvalidCredentialsException();
             }
 
-            Session createdSession = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+            var (_, rawSessionId) = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
             logger.LogInformation("Creator {CreatorId} logged in", creator.CreatorId);
             return new AuthResponseDto(
-                createdSession.SessionId,
+                rawSessionId,
                 new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
             );
         }
@@ -147,26 +148,26 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            PasswordVerificationResult passwordResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
-            if (passwordResult == PasswordVerificationResult.Failed)
+            if (!PasswordUtils.VerifyPassword(request.Password, member.PasswordHash, _pepper))
             {
                 logger.LogWarning("Login failed: invalid password for member {MemberId}", member.MemberId);
                 throw new InvalidCredentialsException();
             }
 
-            Session createdSession = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
+            var (_, rawSessionId) = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
             logger.LogInformation("Member {MemberId} logged in", member.MemberId);
             return new AuthResponseDto(
-                createdSession.SessionId,
+                rawSessionId,
                 new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
             );
         }
 
-        private async Task<Session> CreateSessionAsync(Guid userId, UserType userType, string? ipAddress, string? deviceInfo)
+        private async Task<(Session session, string rawId)> CreateSessionAsync(Guid userId, UserType userType, string? ipAddress, string? deviceInfo)
         {
+            string rawId = SessionIdGenerator.GenerateSessionId();
             Session session = new()
             {
-                SessionId = SessionIdGenerator.GenerateSessionId(),
+                SessionId = SessionIdHasher.Hash(rawId),
                 UserId = userId,
                 UserType = userType,
                 CreatedAt = DateTime.UtcNow,
@@ -177,7 +178,7 @@ namespace backend.Service
                 DeviceInfo = deviceInfo ?? string.Empty
             };
 
-            return await sessions.CreateAsync(session);
+            return (await sessions.CreateAsync(session), rawId);
         }
 
         public async Task<List<SessionDto>> ViewActiveSessions(Guid userId, UserType userType, string currentSessionId)
@@ -225,33 +226,31 @@ namespace backend.Service
                 TeamCreator? creator = await creators.GetCreatorByIdAsync(userId);
                 if(creator == null)
                     throw new NotFoundException("user-not-found", "User not found.");
-                
-                var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.CurrentPassword);
-                if(verifyResult == PasswordVerificationResult.Failed)
+
+                if (!PasswordUtils.VerifyPassword(request.CurrentPassword, creator.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change password rejected: invalid current password for creator {CreatorId}", userId);
                     throw new InvalidCredentialsException();
                 }
-            } 
+            }
             else if(userType == UserType.Member)
             {
                 TeamMember? member = await members.GetMemberByIdAsync(userId);
                 if(member == null)
                     throw new NotFoundException("user-not-found", "User not found.");
 
-                var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.CurrentPassword);
-                if(verifyResult == PasswordVerificationResult.Failed)
+                if (!PasswordUtils.VerifyPassword(request.CurrentPassword, member.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change password rejected: invalid current password for member {MemberId}", userId);
                     throw new InvalidCredentialsException();
                 }
-            } 
+            }
             else
             {
-                throw new AuthRequiredException(); 
+                throw new AuthRequiredException();
             }
 
-            string newHash = hasher.HashPassword(null!, request.NewPassword);
+            string newHash = PasswordUtils.HashPassword(request.NewPassword, _pepper);
 
             await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
@@ -291,8 +290,7 @@ namespace backend.Service
                 if(creator == null)
                     throw new NotFoundException("user-not-found", "User not found.");
 
-                var verifyResult = hasher.VerifyHashedPassword(null!, creator.PasswordHash, request.Password);
-                if(verifyResult == PasswordVerificationResult.Failed)
+                if (!PasswordUtils.VerifyPassword(request.Password, creator.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change email rejected: invalid password for creator {CreatorId}", userId);
                     throw new InvalidCredentialsException();
@@ -310,8 +308,7 @@ namespace backend.Service
                 if(member == null)
                     throw new NotFoundException("user-not-found", "User not found.");
 
-                var verifyResult = hasher.VerifyHashedPassword(null!, member.PasswordHash, request.Password);
-                if(verifyResult == PasswordVerificationResult.Failed)
+                if (!PasswordUtils.VerifyPassword(request.Password, member.PasswordHash, _pepper))
                 {
                     logger.LogWarning("Change email rejected: invalid password for member {MemberId}", userId);
                     throw new InvalidCredentialsException();

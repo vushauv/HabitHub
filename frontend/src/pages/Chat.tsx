@@ -106,6 +106,7 @@ export default function Chat() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
 
+  const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollToBottomRef = useRef(false);
   const preserveScrollRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
@@ -302,6 +303,7 @@ export default function Chat() {
       handleActionError(error);
     } finally {
       setIsSending(false);
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -415,6 +417,7 @@ export default function Chat() {
 
             <form className="chat-composer" onSubmit={(event) => void handleSend(event)}>
               <input
+                ref={inputRef}
                 type="text"
                 className="form-input chat-composer-input"
                 placeholder="Message"
@@ -428,7 +431,7 @@ export default function Chat() {
                 className="button button-primary chat-composer-send"
                 disabled={draft.trim().length === 0 || isSending}
               >
-                {isSending ? "Sending..." : "Send"}
+                Send
               </button>
             </form>
           </div>

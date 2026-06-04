@@ -95,6 +95,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var appSettings = scope.ServiceProvider.GetRequiredService<IOptions<AppSettings>>().Value;
 
     app.Logger.LogInformation("Applying database migrations");
     db.Database.Migrate();
@@ -111,7 +112,7 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         app.Logger.LogInformation("Seeding {Environment} data", app.Environment.EnvironmentName);
-        await SeedData.SeedUsersAsync(db, app.Logger);
+        await SeedData.SeedUsersAsync(db, app.Logger, appSettings.Pepper);
         await SeedData.SeedTeamsAsync(db, app.Logger);
         await SeedData.SeedHabitsAsync(db, app.Logger);
         await SeedData.SeedHabitEntriesAsync(db, app.Logger);

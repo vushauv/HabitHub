@@ -134,7 +134,8 @@ namespace backend.Service
                 h.HabitState,
                 h.HabitType,
                 h.Unit,
-                h.ExpiryDate
+                h.ExpiryDate,
+                h.ReminderTime
             )).ToList();
         }
 
@@ -211,7 +212,8 @@ namespace backend.Service
                 habit.HabitState,
                 habit.HabitType,
                 habit.Unit,
-                habit.ExpiryDate
+                habit.ExpiryDate,
+                habit.ReminderTime
             );
         }
         public async Task ArchiveHabit(Guid userId, Guid habitId)
@@ -301,7 +303,8 @@ namespace backend.Service
                 habit.HabitState,
                 habit.HabitType,
                 habit.Unit,
-            habit.ExpiryDate
+                habit.ExpiryDate,
+                habit.ReminderTime
             );
         }
 

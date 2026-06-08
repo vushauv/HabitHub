@@ -10,6 +10,7 @@ namespace backend.Dtos.HabitDtos
         HabitState HabitState,
         HabitType HabitType,
         Unit? Unit,
-        DateTime? ExpiryDate
+        DateTime? ExpiryDate,
+        TimeOnly? ReminderTime
     );
 }

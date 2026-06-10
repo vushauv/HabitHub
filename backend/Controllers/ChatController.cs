@@ -1,15 +1,17 @@
 using backend.Auth;
 using backend.Dtos.ChatDtos;
+using backend.Hubs;
 using backend.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace backend.Controllers
 {
     [ApiController]
     [Route("teams/{teamId}/chat/messages")]
     [Authorize]
-    public class ChatController(IChatService chatService) : ControllerBase
+    public class ChatController(IChatService chatService, IHubContext<ChatHub, IChatClient> hub) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> GetMessages(Guid teamId, [FromQuery] int offset = 0, [FromQuery] int count = 10)
@@ -26,6 +28,7 @@ namespace backend.Controllers
             var currentUser = HttpContext.RequireCurrentUser();
 
             MessageDto response = await chatService.SendMessage(currentUser.User, teamId, request);
+            await hub.Clients.Group($"team-{teamId}").ReceiveMessage(response);
             return StatusCode(StatusCodes.Status201Created, response);
         }
 
@@ -35,6 +38,7 @@ namespace backend.Controllers
             var currentUser = HttpContext.RequireCurrentUser();
 
             await chatService.DeleteMessage(currentUser.User, teamId, messageId);
+            await hub.Clients.Group($"team-{teamId}").MessageDeleted(messageId);
             return StatusCode(StatusCodes.Status204NoContent);
         }
     }

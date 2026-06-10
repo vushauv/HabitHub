@@ -26,7 +26,8 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
     
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        string? sessionId = Request.Headers["X-Session-Id"].FirstOrDefault();
+        string? sessionId = Request.Headers["X-Session-Id"].FirstOrDefault()
+            ?? Request.Query["access_token"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(sessionId))
         {
             return AuthenticateResult.Fail("No session ID");

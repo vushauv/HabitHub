@@ -64,7 +64,6 @@ namespace backend.Service
             {
                 HabitId = Guid.NewGuid(),
                 TeamId = team.TeamId,
-                CreatorId = userId,
                 Name = name,
                 Goal = goal,
                 HabitType = habitType,
@@ -82,7 +81,6 @@ namespace backend.Service
                 createdHabit.TeamId,
                 createdHabit.Name,
                 createdHabit.Goal,
-                createdHabit.CreatorId,
                 createdHabit.HabitState,
                 createdHabit.HabitType,
                 createdHabit.Unit,

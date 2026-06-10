@@ -176,7 +176,7 @@ it("shows error when habit load fails", async () => {
   });
 });
 
-it.skip("keeps reminder toggle disabled when no reminder time is set", async () => {
+it("keeps reminder toggle disabled when no reminder time is set", async () => {
   render(App());
 
   await waitFor(() => {
@@ -188,7 +188,7 @@ it.skip("keeps reminder toggle disabled when no reminder time is set", async () 
   ).toBeDisabled();
 });
 
-it.skip("enables a habit reminder", async () => {
+it("enables a habit reminder", async () => {
   const disabledReminder = {
     ...defaultReminder,
     reminderTime: "07:30:00",

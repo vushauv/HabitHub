@@ -7,7 +7,7 @@ public class Session
 {
     public string SessionId { get; set; } = string.Empty;
     public Guid UserId { get; set; }
-    public UserType UserType { get; set; }
+    public User? User { get; set; } = null;
     public DateTime CreatedAt { get; set; }
     public DateTime LastActiveAt { get; set; }
     public DateTime ExpiresAt { get; set; }

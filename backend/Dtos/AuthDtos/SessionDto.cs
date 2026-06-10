@@ -3,7 +3,6 @@ namespace backend.Dtos.AuthDtos
 {
     public record SessionDto(
         string SessionId,
-        UserType UserType,
         DateTime CreatedAt,
         DateTime LastActiveAt,
         DateTime ExpiresAt, 

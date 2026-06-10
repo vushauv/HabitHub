@@ -65,7 +65,7 @@ namespace backend.Service
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
-                var (_, rawSessionId) = await CreateSessionAsync(createdCreator.UserId, UserType.Creator, ipAddress, deviceInfo);
+                var (_, rawSessionId) = await CreateSessionAsync(createdCreator.UserId, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
                     rawSessionId,
@@ -101,7 +101,7 @@ namespace backend.Service
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamMember createdMember = await members.CreateMemberAsync(member);
-                var (_, rawSessionId) = await CreateSessionAsync(createdMember.UserId, UserType.Member, ipAddress, deviceInfo);
+                var (_, rawSessionId) = await CreateSessionAsync(createdMember.UserId, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
                     rawSessionId,
@@ -129,7 +129,7 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            var (_, rawSessionId) = await CreateSessionAsync(creator.UserId, UserType.Creator, ipAddress, deviceInfo);
+            var (_, rawSessionId) = await CreateSessionAsync(creator.UserId, ipAddress, deviceInfo);
             logger.LogInformation("Creator {CreatorId} logged in", creator.UserId);
             return new AuthResponseDto(
                 rawSessionId,
@@ -154,7 +154,7 @@ namespace backend.Service
                 throw new InvalidCredentialsException();
             }
 
-            var (_, rawSessionId) = await CreateSessionAsync(member.UserId, UserType.Member, ipAddress, deviceInfo);
+            var (_, rawSessionId) = await CreateSessionAsync(member.UserId, ipAddress, deviceInfo);
             logger.LogInformation("Member {MemberId} logged in", member.UserId);
             return new AuthResponseDto(
                 rawSessionId,
@@ -162,14 +162,13 @@ namespace backend.Service
             );
         }
 
-        private async Task<(Session session, string rawId)> CreateSessionAsync(Guid userId, UserType userType, string? ipAddress, string? deviceInfo)
+        private async Task<(Session session, string rawId)> CreateSessionAsync(Guid userId, string? ipAddress, string? deviceInfo)
         {
             string rawId = SessionIdGenerator.GenerateSessionId();
             Session session = new()
             {
                 SessionId = SessionIdHasher.Hash(rawId),
                 UserId = userId,
-                UserType = userType,
                 CreatedAt = DateTime.UtcNow,
                 LastActiveAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(30),
@@ -181,12 +180,11 @@ namespace backend.Service
             return (await sessions.CreateAsync(session), rawId);
         }
 
-        public async Task<List<SessionDto>> ViewActiveSessions(Guid userId, UserType userType, string currentSessionId)
+        public async Task<List<SessionDto>> ViewActiveSessions(Guid userId, string currentSessionId)
         {
-            var activeSessions = await sessions.GetActiveSessionsForUserAsync(userId, userType);
+            var activeSessions = await sessions.GetActiveSessionsForUserAsync(userId);
             return activeSessions
                 .Select(s => new SessionDto(s.SessionId, 
-                    s.UserType, 
                     s.CreatedAt, 
                     s.LastActiveAt, 
                     s.ExpiresAt, 
@@ -197,11 +195,10 @@ namespace backend.Service
                 )).ToList();
         }
 
-        public async Task InvalidateSpecificSession(Guid userId, UserType userType, string sessionId)
+        public async Task InvalidateSpecificSession(Guid userId, string sessionId)
         {
             Session? session = await sessions.GetByIdAsync(sessionId);
             if(session == null
-                || session.UserType != userType
                 || session.UserId != userId
                 || session.SessionState != SessionState.Active)
             {
@@ -210,8 +207,8 @@ namespace backend.Service
                 throw new NotFoundException();
             }
             await sessions.InvalidateAsync(session.SessionId);
-            logger.LogInformation("Invalidated session {SessionFingerprint} for user {UserId} ({UserType})",
-                LogRedaction.Fingerprint(sessionId), userId, userType);
+            logger.LogInformation("Invalidated session {SessionFingerprint} for user {UserId}",
+                LogRedaction.Fingerprint(sessionId), userId);
         }
         public async Task ChangePassword(Guid userId, UserType userType, string currentSessionId, ChangePasswordRequestDto request)
         {
@@ -267,7 +264,7 @@ namespace backend.Service
                     throw new AuthRequiredException();
                 }
                 await CreateSystemNotification(userId, userType, "Your password was changed.");
-                await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+                await sessions.InvalidateAllExceptCurrentAsync(userId, currentSessionId);
             });
            
             logger.LogInformation("Changed password for {UserType} {UserId}", userType, userId);
@@ -334,7 +331,7 @@ namespace backend.Service
                     throw new AuthRequiredException();
                 }
                 await CreateSystemNotification(userId, userType, "Your email address was changed.");
-                await sessions.InvalidateAllExceptCurrentAsync(userId, userType, currentSessionId);
+                await sessions.InvalidateAllExceptCurrentAsync(userId, currentSessionId);
             });
             logger.LogInformation("Changed email for {UserType} {UserId}", userType, userId);
         }

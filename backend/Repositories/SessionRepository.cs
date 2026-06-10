@@ -13,20 +13,21 @@ public class SessionRepository(AppDbContext db, ILogger<SessionRepository> logge
     {
         db.Sessions.Add(session);
         await db.SaveChangesAsync();
-        logger.LogInformation("Created session {SessionFingerprint} for user {UserId} ({UserType})",
-            LogRedaction.Fingerprint(session.SessionId), session.UserId, session.UserType);
+        logger.LogInformation("Created session {SessionFingerprint} for user {UserId}",
+            LogRedaction.Fingerprint(session.SessionId), session.UserId);
         return session;
     }
-    public async Task<List<Session>> GetActiveSessionsForUserAsync(Guid userId, UserType userType) =>
+    public async Task<List<Session>> GetActiveSessionsForUserAsync(Guid userId) =>
         await db.Sessions.Where(
-            s => s.UserType == userType &&
-            s.UserId == userId &&
-            s.SessionState == SessionState.Active &&
-            s.ExpiresAt > DateTime.UtcNow)
+            s => s.UserId == userId &&
+                 s.SessionState == SessionState.Active &&
+                 s.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(s => s.LastActiveAt)
             .ToListAsync();
     public async Task<Session?> GetByIdAsync(string sessionId) =>
         await db.Sessions.FindAsync(sessionId);
+    public async Task<Session?> GetByIdWithUserAsync(string sessionId) =>
+        await db.Sessions.Include(s => s.User).FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
     public async Task InvalidateAsync(string sessionId)
     {
@@ -37,15 +38,14 @@ public class SessionRepository(AppDbContext db, ILogger<SessionRepository> logge
         {
             session.SessionState = SessionState.Invalidated;
             await db.SaveChangesAsync();
-            logger.LogInformation("Invalidated session {SessionFingerprint} for user {UserId} ({UserType})",
-                LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
+            logger.LogInformation("Invalidated session {SessionFingerprint} for user {UserId}",
+                LogRedaction.Fingerprint(sessionId), session.UserId);
         }
     }
 
-    public async Task InvalidateAllExceptCurrentAsync(Guid userId, UserType userType, string currentSessionId)
+    public async Task InvalidateAllExceptCurrentAsync(Guid userId, string currentSessionId)
     {
          List<Session> sessions = await db.Sessions.Where(s => s.UserId == userId &&
-                                                                s.UserType == userType &&
                                                                 s.SessionState == SessionState.Active
                                                                 && !string.Equals(s.SessionId, currentSessionId))
                                                           .ToListAsync();
@@ -56,8 +56,8 @@ public class SessionRepository(AppDbContext db, ILogger<SessionRepository> logge
         }
 
         await db.SaveChangesAsync();
-        logger.LogInformation("Invalidated {Count} other active sessions for user {UserId} ({UserType}), keeping {SessionFingerprint}",
-            sessions.Count, userId, userType, LogRedaction.Fingerprint(currentSessionId));
+        logger.LogInformation("Invalidated {Count} other active sessions for user {UserId}, keeping {SessionFingerprint}",
+            sessions.Count, userId, LogRedaction.Fingerprint(currentSessionId));
     }
 
     public async Task ExpirePastDueSessionsAsync()
@@ -82,8 +82,8 @@ public class SessionRepository(AppDbContext db, ILogger<SessionRepository> logge
         if(session.ExpiresAt <= now)
         {
             session.SessionState = SessionState.Expired;
-            logger.LogInformation("Marked session {SessionFingerprint} expired on refresh for user {UserId} ({UserType})",
-                LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
+            logger.LogInformation("Marked session {SessionFingerprint} expired on refresh for user {UserId}",
+                LogRedaction.Fingerprint(sessionId), session.UserId);
         }
         else
         {
@@ -102,8 +102,8 @@ public class SessionRepository(AppDbContext db, ILogger<SessionRepository> logge
         {
             session.SessionState = SessionState.Expired;
             await db.SaveChangesAsync();
-            logger.LogInformation("Expired session {SessionFingerprint} for user {UserId} ({UserType})",
-                LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
+            logger.LogInformation("Expired session {SessionFingerprint} for user {UserId}",
+                LogRedaction.Fingerprint(sessionId), session.UserId);
         }
     }
 }

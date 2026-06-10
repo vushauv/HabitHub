@@ -34,7 +34,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            List<SessionDto> activeSessions = await authService.ViewActiveSessions(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
+            List<SessionDto> activeSessions = await authService.ViewActiveSessions(currentUser.UserId, currentUser.SessionId);
             return StatusCode(StatusCodes.Status200OK, activeSessions);
         }
         
@@ -44,7 +44,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, sessionId);
+            await authService.InvalidateSpecificSession(currentUser.UserId, sessionId);
             return StatusCode(StatusCodes.Status204NoContent);
         }
         
@@ -54,7 +54,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.UserType, currentUser.SessionId);
+            await authService.InvalidateSpecificSession(currentUser.UserId, currentUser.SessionId);
             return StatusCode(StatusCodes.Status204NoContent);
         }
 

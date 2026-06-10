@@ -32,7 +32,6 @@ public abstract class HabitServiceTestBase
         {
             HabitId = habitId ?? HabitId,
             TeamId = teamId ?? TeamId,
-            CreatorId = creatorId ?? Guid.Empty,
             Name = name,
             Goal = goal,
             HabitState = state,

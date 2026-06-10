@@ -72,7 +72,7 @@ public class HabitRepository(AppDbContext db) : IHabitRepository
         await db.Habits.FirstOrDefaultAsync(h => h.HabitId == habitId);
 
     public async Task<List<Habit>> GetHabitsByCreatorIdAsync(Guid creatorId) => 
-        await db.Habits.Where(h => h.CreatorId == creatorId).ToListAsync();
+        await db.Habits.Where(h => h.Team.CreatorId == creatorId).ToListAsync();
 
     public async Task<List<Habit>> GetHabitsByTeamIdAsync(Guid teamId) =>
         await db.Habits.Where(h => h.TeamId == teamId).ToListAsync();

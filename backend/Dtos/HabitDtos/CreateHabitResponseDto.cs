@@ -8,7 +8,6 @@ namespace backend.Dtos.HabitDtos
         Guid TeamId,
         string Name,
         string? Goal,
-        Guid CreatorId,
         HabitState HabitState,
         HabitType HabitType,
         Unit? Unit,

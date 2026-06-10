@@ -133,7 +133,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
            e.Property(h => h.TeamId).IsRequired();
            e.Property(h => h.Name).HasMaxLength(256).IsRequired();
            e.Property(h => h.Goal).HasMaxLength(512);
-           e.Property(h => h.CreatorId).IsRequired();
            e.Property(h => h.HabitState).IsRequired();
            e.Property(h => h.HabitType).IsRequired();
            e.Property(h => h.Unit).IsRequired(false);
@@ -146,11 +145,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
            .WithMany(t => t.Habits)
            .HasForeignKey(h => h.TeamId)
            .OnDelete(DeleteBehavior.Cascade);
-
-           e.HasOne(h => h.Creator)
-           .WithMany()
-           .HasForeignKey(h => h.CreatorId)
-           .OnDelete(DeleteBehavior.Restrict);
            
            e.HasIndex(h => h.TeamId);
         });

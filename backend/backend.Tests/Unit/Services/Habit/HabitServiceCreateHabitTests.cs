@@ -149,7 +149,6 @@ public class HabitServiceCreateHabitTests : HabitServiceTestBase
 
         Assert.NotEqual(Guid.Empty, result.HabitId);
         Assert.Equal(TeamId, result.TeamId);
-        Assert.Equal(UserId, result.CreatorId);
         Assert.Equal("Read", result.Name);
         Assert.Equal("20 pages", result.Goal);
         Assert.Equal(HabitState.Active, result.HabitState);
@@ -160,7 +159,6 @@ public class HabitServiceCreateHabitTests : HabitServiceTestBase
         var saved = _habits.LastCreated!;
         Assert.Equal(result.HabitId, saved.HabitId);
         Assert.Equal(TeamId, saved.TeamId);
-        Assert.Equal(UserId, saved.CreatorId);
         Assert.Equal(HabitState.Active, saved.HabitState);
     }
 }

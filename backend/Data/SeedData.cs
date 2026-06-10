@@ -41,7 +41,6 @@ public static class SeedData
                     TeamId = team.TeamId,
                     Name = name,
                     Goal = goal,
-                    CreatorId = team.CreatorId,
                     HabitState = HabitState.Active,
                     HabitType = type,
                     Unit = unit,

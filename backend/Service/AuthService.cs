@@ -263,7 +263,7 @@ namespace backend.Service
                 {
                     throw new AuthRequiredException();
                 }
-                await CreateSystemNotification(userId, userType, "Your password was changed.");
+                await CreateSystemNotification(userId, "Your password was changed.");
                 await sessions.InvalidateAllExceptCurrentAsync(userId, currentSessionId);
             });
            
@@ -330,7 +330,7 @@ namespace backend.Service
                 {
                     throw new AuthRequiredException();
                 }
-                await CreateSystemNotification(userId, userType, "Your email address was changed.");
+                await CreateSystemNotification(userId, "Your email address was changed.");
                 await sessions.InvalidateAllExceptCurrentAsync(userId, currentSessionId);
             });
             logger.LogInformation("Changed email for {UserType} {UserId}", userType, userId);
@@ -363,13 +363,12 @@ namespace backend.Service
         private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
         private static string NormalizeName(string name) => name.Trim();
         private static string NormalizeTimezone(string timezone) => timezone.Trim();
-        private async Task CreateSystemNotification(Guid userId, UserType userType, string content)
+        private async Task CreateSystemNotification(Guid userId, string content)
         {
             Notification notification = new Notification
             {
                 NotificationId = Guid.NewGuid(),
                 UserId = userId,
-                UserType = userType,
                 Content = content,
                 CreatedAt = DateTime.UtcNow,
                 Status = NotificationStatus.Unread,

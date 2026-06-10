@@ -16,7 +16,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            List<NotificationDto> response = await notificationService.GetNotifications(currentUser.UserId, currentUser.UserType, type);
+            List<NotificationDto> response = await notificationService.GetNotifications(currentUser.UserId, type);
 
             return StatusCode(StatusCodes.Status200OK, response);
         }
@@ -26,7 +26,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            NotificationCountDto response = await notificationService.GetUnreadCount(currentUser.UserId, currentUser.UserType, type);
+            NotificationCountDto response = await notificationService.GetUnreadCount(currentUser.UserId, type);
 
             return StatusCode(StatusCodes.Status200OK, response);
         }
@@ -35,7 +35,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            await notificationService.MarkAllAsRead(currentUser.UserId, currentUser.UserType, type);
+            await notificationService.MarkAllAsRead(currentUser.UserId, type);
 
             return StatusCode(StatusCodes.Status204NoContent);
         }
@@ -45,7 +45,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            await notificationService.MarkAsRead(currentUser.UserId, currentUser.UserType, notificationId);
+            await notificationService.MarkAsRead(currentUser.UserId, notificationId);
 
             return StatusCode(StatusCodes.Status204NoContent);
         }
@@ -55,7 +55,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            await notificationService.DeleteNotification(currentUser.UserId, currentUser.UserType, notificationId);
+            await notificationService.DeleteNotification(currentUser.UserId, notificationId);
 
             return StatusCode(StatusCodes.Status204NoContent);
         }

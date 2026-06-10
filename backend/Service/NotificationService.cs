@@ -12,18 +12,18 @@ namespace backend.Service
         ILogger<NotificationService> logger
     ) : INotificationService
     {
-        public async Task<List<NotificationDto>> GetNotifications(Guid userId, UserType userType, NotificationType? type)
+        public async Task<List<NotificationDto>> GetNotifications(Guid userId, NotificationType? type)
         {
             List<Notification> userNotifications = new List<Notification>();
 
             if (type == null)
             {
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, NotificationType.System));
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, NotificationType.Reminder));
+                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, NotificationType.System));
+                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, NotificationType.Reminder));
             }
             else
             {
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, type.Value));
+                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, type.Value));
             }
 
             return userNotifications
@@ -32,28 +32,28 @@ namespace backend.Service
                 .ToList();
         }
 
-        public async Task<NotificationCountDto> GetUnreadCount(Guid userId, UserType userType, NotificationType? type)
+        public async Task<NotificationCountDto> GetUnreadCount(Guid userId, NotificationType? type)
         {
             int count;
 
             if (type == null)
             {
-                int systemCount = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, userType, NotificationType.System);
-                int reminderCount = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, userType, NotificationType.Reminder);
+                int systemCount = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, NotificationType.System);
+                int reminderCount = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, NotificationType.Reminder);
 
                 count = systemCount + reminderCount;
             }
             else
             {
-                count = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, userType, type.Value);
+                count = await notifications.GetUnreadNotificationsCountForUserByTypeAsync(userId, type.Value);
             }
 
             return new NotificationCountDto(count);
         }
 
-        public async Task MarkAsRead(Guid userId, UserType userType, Guid notificationId)
+        public async Task MarkAsRead(Guid userId, Guid notificationId)
         {
-            Notification notification = await GetOwnedNotificationOrThrow(userId, userType, notificationId);
+            Notification notification = await GetOwnedNotificationOrThrow(userId, notificationId);
 
             bool updated = await notifications.MarkNotificationAsReadAsync(notification.NotificationId);
             if (!updated)
@@ -62,12 +62,12 @@ namespace backend.Service
                 throw new NotFoundException();
             }
 
-            logger.LogInformation("Marked notification {NotificationId} as read for user {UserId} ({UserType})", notificationId, userId, userType);
+            logger.LogInformation("Marked notification {NotificationId} as read for user {UserId}", notificationId, userId);
         }
 
-        public async Task DeleteNotification(Guid userId, UserType userType, Guid notificationId)
+        public async Task DeleteNotification(Guid userId, Guid notificationId)
         {
-            Notification notification = await GetOwnedNotificationOrThrow(userId, userType, notificationId);
+            Notification notification = await GetOwnedNotificationOrThrow(userId, notificationId);
 
             bool updated = await notifications.MarkNotificationAsDeletedAsync(notification.NotificationId);
             if (!updated)
@@ -76,17 +76,17 @@ namespace backend.Service
                 throw new NotFoundException();
             }
 
-            logger.LogInformation("Deleted notification {NotificationId} for user {UserId} ({UserType})", notificationId, userId, userType);
+            logger.LogInformation("Deleted notification {NotificationId} for user {UserId}", notificationId, userId);
         }
 
-        private async Task<Notification> GetOwnedNotificationOrThrow(Guid userId, UserType userType, Guid notificationId)
+        private async Task<Notification> GetOwnedNotificationOrThrow(Guid userId, Guid notificationId)
         {
             Notification? notification = await notifications.GetNotificationByIdAsync(notificationId);
 
             if (notification == null || notification.Status == NotificationStatus.Deleted)
                 throw new NotFoundException();
 
-            if (notification.UserId != userId || notification.UserType != userType)
+            if (notification.UserId != userId)
                 throw new ForbiddenException();
 
             return notification;
@@ -97,11 +97,11 @@ namespace backend.Service
             return new NotificationDto(notification.NotificationId, notification.Content, notification.CreatedAt, notification.Status, notification.Type);
         }
 
-        public async Task MarkAllAsRead(Guid userId, UserType userType, NotificationType? type)
+        public async Task MarkAllAsRead(Guid userId, NotificationType? type)
         {
-            await notifications.MarkAllUnreadNotificationsAsReadAsync(userId, userType, type);
+            await notifications.MarkAllUnreadNotificationsAsReadAsync(userId, type);
 
-            logger.LogInformation("Marked all unread notifications as read for user {UserId} ({UserType})", userId, userType);
+            logger.LogInformation("Marked all unread notifications as read for user {UserId}", userId);
         }
     }
 }

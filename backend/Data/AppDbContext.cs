@@ -176,14 +176,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasKey(n => n.NotificationId);
 
             e.Property(n => n.UserId).IsRequired();
-            e.Property(n => n.UserType).IsRequired();
             e.Property(n => n.Content).IsRequired().HasMaxLength(2000);
             e.Property(n => n.CreatedAt).IsRequired();
             e.Property(n => n.Status).IsRequired();
             e.Property(n => n.Type).IsRequired();
 
-            e.HasIndex(n => new { n.UserId, n.UserType });
-            e.HasIndex(n => new { n.UserId, n.UserType, n.Status, n.Type });
+            e.HasIndex(n => new { n.UserId });
+            e.HasIndex(n => new { n.UserId, n.Status, n.Type });
 
             e.Property(n => n.ReminderId).IsRequired(false);
 
@@ -191,6 +190,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(r => r.Notifications)
                 .HasForeignKey(n => n.ReminderId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(n => new { n.ReminderId, n.CreatedAt });
         });

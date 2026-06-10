@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { HubConnectionBuilder, HubConnectionState } from "@microsoft/signalr";
 import "./Chat.css";
 import "../App.css";
 import {
@@ -14,6 +15,7 @@ import {
 } from "../services/Chat";
 import { getTeam } from "../services/Team";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import { API_BASE_URL } from "../services/User";
 
 const PAGE_SIZE = 10;
 
@@ -104,6 +106,7 @@ export default function Chat() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
 
+  const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollToBottomRef = useRef(false);
   const preserveScrollRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
@@ -193,6 +196,39 @@ export default function Chat() {
     };
   }, [auth, teamId, navigate]);
 
+  useEffect(() => {
+    if (!auth || !teamId) return;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${API_BASE_URL}/hubs/chat?access_token=${auth.sessionId}`)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveMessage", (msg: ChatMessageDto) => {
+      shouldScrollToBottomRef.current = true;
+      setMessages((prev) =>
+        prev.some((m) => m.messageId === msg.messageId)
+          ? prev
+          : sortByDateAscending([...prev, msg]),
+      );
+    });
+
+    connection.on("MessageDeleted", (id: string) => {
+      setMessages((prev) => prev.filter((m) => m.messageId !== id));
+    });
+
+    connection
+      .start()
+      .then(() => connection.invoke("JoinTeam", teamId))
+      .catch(() => {/* silently ignore connection errors */});
+
+    return () => {
+      if (connection.state !== HubConnectionState.Disconnected) {
+        void connection.stop();
+      }
+    };
+  }, [auth, teamId]);
+
   const handleActionError = useCallback(
     (error: unknown) => {
       if (error instanceof ChatRequestError && error.code === "auth-required") {
@@ -257,12 +293,17 @@ export default function Chat() {
       const created = await sendMessage(auth, teamId, content);
 
       shouldScrollToBottomRef.current = true;
-      setMessages((current) => sortByDateAscending([...current, created]));
+      setMessages((current) =>
+        current.some((m) => m.messageId === created.messageId)
+          ? current
+          : sortByDateAscending([...current, created]),
+      );
       setDraft("");
     } catch (error) {
       handleActionError(error);
     } finally {
       setIsSending(false);
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -376,6 +417,7 @@ export default function Chat() {
 
             <form className="chat-composer" onSubmit={(event) => void handleSend(event)}>
               <input
+                ref={inputRef}
                 type="text"
                 className="form-input chat-composer-input"
                 placeholder="Message"
@@ -389,7 +431,7 @@ export default function Chat() {
                 className="button button-primary chat-composer-send"
                 disabled={draft.trim().length === 0 || isSending}
               >
-                {isSending ? "Sending..." : "Send"}
+                Send
               </button>
             </form>
           </div>

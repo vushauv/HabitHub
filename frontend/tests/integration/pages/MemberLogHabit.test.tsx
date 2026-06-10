@@ -135,7 +135,6 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "member-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
 it("renders team and habit name after load", async () => {

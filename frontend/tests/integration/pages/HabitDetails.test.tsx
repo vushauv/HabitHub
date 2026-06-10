@@ -74,7 +74,6 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "creator-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
 it("renders habit details after load", async () => {

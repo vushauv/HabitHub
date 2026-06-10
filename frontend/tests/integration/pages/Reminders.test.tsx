@@ -98,7 +98,6 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "member-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
 it("renders unread reminders with team, habit and context", async () => {

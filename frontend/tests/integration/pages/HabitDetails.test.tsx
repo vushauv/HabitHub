@@ -146,7 +146,7 @@ it("shows 'No goal' when goal is null", async () => {
   });
 });
 
-it.skip("saves a reminder time", async () => {
+it("saves a reminder time", async () => {
   server.use(
     http.patch(`${API_URL}/habits/${HABIT_ID}/reminder`, async ({ request }) => {
       const data = (await request.json()) as { reminderTime: string };
@@ -175,7 +175,7 @@ it.skip("saves a reminder time", async () => {
   });
 });
 
-it.skip("clears an existing reminder time", async () => {
+it("clears an existing reminder time", async () => {
   server.use(
     ...makeHandlers({ ...activeHabit, reminderTime: "07:30:00" }),
     http.delete(`${API_URL}/habits/${HABIT_ID}/reminder`, () =>

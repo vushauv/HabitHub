@@ -74,7 +74,7 @@ public static class SeedData
 
             foreach (TeamMember member in members)
             {
-                int memberSeed = Math.Abs(member.MemberId.GetHashCode());
+                int memberSeed = Math.Abs(member.UserId.GetHashCode());
 
                 for (int daysAgo = 13; daysAgo >= 1; daysAgo--)
                 {
@@ -82,7 +82,7 @@ public static class SeedData
 
                     bool exists = await db.HabitEntries.AnyAsync(e =>
                         e.HabitId == habit.HabitId &&
-                        e.MemberId == member.MemberId &&
+                        e.MemberId == member.UserId &&
                         e.LogDate == logDate);
                     if (exists) continue;
 
@@ -105,7 +105,7 @@ public static class SeedData
                     {
                         EntryId = Guid.NewGuid(),
                         HabitId = habit.HabitId,
-                        MemberId = member.MemberId,
+                        MemberId = member.UserId,
                         LogDate = logDate,
                         LoggedAt = new DateTime(logDate.Year, logDate.Month, logDate.Day, 8, 0, 0, DateTimeKind.Utc),
                         Status = status,
@@ -288,7 +288,7 @@ public static class SeedData
             foreach (var (content, type, status, daysAgo) in memberTemplates)
             {
                 bool exists = await db.Notifications.AnyAsync(n =>
-                    n.UserId == member.MemberId &&
+                    n.UserId == member.UserId &&
                     n.UserType == UserType.Member &&
                     n.Content == content);
                 if (exists) continue;
@@ -296,7 +296,7 @@ public static class SeedData
                 db.Notifications.Add(new Notification
                 {
                     NotificationId = Guid.NewGuid(),
-                    UserId = member.MemberId,
+                    UserId = member.UserId,
                     UserType = UserType.Member,
                     Content = content,
                     Type = type,
@@ -312,7 +312,7 @@ public static class SeedData
             foreach (var (content, type, status, daysAgo) in creatorTemplates)
             {
                 bool exists = await db.Notifications.AnyAsync(n =>
-                    n.UserId == creator.CreatorId &&
+                    n.UserId == creator.UserId &&
                     n.UserType == UserType.Creator &&
                     n.Content == content);
                 if (exists) continue;
@@ -320,7 +320,7 @@ public static class SeedData
                 db.Notifications.Add(new Notification
                 {
                     NotificationId = Guid.NewGuid(),
-                    UserId = creator.CreatorId,
+                    UserId = creator.UserId,
                     UserType = UserType.Creator,
                     Content = content,
                     Type = type,
@@ -361,7 +361,7 @@ public static class SeedData
             if (await db.TeamCreators.AnyAsync(c => c.Email == email)) continue;
             db.TeamCreators.Add(new TeamCreator
             {
-                CreatorId = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
                 PasswordHash = PasswordUtils.HashPassword("12345678", pepper),
@@ -375,7 +375,7 @@ public static class SeedData
             if (await db.TeamMembers.AnyAsync(m => m.Email == email)) continue;
             db.TeamMembers.Add(new TeamMember
             {
-                MemberId = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
                 PasswordHash = PasswordUtils.HashPassword("12345678", pepper),
@@ -401,14 +401,14 @@ public static class SeedData
             TeamCreator? creator = await db.TeamCreators.FirstOrDefaultAsync(c => c.Email == creatorEmail);
             if (creator == null) continue;
 
-            HabitTeam? team = await db.HabitTeams.FirstOrDefaultAsync(t => t.Name == teamName && t.CreatorId == creator.CreatorId);
+            HabitTeam? team = await db.HabitTeams.FirstOrDefaultAsync(t => t.Name == teamName && t.CreatorId == creator.UserId);
             if (team == null)
             {
                 team = new HabitTeam
                 {
                     TeamId = Guid.NewGuid(),
                     Name = teamName,
-                    CreatorId = creator.CreatorId,
+                    CreatorId = creator.UserId,
                 };
                 db.HabitTeams.Add(team);
                 await db.SaveChangesAsync();
@@ -433,14 +433,14 @@ public static class SeedData
                 TeamMember? member = await db.TeamMembers.FirstOrDefaultAsync(m => m.Email == memberEmail);
                 if (member == null) continue;
 
-                bool exists = await db.Memberships.AnyAsync(m => m.TeamId == team.TeamId && m.MemberId == member.MemberId);
+                bool exists = await db.Memberships.AnyAsync(m => m.TeamId == team.TeamId && m.MemberId == member.UserId);
                 if (exists) continue;
 
                 db.Memberships.Add(new Membership
                 {
                     MembershipId = Guid.NewGuid(),
                     TeamId = team.TeamId,
-                    MemberId = member.MemberId,
+                    MemberId = member.UserId,
                     Status = MembershipStatus.Active,
                 });
                 membershipCount++;

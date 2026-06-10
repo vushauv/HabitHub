@@ -38,22 +38,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<User>(e => 
+        {
+            e.HasKey(c => c.UserId);
+            e.ToTable("Users");
+        });
         modelBuilder.Entity<TeamCreator>(e => 
         {
-            e.HasKey(c => c.CreatorId);
             e.Property(c => c.Email).IsRequired().HasMaxLength(256);
             e.HasIndex(c => c.Email).IsUnique();
             e.Property(c => c.PasswordHash).IsRequired();
             e.Property(c => c.Name).IsRequired().HasMaxLength(256);
+            e.ToTable("TeamCreators");
         });
         modelBuilder.Entity<TeamMember>(e => 
         {
-            e.HasKey(m => m.MemberId);
             e.Property(m => m.Email).IsRequired().HasMaxLength(256);
             e.HasIndex(m => m.Email).IsUnique();
             e.Property(m => m.PasswordHash).IsRequired();
             e.Property(m => m.Name).IsRequired().HasMaxLength(256);
             e.Property(m => m.Timezone).IsRequired().HasMaxLength(256);
+            e.ToTable("TeamMembers");
         });
         modelBuilder.Entity<Session>(e => 
         {

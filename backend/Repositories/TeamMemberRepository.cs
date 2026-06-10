@@ -13,13 +13,13 @@ public class TeamMemberRepository(AppDbContext db, ILogger<TeamMemberRepository>
     public async Task<TeamMember?> GetMemberByIdAsync(Guid memberId) =>
         await db.TeamMembers.FindAsync(memberId);
     public async Task<List<TeamMember>> GetMembersByIdsAsync(List<Guid> memberIds) =>
-        await db.TeamMembers.Where(m => memberIds.Contains(m.MemberId)).ToListAsync();
+        await db.TeamMembers.Where(m => memberIds.Contains(m.UserId)).ToListAsync();
 
     public async Task<TeamMember> CreateMemberAsync(TeamMember member)
     {
         db.TeamMembers.Add(member);
         await db.SaveChangesAsync();
-        logger.LogInformation("Created team member {MemberId}", member.MemberId);
+        logger.LogInformation("Created team member {MemberId}", member.UserId);
         return member;
     }
     public async Task UpdatePasswordAsync(Guid memberId, string newPasswordHash)

@@ -107,7 +107,7 @@ namespace backend.Service
                 if (member == null)
                     throw new ForbiddenException();
 
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.UserId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
@@ -344,10 +344,10 @@ namespace backend.Service
                 throw new ForbiddenException();
             }
 
-            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
             if (!isActiveMember)
             {
-                logger.LogWarning( "Log progress rejected: member {MemberId} does not have an active membership in team {TeamId}.", member.MemberId, habit.TeamId);
+                logger.LogWarning( "Log progress rejected: member {MemberId} does not have an active membership in team {TeamId}.", member.UserId, habit.TeamId);
                 throw new ForbiddenException();
             }
 
@@ -376,7 +376,7 @@ namespace backend.Service
 
             HabitEntry? existingEntry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(
                 habit.HabitId,
-                member.MemberId,
+                member.UserId,
                 today
             );
 
@@ -390,7 +390,7 @@ namespace backend.Service
             {
                 EntryId = Guid.NewGuid(),
                 HabitId = habit.HabitId,
-                MemberId = member.MemberId,
+                MemberId = member.UserId,
                 LogDate = today,
                 LoggedAt = DateTime.UtcNow,
                 Status = request.Status,
@@ -435,10 +435,10 @@ namespace backend.Service
                 throw new ForbiddenException();
             }
 
-            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
             if (!isActiveMember)
             {
-                logger.LogWarning("Undo log rejected: member {MemberId} does not have an active membership in team {TeamId}.", member.MemberId, habit.TeamId);
+                logger.LogWarning("Undo log rejected: member {MemberId} does not have an active membership in team {TeamId}.", member.UserId, habit.TeamId);
                 throw new ForbiddenException();
             }
 
@@ -450,7 +450,7 @@ namespace backend.Service
 
             DateOnly today = GetLocalToday(member);
 
-            HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.MemberId , today);
+            HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.UserId , today);
             if (entry == null || entry.EntryId != entryId)
             {
                 logger.LogWarning("Undo log rejected: log {LogId} not found.", entryId);
@@ -480,7 +480,7 @@ namespace backend.Service
             if (member == null)
                 throw new ForbiddenException();
 
-            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
             if (!isActiveMember)
                 throw new ForbiddenException();
         
@@ -494,7 +494,7 @@ namespace backend.Service
                 entries = await habitEntries.GetHabitEntriesByHabitAndMemberAsync(habit.HabitId, memberId.Value);
             }
             else
-                entries = await habitEntries.GetHabitEntriesByHabitAndMemberAsync(habit.HabitId, member.MemberId);
+                entries = await habitEntries.GetHabitEntriesByHabitAndMemberAsync(habit.HabitId, member.UserId);
 
             return entries.Select(e => new HabitEntryResponseDto(
                 e.EntryId,
@@ -520,13 +520,13 @@ namespace backend.Service
             if (member == null)
                 throw new ForbiddenException();
 
-            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
             if (!isActiveMember)
                 throw new ForbiddenException();
 
             DateOnly today = GetLocalToday(member);
 
-            HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.MemberId, today);
+            HabitEntry? entry = await habitEntries.GetHabitEntryByHabitMemberLogDateAsync(habitId, member.UserId, today);
             if (entry == null)
                 return new TodayHabitEntryStatusDto(EntryStatus.Pending, null);
 
@@ -562,7 +562,7 @@ namespace backend.Service
                 if (member == null)
                     throw new ForbiddenException();
 
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
@@ -574,7 +574,7 @@ namespace backend.Service
 
             List<LeaderboardRowDto> sortedResults = entries.GroupBy(e => e.MemberId).Select(group =>
             {
-                TeamMember? member = teamMembers.FirstOrDefault(m => m.MemberId == group.Key);
+                TeamMember? member = teamMembers.FirstOrDefault(m => m.UserId == group.Key);
 
                 int loggedCount = group.Count(e => e.Status == EntryStatus.Logged);
 
@@ -607,7 +607,7 @@ namespace backend.Service
         {
             Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(
                 habit.HabitId,
-                member.MemberId
+                member.UserId
             );
 
             if (reminder == null)
@@ -640,7 +640,7 @@ namespace backend.Service
 
             Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(
                 habit.HabitId,
-                member.MemberId
+                member.UserId
             );
 
             if (reminder == null || !reminder.Enabled)
@@ -668,7 +668,7 @@ namespace backend.Service
             Notification newNotification = new Notification
             {
                 NotificationId = Guid.NewGuid(),
-                UserId = member.MemberId,
+                UserId = member.UserId,
                 UserType = UserType.Member,
                 Content = $"Reminder: you have not logged \"{habit.Name}\" today.",
                 CreatedAt = DateTime.UtcNow,

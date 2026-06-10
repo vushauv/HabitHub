@@ -135,7 +135,7 @@ namespace backend.Service
                 if (member == null)
                     throw new ForbiddenException();
 
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.UserId);
                 if (!isActiveMember)
                 {
                     logger.LogWarning("{Action} rejected: user {UserId} not active in team {TeamId}", action, userId, teamId);
@@ -159,7 +159,7 @@ namespace backend.Service
                 return new Dictionary<Guid, string>();
 
             List<TeamMember> memberList = await members.GetMembersByIdsAsync(memberIds);
-            return memberList.ToDictionary(m => m.MemberId, m => m.Name);
+            return memberList.ToDictionary(m => m.UserId, m => m.Name);
         }
 
         private async Task<string> ResolveCreatorNameAsync(Guid creatorId)

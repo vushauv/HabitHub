@@ -15,7 +15,7 @@ public class TeamCreatorRepository(AppDbContext db, ILogger<TeamCreatorRepositor
     {
         db.TeamCreators.Add(creator);
         await db.SaveChangesAsync();
-        logger.LogInformation("Created team creator {CreatorId}", creator.CreatorId);
+        logger.LogInformation("Created team creator {CreatorId}", creator.UserId);
         return creator;
     }
 

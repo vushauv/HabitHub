@@ -16,7 +16,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            List<MessageDto> response = await chatService.GetMessages(currentUser.UserId, currentUser.UserType, teamId, offset, count);
+            List<MessageDto> response = await chatService.GetMessages(currentUser.User, teamId, offset, count);
             return StatusCode(StatusCodes.Status200OK, response);
         }
 
@@ -25,7 +25,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            MessageDto response = await chatService.SendMessage(currentUser.UserId, currentUser.UserType, teamId, request);
+            MessageDto response = await chatService.SendMessage(currentUser.User, teamId, request);
             return StatusCode(StatusCodes.Status201Created, response);
         }
 
@@ -34,7 +34,7 @@ namespace backend.Controllers
         {
             var currentUser = HttpContext.RequireCurrentUser();
 
-            await chatService.DeleteMessage(currentUser.UserId, currentUser.UserType, teamId, messageId);
+            await chatService.DeleteMessage(currentUser.User, teamId, messageId);
             return StatusCode(StatusCodes.Status204NoContent);
         }
     }

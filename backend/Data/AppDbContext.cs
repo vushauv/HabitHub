@@ -237,7 +237,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             e.Property(m => m.ChatId).IsRequired();
             e.Property(m => m.UserId).IsRequired();
-            e.Property(m => m.UserType).IsRequired();
             e.Property(m => m.Content).IsRequired().HasMaxLength(2000); 
             e.Property(m => m.SendDate).IsRequired();
 
@@ -245,6 +244,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany(c => c.Messages)
             .HasForeignKey(m => m.ChatId)
             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(m => m.User)
+                .WithMany(u => u.Messages)
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(m => m.ChatId);
         });

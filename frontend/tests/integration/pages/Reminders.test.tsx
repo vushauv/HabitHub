@@ -98,10 +98,9 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "member-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
-it.skip("renders unread reminders with team, habit and context", async () => {
+it("renders unread reminders with team, habit and context", async () => {
   render(App());
 
   await waitFor(() => {
@@ -112,7 +111,7 @@ it.skip("renders unread reminders with team, habit and context", async () => {
   });
 });
 
-it.skip("hides reminders for habits already logged today", async () => {
+it("hides reminders for habits already logged today", async () => {
   server.use(...makeHandlers(reminderAlerts, loggedToday));
 
   render(App());
@@ -124,7 +123,7 @@ it.skip("hides reminders for habits already logged today", async () => {
   expect(screen.queryByText("Morning Walk")).not.toBeInTheDocument();
 });
 
-it.skip("shows empty state when there are no unread reminders", async () => {
+it("shows empty state when there are no unread reminders", async () => {
   server.use(...makeHandlers([]));
 
   render(App());
@@ -134,7 +133,7 @@ it.skip("shows empty state when there are no unread reminders", async () => {
   });
 });
 
-it.skip("shows error when reminders fail to load", async () => {
+it("shows error when reminders fail to load", async () => {
   server.use(
     http.get(`${API_URL}/notifications`, () =>
       HttpResponse.json(

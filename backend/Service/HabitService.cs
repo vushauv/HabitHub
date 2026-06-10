@@ -667,7 +667,6 @@ namespace backend.Service
             {
                 NotificationId = Guid.NewGuid(),
                 UserId = member.UserId,
-                UserType = UserType.Member,
                 Content = $"Reminder: you have not logged \"{habit.Name}\" today.",
                 CreatedAt = DateTime.UtcNow,
                 Status = NotificationStatus.Unread,

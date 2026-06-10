@@ -76,7 +76,6 @@ namespace backend.BackgroundServices
             {
                 NotificationId = Guid.NewGuid(),
                 UserId = reminder.MemberId,
-                UserType = UserType.Member,
                 Content = $"Reminder: you have not logged \"{reminder.Habit.Name}\" today.",
                 CreatedAt = nowUtc,
                 Status = NotificationStatus.Unread,

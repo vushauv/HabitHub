@@ -9,28 +9,26 @@ namespace backend.Repositories
     public class NotificationRepository(AppDbContext db): INotificationRepository
     {
         private static readonly TimeSpan VisibleNotificationTime = TimeSpan.FromDays(10);
-        public async Task<List<Notification>> GetVisibleNotificationsForUserByTypeAsync(Guid userId, UserType userType, NotificationType type)
+        public async Task<List<Notification>> GetVisibleNotificationsForUserByTypeAsync(Guid userId, NotificationType type)
         {
             DateTime timeLimit = DateTime.UtcNow.Subtract(VisibleNotificationTime);
 
             return await db.Notifications
                 .Where(n =>
                     n.UserId == userId &&
-                    n.UserType == userType &&
                     n.Status != NotificationStatus.Deleted &&
                     n.Type == type &&
                     n.CreatedAt >= timeLimit)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
-        public async Task<int> GetUnreadNotificationsCountForUserByTypeAsync(Guid userId, UserType userType, NotificationType type)
+        public async Task<int> GetUnreadNotificationsCountForUserByTypeAsync(Guid userId, NotificationType type)
         {
             DateTime timeLimit = DateTime.UtcNow.Subtract(VisibleNotificationTime);
 
             return await db.Notifications
                 .CountAsync(n =>
                     n.UserId == userId &&
-                    n.UserType == userType &&
                     n.Status == NotificationStatus.Unread &&
                     n.Type == type &&
                     n.CreatedAt >= timeLimit);
@@ -56,11 +54,10 @@ namespace backend.Repositories
             await db.SaveChangesAsync();
             return true;
         }
-        public async Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type)
+        public async Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, NotificationType? type)
         {
             IQueryable<Notification> query = db.Notifications.Where(n =>
                 n.UserId == userId &&
-                n.UserType == userType &&
                 n.Status == NotificationStatus.Unread
             );
 

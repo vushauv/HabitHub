@@ -288,7 +288,6 @@ public static class SeedData
             {
                 bool exists = await db.Notifications.AnyAsync(n =>
                     n.UserId == member.UserId &&
-                    n.UserType == UserType.Member &&
                     n.Content == content);
                 if (exists) continue;
 
@@ -296,7 +295,6 @@ public static class SeedData
                 {
                     NotificationId = Guid.NewGuid(),
                     UserId = member.UserId,
-                    UserType = UserType.Member,
                     Content = content,
                     Type = type,
                     Status = status,
@@ -312,7 +310,6 @@ public static class SeedData
             {
                 bool exists = await db.Notifications.AnyAsync(n =>
                     n.UserId == creator.UserId &&
-                    n.UserType == UserType.Creator &&
                     n.Content == content);
                 if (exists) continue;
 
@@ -320,7 +317,6 @@ public static class SeedData
                 {
                     NotificationId = Guid.NewGuid(),
                     UserId = creator.UserId,
-                    UserType = UserType.Creator,
                     Content = content,
                     Type = type,
                     Status = status,

@@ -7,7 +7,7 @@ namespace backend.Models
     {
         public Guid NotificationId { get; set; } 
         public Guid UserId { get; set; }
-        public UserType UserType { get; set; }
+        public User? User { get; set; } = null;
         public string Content { get; set; } = string.Empty; 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
         public NotificationStatus Status { get; set; } = NotificationStatus.Unread; 

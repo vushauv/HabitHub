@@ -18,26 +18,26 @@ namespace backend.Service
     {
         private const int MaxMessagesPerPage = 100;
 
-        public async Task<List<MessageDto>> GetMessages(Guid userId, UserType userType, Guid teamId, int offset, int count)
+        public async Task<List<MessageDto>> GetMessages(User user, Guid teamId, int offset, int count)
         {
             if (offset < 0)
                 throw new RequestValidationException("Offset must be non-negative.");
             if (count <= 0 || count > MaxMessagesPerPage)
                 throw new RequestValidationException($"Count must be between 1 and {MaxMessagesPerPage}.");
 
-            (HabitTeam team, _) = await EnsureTeamAccessAsync(userId, userType, teamId, "Get messages");
+            (HabitTeam team, _) = await EnsureTeamAccessAsync(user, teamId, "Get messages");
 
             List<Message> messages = await chats.GetMessagesByTeamIdAsync(teamId, offset, count);
 
             Dictionary<Guid, string> memberNames = await ResolveMemberNamesAsync(messages);
-            bool hasCreatorMsg = messages.Any(m => m.UserType == UserType.Creator);
+            bool hasCreatorMsg = messages.Any(m => m.User is TeamCreator);
             string? creatorName = hasCreatorMsg ? await ResolveCreatorNameAsync(team.CreatorId) : null;
 
             return messages.Select(m => new MessageDto(
                 m.MessageId,
                 m.UserId,
-                m.UserType,
-                m.UserType == UserType.Creator
+                m.User!.GetUserType(),
+                m.User is TeamCreator
                     ? (creatorName ?? "Unknown")
                     : memberNames.GetValueOrDefault(m.UserId, "Unknown"),
                 m.Content,
@@ -45,9 +45,9 @@ namespace backend.Service
             )).ToList();
         }
 
-        public async Task<MessageDto> SendMessage(Guid userId, UserType userType, Guid teamId, SendMessageRequestDto request)
+        public async Task<MessageDto> SendMessage(User user, Guid teamId, SendMessageRequestDto request)
         {
-            (HabitTeam team, TeamMember? member) = await EnsureTeamAccessAsync(userId, userType, teamId, "Send message");
+            (HabitTeam team, TeamMember? member) = await EnsureTeamAccessAsync(user, teamId, "Send message");
 
             string content = NormalizeString(request.Content);
             if (content.Length == 0)
@@ -64,31 +64,30 @@ namespace backend.Service
             {
                 MessageId = Guid.NewGuid(),
                 ChatId = chat.ChatId,
-                UserId = userId,
-                UserType = userType,
+                UserId = user.UserId,
                 Content = content,
                 SendDate = DateTime.UtcNow
             };
             Message created = await chats.CreateMessageAsync(message);
-            logger.LogInformation("User {UserId} sent message {MessageId} in team {TeamId}", userId, created.MessageId, teamId);
+            logger.LogInformation("User {UserId} sent message {MessageId} in team {TeamId}", user.UserId, created.MessageId, teamId);
 
-            string authorName = userType == UserType.Creator
+            string authorName = user is TeamCreator
                 ? await ResolveCreatorNameAsync(team.CreatorId)
                 : member!.Name;
 
             return new MessageDto(
                 created.MessageId,
                 created.UserId,
-                created.UserType,
+                user.GetUserType(),
                 authorName,
                 created.Content,
                 created.SendDate
             );
         }
 
-        public async Task DeleteMessage(Guid userId, UserType userType, Guid teamId, Guid messageId)
+        public async Task DeleteMessage(User user, Guid teamId, Guid messageId)
         {
-            (HabitTeam team, _) = await EnsureTeamAccessAsync(userId, userType, teamId, "Delete message");
+            (HabitTeam team, _) = await EnsureTeamAccessAsync(user, teamId, "Delete message");
 
             Message? message = await chats.GetMessageByIdAndTeamIdAsync(messageId, teamId);
             if (message == null)
@@ -97,19 +96,19 @@ namespace backend.Service
                 throw new MessageNotFoundException();
             }
 
-            bool isAuthor = message.UserId == userId && message.UserType == userType;
-            bool isTeamCreator = userType == UserType.Creator && team.CreatorId == userId;
+            bool isAuthor = message.UserId == user.UserId;
+            bool isTeamCreator = message.User is TeamCreator && team.CreatorId == user.UserId;
             if (!isAuthor && !isTeamCreator)
             {
-                logger.LogWarning("Delete message rejected: user {UserId} not authorized for message {MessageId}", userId, messageId);
+                logger.LogWarning("Delete message rejected: user {UserId} not authorized for message {MessageId}", user.UserId, messageId);
                 throw new MessageNotOwnException();
             }
 
             await chats.DeleteMessageAsync(messageId);
-            logger.LogInformation("Deleted message {MessageId} from team {TeamId} by user {UserId}", messageId, teamId, userId);
+            logger.LogInformation("Deleted message {MessageId} from team {TeamId} by user {UserId}", messageId, teamId, user.UserId);
         }
 
-        private async Task<(HabitTeam Team, TeamMember? Member)> EnsureTeamAccessAsync(Guid userId, UserType userType, Guid teamId, string action)
+        private async Task<(HabitTeam Team, TeamMember? Member)> EnsureTeamAccessAsync(User user, Guid teamId, string action)
         {
             HabitTeam? team = await habitTeams.GetHabitTeamByIdAsync(teamId);
             if (team == null)
@@ -118,27 +117,27 @@ namespace backend.Service
                 throw new NotFoundException();
             }
 
-            if (userType == UserType.Creator)
+            if (user is TeamCreator)
             {
-                bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, userId);
+                bool isTeamCreator = await habitTeams.CheckOwnershipOfTeamAsync(team.TeamId, user.UserId);
                 if (!isTeamCreator)
                 {
-                    logger.LogWarning("{Action} rejected: user {UserId} is not owner of team {TeamId}", action, userId, teamId);
+                    logger.LogWarning("{Action} rejected: user {UserId} is not owner of team {TeamId}", action, user.UserId, teamId);
                     throw new ForbiddenException();
                 }
                 return (team, null);
             }
 
-            if (userType == UserType.Member)
+            if (user is TeamMember)
             {
-                TeamMember? member = await members.GetMemberByIdAsync(userId);
+                TeamMember? member = await members.GetMemberByIdAsync(user.UserId);
                 if (member == null)
                     throw new ForbiddenException();
 
                 bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.UserId);
                 if (!isActiveMember)
                 {
-                    logger.LogWarning("{Action} rejected: user {UserId} not active in team {TeamId}", action, userId, teamId);
+                    logger.LogWarning("{Action} rejected: user {UserId} not active in team {TeamId}", action, user.UserId, teamId);
                     throw new ForbiddenException();
                 }
                 return (team, member);
@@ -150,7 +149,7 @@ namespace backend.Service
         private async Task<Dictionary<Guid, string>> ResolveMemberNamesAsync(List<Message> messages)
         {
             List<Guid> memberIds = messages
-                .Where(m => m.UserType == UserType.Member)
+                .Where(m => m.User is TeamMember)
                 .Select(m => m.UserId)
                 .Distinct()
                 .ToList();

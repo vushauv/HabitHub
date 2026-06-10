@@ -176,14 +176,14 @@ public static class SeedData
             bool hasMessages = await db.Messages.AnyAsync(m => m.ChatId == chat.ChatId);
             if (hasMessages) continue;
 
-            List<(Guid UserId, UserType UserType)> speakers = new();
+            List<Guid> speakers = new();
             if (chat.Team.Creator != null)
             {
-                speakers.Add((chat.Team.CreatorId, UserType.Creator));
+                speakers.Add(chat.Team.CreatorId);
             }
             foreach (Membership ms in chat.Team.Memberships.Where(m => m.Status == MembershipStatus.Active))
             {
-                speakers.Add((ms.MemberId, UserType.Member));
+                speakers.Add(ms.MemberId);
             }
             if (speakers.Count == 0) continue;
 
@@ -191,13 +191,12 @@ public static class SeedData
             double stepHours = 7 * 24.0 / templates.Length;
             for (int i = 0; i < templates.Length; i++)
             {
-                var (userId, userType) = speakers[i % speakers.Count];
+                var userId = speakers[i % speakers.Count];
                 db.Messages.Add(new Message
                 {
                     MessageId = Guid.NewGuid(),
                     ChatId = chat.ChatId,
                     UserId = userId,
-                    UserType = userType,
                     Content = templates[i],
                     SendDate = baseTime.AddHours(i * stepHours),
                 });

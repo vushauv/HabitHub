@@ -18,6 +18,7 @@ namespace backend.Repositories
         }
         public async Task<List<Message>> GetMessagesByTeamIdAsync(Guid teamId, int offset, int count) =>
             await db.Messages
+                .Include(m => m.User)
                 .Where(m => m.Chat.TeamId == teamId)
                 .OrderByDescending(m => m.SendDate)
                 .ThenByDescending(m => m.MessageId)
@@ -30,6 +31,7 @@ namespace backend.Repositories
                 .FirstOrDefaultAsync(m => m.MessageId == messageId);
         public async Task<Message?> GetMessageByIdAndTeamIdAsync(Guid messageId, Guid teamId) =>
             await db.Messages
+                .Include(m => m.User)
                 .FirstOrDefaultAsync(m => 
                 m.MessageId == messageId &&
                 m.Chat.TeamId == teamId);

@@ -1,6 +1,4 @@
-﻿using backend.Enums;
-
-namespace backend.Models
+﻿namespace backend.Models
 {
     public class Message
     {
@@ -8,7 +6,7 @@ namespace backend.Models
         public Guid ChatId { get; set; }
         public TeamChat Chat { get; set; } = null!;
         public Guid UserId { get; set; }
-        public UserType UserType { get; set; }
+        public User? User { get; set; } = null;
         public string Content { get; set; } = string.Empty;
         public DateTime SendDate { get; set; } = DateTime.UtcNow;
     }

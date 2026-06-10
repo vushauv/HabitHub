@@ -67,7 +67,7 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
             throw new Exception("Unknown user type. Shouldn't occur!");
         }
         
-        CurrentUserContext currentUser = new(session.UserId, userType, session.SessionId);
+        CurrentUserContext currentUser = new(session.UserId, userType, session.User!, session.SessionId);
         Context.Items["CurrentUser"] = currentUser;
         Logger.LogDebug("Auth success: session {SessionFingerprint} for user {UserId} ({UserType})",
             LogRedaction.Fingerprint(sessionId), session.UserId, userType);

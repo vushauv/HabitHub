@@ -1,3 +1,5 @@
+using backend.Enums;
+
 namespace backend.Models;
 
 public class TeamMember : User
@@ -9,4 +11,9 @@ public class TeamMember : User
     public List<Membership> Memberships {get;set;} = new List<Membership>();
     public List<HabitEntry> HabitEntries { get; set; } = new List<HabitEntry>();
     public List<Reminder> Reminders { get; set; } = new List<Reminder>();
+
+    public override UserType GetUserType()
+    {
+        return UserType.Member;
+    }
 }

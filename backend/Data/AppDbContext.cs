@@ -66,13 +66,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             e.Property(s => s.SessionId).IsRequired().HasMaxLength(64);
             e.Property(s => s.UserId).IsRequired();
-            e.Property(s => s.UserType).IsRequired();
             e.Property(s => s.CreatedAt).IsRequired();
             e.Property(s => s.LastActiveAt).IsRequired();
             e.Property(s => s.ExpiresAt).IsRequired();
             e.Property(s => s.SessionState).IsRequired();
 
-            e.HasIndex(s => new { s.UserId, s.UserType });
+            e.HasIndex(s => new { s.UserId });
+
+            e.HasOne(s => s.User)
+                .WithMany(u => u.Sessions)
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Entity<HabitTeam>(e =>
         {

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using backend.Enums;
 using backend.Logging;
+using backend.Models;
 using backend.Repositories.Interfaces;
 using backend.Utils;
 using Microsoft.AspNetCore.Authentication;
@@ -31,7 +32,7 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
             return AuthenticateResult.Fail("No session ID");
         }
         string hashedSessionId = SessionIdHasher.Hash(sessionId);
-        var session = await _sessions.GetByIdAsync(hashedSessionId);
+        var session = await _sessions.GetByIdWithUserAsync(hashedSessionId);
         if (session == null)
         {
             Logger.LogWarning("Auth rejected: session {SessionFingerprint} not found", LogRedaction.Fingerprint(sessionId));
@@ -51,14 +52,29 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
             return AuthenticateResult.Fail("Expired Session");
         }
         await _sessions.RefreshSpecificSession(session.SessionId);
-        CurrentUserContext currentUser = new(session.UserId, session.UserType, session.SessionId);
+        
+        UserType userType;
+        if (session.User! is TeamCreator)
+        {
+            userType = UserType.Creator;
+        }
+        else if (session.User is TeamMember)
+        {
+            userType = UserType.Member;
+        }
+        else
+        {
+            throw new Exception("Unknown user type. Shouldn't occur!");
+        }
+        
+        CurrentUserContext currentUser = new(session.UserId, userType, session.SessionId);
         Context.Items["CurrentUser"] = currentUser;
         Logger.LogDebug("Auth success: session {SessionFingerprint} for user {UserId} ({UserType})",
-            LogRedaction.Fingerprint(sessionId), session.UserId, session.UserType);
+            LogRedaction.Fingerprint(sessionId), session.UserId, userType);
 
         var claimsIdentity = new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, session.UserId.ToString()),
-            new Claim(ClaimTypes.Role, ((int)session.UserType).ToString())
+            new Claim(ClaimTypes.Role, ((int)userType).ToString())
         ], nameof(SessionAuthenticationHandler));
         var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
         

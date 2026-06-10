@@ -22,6 +22,7 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
                 ["PostgresDb"] = "habithub_test",
                 ["PostgresUser"] = "test",
                 ["PostgresPassword"] = "test",
+                ["Pepper"] = "test-pepper-for-tests",
             });
         });
 

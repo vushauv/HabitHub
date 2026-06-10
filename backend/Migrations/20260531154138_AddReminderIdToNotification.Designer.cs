@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260531154138_AddReminderIdToNotification")]
+    partial class AddReminderIdToNotification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,13 +41,11 @@ namespace backend.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
-                    b.Property<string>("HabitState")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("HabitState")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("HabitType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("HabitType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -57,8 +58,8 @@ namespace backend.Migrations
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Unit")
-                        .HasColumnType("text");
+                    b.Property<int?>("Unit")
+                        .HasColumnType("integer");
 
                     b.HasKey("HabitId");
 
@@ -91,9 +92,8 @@ namespace backend.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<float?>("Value")
                         .HasColumnType("real");
@@ -143,9 +143,8 @@ namespace backend.Migrations
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -169,9 +168,8 @@ namespace backend.Migrations
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -206,9 +204,8 @@ namespace backend.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("UserType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
 
                     b.HasKey("MessageId");
 
@@ -234,20 +231,17 @@ namespace backend.Migrations
                     b.Property<Guid?>("ReminderId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("UserType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
 
                     b.HasKey("NotificationId");
 
@@ -309,16 +303,14 @@ namespace backend.Migrations
                     b.Property<DateTime>("LastActiveAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("SessionState")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("SessionState")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("UserType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserType")
+                        .HasColumnType("integer");
 
                     b.HasKey("SessionId");
 

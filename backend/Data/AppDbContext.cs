@@ -1,3 +1,4 @@
+using backend.Enums;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Reminder> Reminders => Set<Reminder>();
     public DbSet<TeamChat> TeamChats => Set<TeamChat>();
     public DbSet<Message> Messages => Set<Message>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+
+        configurationBuilder.Properties<UserType>().HaveConversion<string>();
+        configurationBuilder.Properties<HabitType>().HaveConversion<string>();
+        configurationBuilder.Properties<HabitState>().HaveConversion<string>();
+        configurationBuilder.Properties<EntryStatus>().HaveConversion<string>();
+        configurationBuilder.Properties<CodeStatus>().HaveConversion<string>();
+        configurationBuilder.Properties<SessionState>().HaveConversion<string>();
+        configurationBuilder.Properties<MembershipStatus>().HaveConversion<string>();
+        configurationBuilder.Properties<NotificationType>().HaveConversion<string>();
+        configurationBuilder.Properties<NotificationStatus>().HaveConversion<string>();
+        configurationBuilder.Properties<Unit>().HaveConversion<string>();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -164,6 +181,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             e.HasIndex(n => new { n.UserId, n.UserType });
             e.HasIndex(n => new { n.UserId, n.UserType, n.Status, n.Type });
+
+            e.Property(n => n.ReminderId).IsRequired(false);
+
+            e.HasOne(n => n.Reminder)
+                .WithMany(r => r.Notifications)
+                .HasForeignKey(n => n.ReminderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasIndex(n => new { n.ReminderId, n.CreatedAt });
         });
         modelBuilder.Entity<Reminder>(e =>
         {

@@ -80,7 +80,8 @@ namespace backend.BackgroundServices
                 Content = $"Reminder: you have not logged \"{reminder.Habit.Name}\" today.",
                 CreatedAt = nowUtc,
                 Status = NotificationStatus.Unread,
-                Type = NotificationType.Reminder
+                Type = NotificationType.Reminder,
+                ReminderId = reminder.ReminderId
             };
 
             await notificationRepository.CreateNotificationAsync(notification);

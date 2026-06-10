@@ -52,20 +52,8 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
             return AuthenticateResult.Fail("Expired Session");
         }
         await _sessions.RefreshSpecificSession(session.SessionId);
-        
-        UserType userType;
-        if (session.User! is TeamCreator)
-        {
-            userType = UserType.Creator;
-        }
-        else if (session.User is TeamMember)
-        {
-            userType = UserType.Member;
-        }
-        else
-        {
-            throw new Exception("Unknown user type. Shouldn't occur!");
-        }
+
+        UserType userType = session.User!.GetUserType();
         
         CurrentUserContext currentUser = new(session.UserId, userType, session.User!, session.SessionId);
         Context.Items["CurrentUser"] = currentUser;

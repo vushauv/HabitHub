@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
+using backend.Dtos.ChatDtos;
 using backend.Dtos.HabitDtos;
 using backend.Dtos.HabitEntryDtos;
 using backend.Dtos.TeamDtos;
@@ -136,6 +137,19 @@ public static class TestUtils
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var body = await response.Content.ReadFromJsonAsync<CreateHabitResponseDto>(TestContext.Current.CancellationToken);
+        Assert.NotNull(body);
+        return body;
+    }
+
+    public static async Task<MessageDto> ChatSendMessage(HttpClient client, Guid teamId, string content)
+    {
+        var response = await client.PostAsJsonAsync($"/teams/{teamId}/chat/messages", new
+        {
+            content
+        }, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<MessageDto>(TestContext.Current.CancellationToken);
         Assert.NotNull(body);
         return body;
     }

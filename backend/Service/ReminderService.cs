@@ -106,14 +106,14 @@ namespace backend.Service
                 throw new ForbiddenException();
             }
 
-            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
             if (!isActiveMember)
             {
-                logger.LogWarning("Change my reminder rejected: member {MemberId} not active in team {TeamId}", member.MemberId, habit.TeamId);
+                logger.LogWarning("Change my reminder rejected: member {MemberId} not active in team {TeamId}", member.UserId, habit.TeamId);
                 throw new ForbiddenException();
             }
 
-            Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(habit.HabitId, member.MemberId);
+            Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(habit.HabitId, member.UserId);
 
             if (reminder == null)
             {
@@ -121,29 +121,29 @@ namespace backend.Service
                 {
                     ReminderId = Guid.NewGuid(),
                     HabitId = habit.HabitId,
-                    MemberId = member.MemberId,
+                    MemberId = member.UserId,
                     Enabled = request.Enabled,
                     LastSentAt = null
                 };
 
                 await reminders.CreateReminderAsync(reminder);
-                logger.LogInformation("Created reminder setting {ReminderId} for habit {HabitId}, member {MemberId}", reminder.ReminderId, habit.HabitId, member.MemberId);
+                logger.LogInformation("Created reminder setting {ReminderId} for habit {HabitId}, member {MemberId}", reminder.ReminderId, habit.HabitId, member.UserId);
             }
             else
             {
-                bool updated = await reminders.SetReminderEnabledAsync(habit.HabitId, member.MemberId, request.Enabled);
+                bool updated = await reminders.SetReminderEnabledAsync(habit.HabitId, member.UserId, request.Enabled);
 
                 if (!updated)
                 {
-                    logger.LogWarning("Change my reminder rejected: reminder for habit {HabitId}, member {MemberId} not found", habit.HabitId, member.MemberId);
+                    logger.LogWarning("Change my reminder rejected: reminder for habit {HabitId}, member {MemberId} not found", habit.HabitId, member.UserId);
                     throw new NotFoundException();
                 }
 
                 reminder.Enabled = request.Enabled;
             }
 
-            logger.LogInformation("Changed reminder setting for habit {HabitId}, member {MemberId} to enabled {Enabled}", habit.HabitId, member.MemberId, reminder.Enabled);
-            return new MyReminderResponseDto(habit.HabitId, member.MemberId, reminder.Enabled, habit.ReminderTime);
+            logger.LogInformation("Changed reminder setting for habit {HabitId}, member {MemberId} to enabled {Enabled}", habit.HabitId, member.UserId, reminder.Enabled);
+            return new MyReminderResponseDto(habit.HabitId, member.UserId, reminder.Enabled, habit.ReminderTime);
         }
 
         public async Task<MyReminderResponseDto> GetMyReminder(Guid userId, UserType userType, Guid habitId)
@@ -157,13 +157,13 @@ namespace backend.Service
             if (member == null)
                 throw new ForbiddenException();
 
-            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.MemberId);
+            bool isActiveMember = await memberships.IsActiveMembershipAsync(habit.TeamId, member.UserId);
             if (!isActiveMember)
                 throw new ForbiddenException();
 
-            Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(habit.HabitId, member.MemberId);
+            Reminder? reminder = await reminders.GetReminderByHabitAndMemberAsync(habit.HabitId, member.UserId);
 
-            return new MyReminderResponseDto(habit.HabitId, member.MemberId, reminder?.Enabled ?? true, habit.ReminderTime);
+            return new MyReminderResponseDto(habit.HabitId, member.UserId, reminder?.Enabled ?? true, habit.ReminderTime);
         }
 
         private async Task<Habit> GetHabitOrThrow(Guid habitId)

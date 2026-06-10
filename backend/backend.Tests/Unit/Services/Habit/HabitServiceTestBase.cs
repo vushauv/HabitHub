@@ -61,7 +61,7 @@ public abstract class HabitServiceTestBase
         };
 
     protected static Models.TeamMember MakeMember(Guid? memberId = null, string name = "X")
-        => new() { MemberId = memberId ?? MemberId, Name = name };
+        => new() { UserId = memberId ?? MemberId, Name = name };
 
     protected Models.Habit SeedHabit(
         HabitState state = HabitState.Active,

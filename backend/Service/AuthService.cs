@@ -56,7 +56,7 @@ namespace backend.Service
 
             TeamCreator creator = new TeamCreator
             {
-                CreatorId = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
                 PasswordHash = PasswordUtils.HashPassword(request.Password, _pepper),
@@ -65,11 +65,11 @@ namespace backend.Service
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamCreator createdCreator = await creators.CreateCreatorAsync(creator);
-                var (_, rawSessionId) = await CreateSessionAsync(createdCreator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
+                var (_, rawSessionId) = await CreateSessionAsync(createdCreator.UserId, UserType.Creator, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
                     rawSessionId,
-                    new UserDto(createdCreator.CreatorId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
+                    new UserDto(createdCreator.UserId, createdCreator.Name, createdCreator.Email, UserType.Creator, null))
                 ;
             });
 
@@ -91,7 +91,7 @@ namespace backend.Service
 
             TeamMember member = new TeamMember
             {
-                MemberId = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
                 Name = name,
                 Email = email,
                 PasswordHash = PasswordUtils.HashPassword(request.Password, _pepper),
@@ -101,11 +101,11 @@ namespace backend.Service
             AuthResponseDto response = await unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 TeamMember createdMember = await members.CreateMemberAsync(member);
-                var (_, rawSessionId) = await CreateSessionAsync(createdMember.MemberId, UserType.Member, ipAddress, deviceInfo);
+                var (_, rawSessionId) = await CreateSessionAsync(createdMember.UserId, UserType.Member, ipAddress, deviceInfo);
 
                 return new AuthResponseDto(
                     rawSessionId,
-                    new UserDto(createdMember.MemberId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
+                    new UserDto(createdMember.UserId, createdMember.Name, createdMember.Email, UserType.Member, createdMember.Timezone))
                 ;
             });
             logger.LogInformation("Registered member {MemberId}", response.User.Id);
@@ -125,15 +125,15 @@ namespace backend.Service
 
             if (!PasswordUtils.VerifyPassword(request.Password, creator.PasswordHash, _pepper))
             {
-                logger.LogWarning("Login failed: invalid password for creator {CreatorId}", creator.CreatorId);
+                logger.LogWarning("Login failed: invalid password for creator {CreatorId}", creator.UserId);
                 throw new InvalidCredentialsException();
             }
 
-            var (_, rawSessionId) = await CreateSessionAsync(creator.CreatorId, UserType.Creator, ipAddress, deviceInfo);
-            logger.LogInformation("Creator {CreatorId} logged in", creator.CreatorId);
+            var (_, rawSessionId) = await CreateSessionAsync(creator.UserId, UserType.Creator, ipAddress, deviceInfo);
+            logger.LogInformation("Creator {CreatorId} logged in", creator.UserId);
             return new AuthResponseDto(
                 rawSessionId,
-                new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null)
+                new UserDto(creator.UserId, creator.Name, creator.Email, UserType.Creator, null)
             );
         }
 
@@ -150,15 +150,15 @@ namespace backend.Service
 
             if (!PasswordUtils.VerifyPassword(request.Password, member.PasswordHash, _pepper))
             {
-                logger.LogWarning("Login failed: invalid password for member {MemberId}", member.MemberId);
+                logger.LogWarning("Login failed: invalid password for member {MemberId}", member.UserId);
                 throw new InvalidCredentialsException();
             }
 
-            var (_, rawSessionId) = await CreateSessionAsync(member.MemberId, UserType.Member, ipAddress, deviceInfo);
-            logger.LogInformation("Member {MemberId} logged in", member.MemberId);
+            var (_, rawSessionId) = await CreateSessionAsync(member.UserId, UserType.Member, ipAddress, deviceInfo);
+            logger.LogInformation("Member {MemberId} logged in", member.UserId);
             return new AuthResponseDto(
                 rawSessionId,
-                new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone)
+                new UserDto(member.UserId, member.Name, member.Email, UserType.Member, member.Timezone)
             );
         }
 
@@ -347,7 +347,7 @@ namespace backend.Service
                 if (creator == null)
                     throw new NotFoundException();
 
-                return new UserDto(creator.CreatorId, creator.Name, creator.Email, UserType.Creator, null);
+                return new UserDto(creator.UserId, creator.Name, creator.Email, UserType.Creator, null);
             }
             else if (userType == UserType.Member)
             {
@@ -355,7 +355,7 @@ namespace backend.Service
                 if (member == null)
                     throw new NotFoundException();
 
-                return new UserDto(member.MemberId, member.Name, member.Email, UserType.Member, member.Timezone);
+                return new UserDto(member.UserId, member.Name, member.Email, UserType.Member, member.Timezone);
             }
             else
             {

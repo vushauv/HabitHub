@@ -42,7 +42,7 @@ namespace backend.Service
                 {
                     TeamId = Guid.NewGuid(),
                     Name = name,
-                    CreatorId = creator.CreatorId
+                    CreatorId = creator.UserId
                 };
                 HabitTeam createdTeam = await habitTeams.CreateHabitTeamAsync(team);
 
@@ -57,7 +57,7 @@ namespace backend.Service
                 return new CreateTeamResponseDto(createdTeam.TeamId, createdTeam.Name);
             });
 
-            logger.LogInformation("Created team {TeamId} for creator {CreatorId} with chat {ChatId}", response.TeamId, creator.CreatorId, teamChatId);
+            logger.LogInformation("Created team {TeamId} for creator {CreatorId} with chat {ChatId}", response.TeamId, creator.UserId, teamChatId);
             return response;
         }
 
@@ -193,10 +193,10 @@ namespace backend.Service
                 throw new ForbiddenException();
             }
 
-            Membership? membership = await memberships.GetMembershipByTeamIdAndMemberIdAsync(inviteCode.TeamId, member.MemberId);
+            Membership? membership = await memberships.GetMembershipByTeamIdAndMemberIdAsync(inviteCode.TeamId, member.UserId);
             if (membership != null && membership.Status == MembershipStatus.Active)
             {
-                logger.LogWarning("Join team rejected: member {MemberId} already active in team {TeamId}", member.MemberId, inviteCode.TeamId);
+                logger.LogWarning("Join team rejected: member {MemberId} already active in team {TeamId}", member.UserId, inviteCode.TeamId);
                 throw new ConflictException("already-member", "User is already a member of this team.");
             }
 
@@ -209,25 +209,25 @@ namespace backend.Service
                     {
                         MembershipId = Guid.NewGuid(),
                         TeamId = inviteCode.TeamId,
-                        MemberId = member.MemberId,
+                        MemberId = member.UserId,
                         Status = MembershipStatus.Active
                     };
                     await memberships.CreateMembershipAsync(createdMembership);
                 }
                 else
                 {
-                    await memberships.UpdateMembershipStatusAsync(inviteCode.TeamId, member.MemberId, MembershipStatus.Active);
+                    await memberships.UpdateMembershipStatusAsync(inviteCode.TeamId, member.UserId, MembershipStatus.Active);
                 }
                 List<Guid> habitIdsWithReminders = await habits.GetActiveHabitIdsWithReminderTimeByTeamIdAsync(habitTeam.TeamId);
 
                 habitReminderCount = habitIdsWithReminders.Count;
 
-                await reminders.CreateMissingRemindersForMemberAsync(member.MemberId, habitIdsWithReminders);
+                await reminders.CreateMissingRemindersForMemberAsync(member.UserId, habitIdsWithReminders);
 
-                return new JoinTeamResponseDto(inviteCode.TeamId, member.MemberId);
+                return new JoinTeamResponseDto(inviteCode.TeamId, member.UserId);
             });
 
-            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}. Ensured reminder setting for {HabitCount} habits.", member.MemberId, inviteCode.TeamId, inviteCode.CodeId, habitReminderCount);
+            logger.LogInformation("Member {MemberId} joined team {TeamId} via invite code {CodeId}. Ensured reminder setting for {HabitCount} habits.", member.UserId, inviteCode.TeamId, inviteCode.CodeId, habitReminderCount);
             return response;
         }
         public async Task KickUser(Guid userId, Guid teamId, Guid memberId)
@@ -269,14 +269,14 @@ namespace backend.Service
             if (member == null)
                 throw new ForbiddenException();
 
-            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
+            bool isActiveMembership = await memberships.IsActiveMembershipAsync(team.TeamId, member.UserId);
             if (!isActiveMembership)
             {
                 logger.LogWarning("Leave team rejected: member {UserId} not active in team {TeamId}", userId, teamId);
                 throw new NotFoundException();
             }
 
-            await memberships.UpdateMembershipStatusAsync(team.TeamId, member.MemberId, MembershipStatus.Left);
+            await memberships.UpdateMembershipStatusAsync(team.TeamId, member.UserId, MembershipStatus.Left);
         }
         public async Task DeleteTeam(Guid userId, Guid teamId)
         {
@@ -336,7 +336,7 @@ namespace backend.Service
                 if (member == null)
                     throw new ForbiddenException();
 
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.MemberId);
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(team.TeamId, member.UserId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
@@ -365,7 +365,7 @@ namespace backend.Service
                 if (member == null)
                     throw new ForbiddenException();
 
-                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, member.MemberId);
+                bool isActiveMember = await memberships.IsActiveMembershipAsync(teamId, member.UserId);
                 if (!isActiveMember)
                     throw new ForbiddenException();
             }
@@ -384,7 +384,7 @@ namespace backend.Service
 
             results = membershipList.Select(m =>
             {
-                TeamMember? member = membersList.FirstOrDefault(mem => mem.MemberId == m.MemberId);
+                TeamMember? member = membersList.FirstOrDefault(mem => mem.UserId == m.MemberId);
                 return new TeamMemberDto(m.MemberId, member?.Name ?? "Unknown", member?.Email ?? "Unknown", m.Status);
             }).ToList();
 

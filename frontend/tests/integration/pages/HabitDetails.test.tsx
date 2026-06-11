@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
   it,
@@ -26,6 +26,7 @@ type HabitFixture = {
   habitType: string;
   unit: string | null;
   expiryDate: string | null;
+  reminderTime?: string | null;
 };
 
 const activeHabit: HabitFixture = {
@@ -73,7 +74,6 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "creator-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
 it("renders habit details after load", async () => {
@@ -142,5 +142,56 @@ it("shows 'No goal' when goal is null", async () => {
 
   await waitFor(() => {
     expect(screen.getByText("No goal")).toBeInTheDocument();
+  });
+});
+
+it("saves a reminder time", async () => {
+  server.use(
+    http.patch(`${API_URL}/habits/${HABIT_ID}/reminder`, async ({ request }) => {
+      const data = (await request.json()) as { reminderTime: string };
+
+      return HttpResponse.json({
+        habitId: HABIT_ID,
+        reminderTime: data.reminderTime,
+      });
+    }),
+  );
+
+  render(App());
+
+  await waitFor(() => {
+    expect(screen.getByLabelText("Reminder time")).toBeInTheDocument();
+  });
+
+  fireEvent.change(screen.getByLabelText("Reminder time"), {
+    target: { value: "07:30" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save Reminder" }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Reminder saved.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Reminder time")).toHaveValue("07:30");
+  });
+});
+
+it("clears an existing reminder time", async () => {
+  server.use(
+    ...makeHandlers({ ...activeHabit, reminderTime: "07:30:00" }),
+    http.delete(`${API_URL}/habits/${HABIT_ID}/reminder`, () =>
+      new HttpResponse(null, { status: 204 }),
+    ),
+  );
+
+  render(App());
+
+  await waitFor(() => {
+    expect(screen.getByLabelText("Reminder time")).toHaveValue("07:30");
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "Clear Reminder" }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Reminder cleared.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Reminder time")).toHaveValue("");
   });
 });

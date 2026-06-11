@@ -193,13 +193,13 @@ it("logs binary habit progress and shows success message", async () => {
   ).toBeInTheDocument();
 });
 
-it.skip("skips today and shows success message", async () => {
+it("skips today and shows success message", async () => {
   render(App());
 
   await waitFor(() => {
     expect(
       screen.getByRole("button", { name: "Skip Today" }),
-    ).toBeInTheDocument();
+    ).not.toBeDisabled();
   });
 
   server.use(
@@ -271,13 +271,13 @@ it("undoes today's log and shows success message", async () => {
   ).toBeInTheDocument();
 });
 
-it.skip("shows error on failed log", async () => {
+it("shows error on failed log", async () => {
   render(App());
 
   await waitFor(() => {
     expect(
       screen.getByRole("button", { name: "Mark Completed" }),
-    ).toBeInTheDocument();
+    ).not.toBeDisabled();
   });
 
   server.use(

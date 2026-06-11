@@ -160,6 +160,7 @@ public sealed class FakeTeamMemberRepository : ITeamMemberRepository
 public sealed class FakeReminderRepository : IReminderRepository
 {
     public List<Guid> DisabledForHabit { get; } = new();
+    public Dictionary<(Guid HabitId, Guid MemberId), Reminder> ByHabitAndMember { get; } = new();
 
     public Task DisableAllRemindersForHabitAsync(Guid habitId)
     {
@@ -167,7 +168,8 @@ public sealed class FakeReminderRepository : IReminderRepository
         return Task.CompletedTask;
     }
 
-    public Task<Reminder?> GetReminderByHabitAndMemberAsync(Guid habitId, Guid memberId) => throw new NotImplementedException();
+    public Task<Reminder?> GetReminderByHabitAndMemberAsync(Guid habitId, Guid memberId)
+        => Task.FromResult(ByHabitAndMember.TryGetValue((habitId, memberId), out var r) ? r : (Reminder?)null);
     public Task<List<Reminder>> GetEnabledRemindersWithHabitAndMemberAsync() => throw new NotImplementedException();
     public Task<Reminder> CreateReminderAsync(Reminder reminder) => throw new NotImplementedException();
     public Task CreateMissingRemindersForHabitAsync(Guid habitId, List<Guid> memberIds) => throw new NotImplementedException();

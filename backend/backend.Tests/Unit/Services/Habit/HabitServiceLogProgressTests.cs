@@ -100,7 +100,7 @@ public class HabitServiceLogProgressTests : HabitServiceTestBase
         Assert.Equal("log-already-exists", ex.ErrorCode);
     }
 
-    [Fact(Skip = "NotImplementException")]
+    [Fact]
     public async Task HappyPath_Binary()
     {
         SeedHabit(type: HabitType.Binary);
@@ -117,7 +117,7 @@ public class HabitServiceLogProgressTests : HabitServiceTestBase
         Assert.NotNull(_entries.LastCreated);
     }
 
-    [Fact(Skip = "NotImplementException")]
+    [Fact]
     public async Task HappyPath_Quantitative()
     {
         SeedHabit(type: HabitType.Quantitative);
@@ -129,7 +129,7 @@ public class HabitServiceLogProgressTests : HabitServiceTestBase
         Assert.Equal(EntryStatus.Logged, dto.Status);
     }
 
-    [Fact(Skip = "NotImplementException")]
+    [Fact]
     public async Task Skipped_ValueNulled()
     {
         SeedHabit(type: HabitType.Quantitative);

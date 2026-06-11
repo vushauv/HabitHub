@@ -182,16 +182,16 @@ public sealed class FakeReminderRepository : IReminderRepository
 
 public sealed class FakeNotificationRepository : INotificationRepository
 {
-    public Task<List<Notification>> GetVisibleNotificationsForUserByTypeAsync(Guid userId, UserType userType, NotificationType type) => throw new NotImplementedException();
+    public Task<List<backend.Models.Notification>> GetVisibleNotificationsForUserByTypeAsync(Guid userId, UserType userType, NotificationType type) => throw new NotImplementedException();
     public Task<int> GetUnreadNotificationsCountForUserByTypeAsync(Guid userId, UserType userType, NotificationType type) => throw new NotImplementedException();
-    public Task<Notification?> GetNotificationByIdAsync(Guid notificationId) => throw new NotImplementedException();
-    public Task<Notification> CreateNotificationAsync(Notification notification) => throw new NotImplementedException();
+    public Task<backend.Models.Notification?> GetNotificationByIdAsync(Guid notificationId) => throw new NotImplementedException();
+    public Task<backend.Models.Notification> CreateNotificationAsync(backend.Models.Notification notification) => throw new NotImplementedException();
     public Task<bool> MarkNotificationAsReadAsync(Guid notificationId) => throw new NotImplementedException();
     public Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type) => throw new NotImplementedException();
     public Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId) => throw new NotImplementedException();
     public Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status) => throw new NotImplementedException();
     public Task<int> MarkOldReminderNotificationsAsDeletedAsync(Guid reminderId, DateTime cutoffUtc) => throw new NotImplementedException();
-    public Task<Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone) => throw new NotImplementedException();
+    public Task<backend.Models.Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone) => throw new NotImplementedException();
 }
 
 public sealed class FakeUnitOfWork: IUnitOfWork

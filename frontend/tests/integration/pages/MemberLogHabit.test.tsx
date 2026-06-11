@@ -272,13 +272,13 @@ it("undoes today's log and shows success message", async () => {
   ).toBeInTheDocument();
 });
 
-it.skip("shows error on failed log", async () => {
+it("shows error on failed log", async () => {
   render(App());
 
   await waitFor(() => {
     expect(
       screen.getByRole("button", { name: "Mark Completed" }),
-    ).toBeInTheDocument();
+    ).not.toBeDisabled();
   });
 
   server.use(

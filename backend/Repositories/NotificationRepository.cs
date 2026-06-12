@@ -56,6 +56,30 @@ namespace backend.Repositories
             await db.SaveChangesAsync();
             return true;
         }
+        public async Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type)
+        {
+            IQueryable<Notification> query = db.Notifications.Where(n =>
+                n.UserId == userId &&
+                n.UserType == userType &&
+                n.Status == NotificationStatus.Unread
+            );
+
+            if(type != null)
+            {
+                query = query.Where(n => n.Type == type.Value);
+            }
+
+            List<Notification> unreadNotifications = await query.ToListAsync();
+
+            if (unreadNotifications.Count == 0)
+                return;
+            foreach(Notification notification in unreadNotifications)
+            {
+                notification.Status = NotificationStatus.Read;
+            }
+
+            await db.SaveChangesAsync();
+        }
         public async Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId)
         {
             Notification? notification = await db.Notifications.FirstOrDefaultAsync(n => n.NotificationId == notificationId);
@@ -65,6 +89,63 @@ namespace backend.Repositories
             notification.Status = NotificationStatus.Deleted;
             await db.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status)
+        {
+            Notification? notification = await db.Notifications.FirstOrDefaultAsync(n => n.NotificationId == notificationId);
+            if (notification == null)
+                return false;
+
+            if (notification.Type != NotificationType.Reminder)
+                return false;
+            // if (notification.Status == NotificationStatus.Deleted)
+            //     return false;
+
+            notification.Status = status;
+            await db.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<int> MarkOldReminderNotificationsAsDeletedAsync(Guid reminderId, DateTime cutoffUtc)
+        {
+            List<Notification> notifications = await db.Notifications
+                .Where(n =>
+                    n.ReminderId == reminderId &&
+                    n.Type == NotificationType.Reminder &&
+                    n.Status != NotificationStatus.Deleted &&
+                    n.CreatedAt < cutoffUtc)
+                .ToListAsync();
+
+            foreach(Notification notification in notifications)
+            {
+                notification.Status = NotificationStatus.Deleted;
+            }
+
+            await db.SaveChangesAsync();
+            return notifications.Count;
+        }
+        public async Task<Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone)
+        {
+            DateTime localStart = localDate.ToDateTime(TimeOnly.MinValue);
+            DateTime localEnd = localDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+            DateTime utcStart = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(localStart, DateTimeKind.Unspecified),
+                timezone
+            );
+
+            DateTime utcEnd = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(localEnd, DateTimeKind.Unspecified),
+                timezone
+            );
+
+            return await db.Notifications
+                .FirstOrDefaultAsync(n =>
+                    n.ReminderId == reminderId &&
+                    n.Type == NotificationType.Reminder &&
+                    n.CreatedAt >= utcStart &&
+                    n.CreatedAt < utcEnd);
         }
     }
 }

@@ -135,7 +135,6 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "member-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
 it("renders team and habit name after load", async () => {
@@ -200,7 +199,7 @@ it("skips today and shows success message", async () => {
   await waitFor(() => {
     expect(
       screen.getByRole("button", { name: "Skip Today" }),
-    ).toBeInTheDocument();
+    ).not.toBeDisabled();
   });
 
   server.use(
@@ -272,13 +271,13 @@ it("undoes today's log and shows success message", async () => {
   ).toBeInTheDocument();
 });
 
-it.skip("shows error on failed log", async () => {
+it("shows error on failed log", async () => {
   render(App());
 
   await waitFor(() => {
     expect(
       screen.getByRole("button", { name: "Mark Completed" }),
-    ).toBeInTheDocument();
+    ).not.toBeDisabled();
   });
 
   server.use(

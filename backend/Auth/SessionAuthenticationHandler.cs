@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using backend.Enums;
 using backend.Logging;
 using backend.Repositories.Interfaces;
+using backend.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
@@ -24,12 +25,14 @@ public class SessionAuthenticationHandler : AuthenticationHandler<Authentication
     
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        string? sessionId = Request.Headers["X-Session-Id"].FirstOrDefault();
+        string? sessionId = Request.Headers["X-Session-Id"].FirstOrDefault()
+            ?? Request.Query["access_token"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(sessionId))
         {
             return AuthenticateResult.Fail("No session ID");
         }
-        var session = await _sessions.GetByIdAsync(sessionId);
+        string hashedSessionId = SessionIdHasher.Hash(sessionId);
+        var session = await _sessions.GetByIdAsync(hashedSessionId);
         if (session == null)
         {
             Logger.LogWarning("Auth rejected: session {SessionFingerprint} not found", LogRedaction.Fingerprint(sessionId));

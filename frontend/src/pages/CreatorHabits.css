@@ -49,8 +49,8 @@
 
 .creator-habits-table-row {
   grid-template-columns:
-    minmax(8rem, 1fr) minmax(6.5rem, 0.7fr) minmax(6.5rem, 0.7fr)
-    minmax(9rem, 0.9fr) minmax(8rem, 0.8fr) minmax(22rem, 2fr);
+    minmax(7rem, 1fr) minmax(5.5rem, 0.65fr) minmax(5rem, 0.55fr)
+    minmax(7rem, 0.75fr) minmax(7rem, 0.8fr) minmax(17rem, 1.4fr);
 }
 
 .creator-habits-name,
@@ -72,9 +72,12 @@
 
 .creator-habits-row-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(6.25rem, 1fr));
   gap: 0.5rem;
   align-items: center;
+  justify-self: stretch;
+  width: 100%;
+  max-width: 100%;
 }
 
 .creator-habits-danger-button {
@@ -88,6 +91,11 @@
 
   .creator-habits-table-head {
     display: none;
+  }
+
+  .creator-habits-row-actions {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   }
 }
 

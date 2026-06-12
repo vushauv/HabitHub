@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using backend.Dtos.AuthDtos;
 using backend.Enums;
 using backend.Tests.Fixtures;
+using backend.Utils;
 
 namespace backend.Tests.Integration.Auth;
 
@@ -38,7 +39,7 @@ public class AuthInvalidateSpecificSessionEndpointTests
         Assert.NotNull(body);
         Assert.Single(body);
         
-        var response2 = await _client.DeleteAsync($"/auth/sessions/{sessionId}", TestContext.Current.CancellationToken);
+        var response2 = await _client.DeleteAsync($"/auth/sessions/{SessionIdHasher.Hash(sessionId)}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, response2.StatusCode);
         
         var response3 = await _client.GetAsync("/auth/sessions", TestContext.Current.CancellationToken);
@@ -74,7 +75,7 @@ public class AuthInvalidateSpecificSessionEndpointTests
         Assert.NotNull(body);
         Assert.Single(body);
         
-        var response2 = await _client.DeleteAsync($"/auth/sessions/{sessionIdB}", TestContext.Current.CancellationToken);
+        var response2 = await _client.DeleteAsync($"/auth/sessions/{SessionIdHasher.Hash(sessionIdB)}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response2.StatusCode);
         
         _client.DefaultRequestHeaders.Add("X-Session-Id", sessionIdB);

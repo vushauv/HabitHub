@@ -1,6 +1,8 @@
+using backend.Data.UnitOfWork;
 using backend.Enums;
 using backend.Models;
 using backend.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Tests.Unit.Services.Habit;
 
@@ -63,6 +65,7 @@ public sealed class FakeHabitRepository : IHabitRepository
 public sealed class FakeHabitTeamRepository : IHabitTeamRepository
 {
     public Dictionary<Guid, HabitTeam> TeamsById { get; } = new();
+
     public Dictionary<(Guid TeamId, Guid UserId), bool> Owners { get; } = new();
 
     public Task<HabitTeam?> GetHabitTeamByIdAsync(Guid teamId)
@@ -157,6 +160,7 @@ public sealed class FakeTeamMemberRepository : ITeamMemberRepository
 public sealed class FakeReminderRepository : IReminderRepository
 {
     public List<Guid> DisabledForHabit { get; } = new();
+    public Dictionary<(Guid HabitId, Guid MemberId), Reminder> ByHabitAndMember { get; } = new();
 
     public Task DisableAllRemindersForHabitAsync(Guid habitId)
     {
@@ -164,7 +168,8 @@ public sealed class FakeReminderRepository : IReminderRepository
         return Task.CompletedTask;
     }
 
-    public Task<Reminder?> GetReminderByHabitAndMemberAsync(Guid habitId, Guid memberId) => throw new NotImplementedException();
+    public Task<Reminder?> GetReminderByHabitAndMemberAsync(Guid habitId, Guid memberId)
+        => Task.FromResult(ByHabitAndMember.TryGetValue((habitId, memberId), out var r) ? r : (Reminder?)null);
     public Task<List<Reminder>> GetEnabledRemindersWithHabitAndMemberAsync() => throw new NotImplementedException();
     public Task<Reminder> CreateReminderAsync(Reminder reminder) => throw new NotImplementedException();
     public Task CreateMissingRemindersForHabitAsync(Guid habitId, List<Guid> memberIds) => throw new NotImplementedException();
@@ -175,6 +180,48 @@ public sealed class FakeReminderRepository : IReminderRepository
     public Task<bool> UpdateLastSentAtAsync(Guid reminderId, DateTime lastSentAt) => throw new NotImplementedException();
 }
 
+public sealed class FakeNotificationRepository : INotificationRepository
+{
+    public Task<List<backend.Models.Notification>> GetVisibleNotificationsForUserByTypeAsync(Guid userId, UserType userType, NotificationType type) => throw new NotImplementedException();
+    public Task<int> GetUnreadNotificationsCountForUserByTypeAsync(Guid userId, UserType userType, NotificationType type) => throw new NotImplementedException();
+    public Task<backend.Models.Notification?> GetNotificationByIdAsync(Guid notificationId) => throw new NotImplementedException();
+    public Task<backend.Models.Notification> CreateNotificationAsync(backend.Models.Notification notification) => throw new NotImplementedException();
+    public Task<bool> MarkNotificationAsReadAsync(Guid notificationId) => throw new NotImplementedException();
+    public Task MarkAllUnreadNotificationsAsReadAsync(Guid userId, UserType userType, NotificationType? type) => throw new NotImplementedException();
+    public Task<bool> MarkNotificationAsDeletedAsync(Guid notificationId) => throw new NotImplementedException();
+    public Task<bool> ChangeReminderNotificationStatusAsync(Guid notificationId, NotificationStatus status) => throw new NotImplementedException();
+    public Task<int> MarkOldReminderNotificationsAsDeletedAsync(Guid reminderId, DateTime cutoffUtc) => throw new NotImplementedException();
+    public Task<backend.Models.Notification?> GetReminderNotificationForLocalDateAsync(Guid reminderId, DateOnly localDate, TimeZoneInfo timezone) => throw new NotImplementedException();
+}
+
+public sealed class FakeUnitOfWork: IUnitOfWork
+{
+    public async Task ExecuteInTransactionAsync(Func<Task> action)
+    {
+        await action();
+    }
+    public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action)
+    {
+        return await action();
+    }
+}
+
+public sealed class FakeLogger<T> : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        => null;
+
+    public bool IsEnabled(LogLevel logLevel)
+        => false;
+
+    public void Log<TState>(
+        LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    { }
+}
 public static class HabitTestIds
 {
     public static readonly Guid UserId = Guid.Parse("11111111-1111-1111-1111-111111111111");

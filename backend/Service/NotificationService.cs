@@ -7,7 +7,10 @@ using backend.Service.Interfaces;
 
 namespace backend.Service
 {
-    public class NotificationService(INotificationRepository notifications) : INotificationService
+    public class NotificationService(
+        INotificationRepository notifications,
+        ILogger<NotificationService> logger
+    ) : INotificationService
     {
         public async Task<List<NotificationDto>> GetNotifications(Guid userId, UserType userType, NotificationType? type)
         {
@@ -54,7 +57,12 @@ namespace backend.Service
 
             bool updated = await notifications.MarkNotificationAsReadAsync(notification.NotificationId);
             if (!updated)
+            {
+                logger.LogWarning("Mark as read rejected: notification {NotificationId} not found", notificationId);
                 throw new NotFoundException();
+            }
+
+            logger.LogInformation("Marked notification {NotificationId} as read for user {UserId} ({UserType})", notificationId, userId, userType);
         }
 
         public async Task DeleteNotification(Guid userId, UserType userType, Guid notificationId)
@@ -63,7 +71,12 @@ namespace backend.Service
 
             bool updated = await notifications.MarkNotificationAsDeletedAsync(notification.NotificationId);
             if (!updated)
+            {
+                logger.LogWarning("Delete notification rejected: notification {NotificationId} not found", notificationId);
                 throw new NotFoundException();
+            }
+
+            logger.LogInformation("Deleted notification {NotificationId} for user {UserId} ({UserType})", notificationId, userId, userType);
         }
 
         private async Task<Notification> GetOwnedNotificationOrThrow(Guid userId, UserType userType, Guid notificationId)
@@ -78,32 +91,17 @@ namespace backend.Service
 
             return notification;
         }
+
         private static NotificationDto ToDto(Notification notification)
         {
             return new NotificationDto(notification.NotificationId, notification.Content, notification.CreatedAt, notification.Status, notification.Type);
         }
+
         public async Task MarkAllAsRead(Guid userId, UserType userType, NotificationType? type)
         {
-            List<Notification> userNotifications = new List<Notification>();
+            await notifications.MarkAllUnreadNotificationsAsReadAsync(userId, userType, type);
 
-            if (type == null)
-            {
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, NotificationType.System));
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, NotificationType.Reminder));
-            }
-            else
-            {
-                userNotifications.AddRange(await notifications.GetVisibleNotificationsForUserByTypeAsync(userId, userType, type.Value));
-            }
-            
-            List<Notification> unreadNotifications = userNotifications
-                .Where(n => n.Status == NotificationStatus.Unread)
-                .ToList();
-
-            foreach (Notification notification in unreadNotifications)
-            {
-                await notifications.MarkNotificationAsReadAsync(notification.NotificationId);
-            }
+            logger.LogInformation("Marked all unread notifications as read for user {UserId} ({UserType})", userId, userType);
         }
     }
 }

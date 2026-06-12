@@ -38,11 +38,13 @@ namespace backend.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
-                    b.Property<int>("HabitState")
-                        .HasColumnType("integer");
+                    b.Property<string>("HabitState")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("HabitType")
-                        .HasColumnType("integer");
+                    b.Property<string>("HabitType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -55,8 +57,8 @@ namespace backend.Migrations
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("Unit")
-                        .HasColumnType("integer");
+                    b.Property<string>("Unit")
+                        .HasColumnType("text");
 
                     b.HasKey("HabitId");
 
@@ -89,8 +91,9 @@ namespace backend.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<float?>("Value")
                         .HasColumnType("real");
@@ -140,8 +143,9 @@ namespace backend.Migrations
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -165,8 +169,9 @@ namespace backend.Migrations
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -201,8 +206,9 @@ namespace backend.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("UserType")
-                        .HasColumnType("integer");
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("MessageId");
 
@@ -225,19 +231,27 @@ namespace backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ReminderId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("UserType")
-                        .HasColumnType("integer");
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("NotificationId");
+
+                    b.HasIndex("ReminderId", "CreatedAt");
 
                     b.HasIndex("UserId", "UserType");
 
@@ -295,14 +309,16 @@ namespace backend.Migrations
                     b.Property<DateTime>("LastActiveAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("SessionState")
-                        .HasColumnType("integer");
+                    b.Property<string>("SessionState")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("UserType")
-                        .HasColumnType("integer");
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("SessionId");
 
@@ -479,6 +495,16 @@ namespace backend.Migrations
                     b.Navigation("Chat");
                 });
 
+            modelBuilder.Entity("backend.Models.Notification", b =>
+                {
+                    b.HasOne("backend.Models.Reminder", "Reminder")
+                        .WithMany("Notifications")
+                        .HasForeignKey("ReminderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Reminder");
+                });
+
             modelBuilder.Entity("backend.Models.Reminder", b =>
                 {
                     b.HasOne("backend.Models.Habit", "Habit")
@@ -526,6 +552,11 @@ namespace backend.Migrations
                     b.Navigation("InviteCodes");
 
                     b.Navigation("Memberships");
+                });
+
+            modelBuilder.Entity("backend.Models.Reminder", b =>
+                {
+                    b.Navigation("Notifications");
                 });
 
             modelBuilder.Entity("backend.Models.TeamChat", b =>

@@ -91,7 +91,6 @@ beforeEach(() => {
     JSON.stringify({ sessionId: "member-session" }),
   );
   vi.restoreAllMocks();
-  server.resetHandlers(...makeHandlers());
 });
 
 it("renders leaderboard rows ranked", async () => {

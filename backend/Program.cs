@@ -3,6 +3,7 @@ using backend.BackgroundServices;
 using backend.Configuration;
 using backend.Data;
 using backend.Exceptions;
+using backend.Logging;
 using backend.Repositories;
 using backend.Service;
 using Microsoft.AspNetCore.Authentication;
@@ -13,6 +14,7 @@ using Serilog;
 using Serilog.Events;
 using backend.Service.Interfaces;
 using backend.Repositories.Interfaces;
+using backend.Data.UnitOfWork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,10 +54,12 @@ builder.Services.AddScoped<IInviteCodeRepository, InviteCodeRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();
 builder.Services.AddScoped<IHabitEntryRepository, HabitEntryRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
@@ -63,11 +67,13 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddHostedService<InviteCodeExpiryService>();
 builder.Services.AddHostedService<ReminderNotificationService>();
+builder.Services.AddHostedService<ReminderNotificationCleanupService>();
 
 builder.Services.AddAuthentication(options => options.DefaultScheme = "Session")
     .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>("Session", _ => { });
 
 builder.Services.AddCors();
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -91,6 +97,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var appSettings = scope.ServiceProvider.GetRequiredService<IOptions<AppSettings>>().Value;
 
     app.Logger.LogInformation("Applying database migrations");
     db.Database.Migrate();
@@ -107,7 +114,7 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         app.Logger.LogInformation("Seeding {Environment} data", app.Environment.EnvironmentName);
-        await SeedData.SeedUsersAsync(db, app.Logger);
+        await SeedData.SeedUsersAsync(db, app.Logger, appSettings.Pepper);
         await SeedData.SeedTeamsAsync(db, app.Logger);
         await SeedData.SeedHabitsAsync(db, app.Logger);
         await SeedData.SeedHabitEntriesAsync(db, app.Logger);
@@ -124,10 +131,12 @@ if (app.Environment.IsDevelopment())
 }
 
 var settings = app.Services.GetRequiredService<IOptions<AppSettings>>().Value;
+LogRedaction.Configure(settings.Pepper);
 app.UseCors(policy => policy
     .WithOrigins(settings.CorsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries))
     .AllowAnyHeader()
-    .AllowAnyMethod());
+    .AllowAnyMethod()
+    .AllowCredentials());
 
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
@@ -138,6 +147,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<backend.Hubs.ChatHub>("/hubs/chat");
 
 app.Logger.LogInformation("Starting backend on {Environment}", app.Environment.EnvironmentName);
 app.Run();

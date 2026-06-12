@@ -25,6 +25,9 @@ public class AppSettings
     [Required]
     public string CorsOrigins { get; set; } = "http://localhost:3000";
 
+    [Required, MinLength(16)]
+    public required string Pepper { get; init; }
+
     public string ConnectionString =>
         $"Host={PostgresHost};Port={PostgresPort};Database={PostgresDb};Username={PostgresUser};Password={PostgresPassword}";
 }
